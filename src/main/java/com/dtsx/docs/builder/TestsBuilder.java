@@ -105,7 +105,7 @@ public class TestsBuilder {
     private static TreeSet<SnapshotType> buildSnapshotTypes(SnapshotsConfig config) {
         val types = new TreeSet<SnapshotType>();
 
-        for (val typeName : config.additional().orElse(List.of("stdout"))) {
+        for (val typeName : config.additional().orElse(List.of(SnapshotType.OUTPUT.name()))) {
             try {
                 types.add(SnapshotType.valueOf(typeName.toUpperCase()));
             } catch (IllegalArgumentException e) {

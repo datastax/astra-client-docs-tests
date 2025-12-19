@@ -6,6 +6,7 @@ import io.github.cdimascio.dotenv.Dotenv;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -17,23 +18,48 @@ public class VerifierConfig {
     public final Commands commands = new Commands();
 
     public static VerifierConfig load() {
-        return new VerifierConfig(Dotenv.configure().ignoreIfMissing().load());
+        return new VerifierConfig(Dotenv.configure().load());
+    }
+
+    public String token() {
+        return env("APPLICATION_TOKEN");
+    }
+
+    public String apiEndpoint() {
+        return env("API_ENDPOINT");
     }
 
     public Path examplesFolder() {
         return requirePath(env("EXAMPLES_FOLDER", "./mock_examples/"));
     }
 
+    public Path tmpFolder() {
+        return Path.of(env("TMP_FOLDER", "./tmp/"));
+    }
+
     public ClientDriver driver() {
         return ClientDriver.mkIfAvailable(env("DRIVER")).orElseThrow(() -> new IllegalStateException("No valid DRIVER specified in environment variables"));
     }
 
-    public Path executionEnvironment(ClientLanguage lang) {
-        return requirePath(Path.of(env("EXECUTION_ENVIRONMENTS", "./environments")).resolve(lang.name().toLowerCase()));
+    public Path sourceExecutionEnvironment(ClientLanguage lang) {
+        return requirePath(Path.of(env("EXECUTION_ENVIRONMENTS_FOLDER", "./environments")).resolve(lang.name().toLowerCase()));
+    }
+
+    public File snapshotsFolder() {
+        return requirePath(Path.of(env("SNAPSHOTS_FOLDER", "./snapshots"))).toFile();
+    }
+
+    public class Commands {
+        public String[] tsx() {
+            return env("TSX_COMMAND", "npx tsx").split(" ");
+        }
     }
 
     private String env(String key) {
-        return dotenv.get(key, Optional.ofNullable(System.getenv(key)).orElseThrow(() -> new IllegalStateException("Environment variable " + key + " not found")));
+        if (dotenv.get(key) == null) {
+            return Optional.ofNullable(System.getenv(key)).orElseThrow(() -> new IllegalStateException("Environment variable " + key + " not found"));
+        }
+        return dotenv.get(key);
     }
 
     private String env(String key, String defaultValue) {
@@ -46,14 +72,8 @@ public class VerifierConfig {
 
     private Path requirePath(Path path) {
         if (!Files.exists(path)) {
-            throw new IllegalStateException("Path " + path.toString() + " does not exist");
+            throw new IllegalStateException("Path " + path + " does not exist");
         }
         return path;
-    }
-
-    public class Commands {
-        public String[] tsx() {
-            return env("TSX_COMMAND", "npx tsx").split(" ");
-        }
     }
 }

@@ -1,7 +1,7 @@
 package com.dtsx.docs;
 
 import com.dtsx.docs.builder.TestsBuilder;
-import com.dtsx.docs.runner.TestsRunner;
+import com.dtsx.docs.runner.TestRunner;
 import lombok.val;
 
 public class Verifier {
@@ -12,6 +12,6 @@ public class Verifier {
 
         System.out.println(tests);
 
-        TestsRunner.runTests(cfg, tests);
+        TestRunner.runTests(cfg, tests);
     }
 }

@@ -9,7 +9,7 @@ import lombok.experimental.Accessors;
 @RequiredArgsConstructor
 public enum SnapshotType {
     OUTPUT(OutputSnapshotter.INSTANCE),
-    COLLECTION(null),
+    COLLECTION(CollectionSnapshotter.INSTANCE),
     TABLE(null),
     COLLECTIONS(null),
     TABLES(null),

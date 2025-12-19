@@ -30,7 +30,7 @@ public class TestFixture {
     }
 
     private void tryCallJsFunction(ExternalRunner tsx, String function) {
-        val res = tsx.run("-e", "import * as m from '" + path.toAbsolutePath().toString() + "'; await m." + function + "?.()");
+        val res = tsx.run("-e", "import * as m from '" + path.toAbsolutePath().toString() + "'; m." + function + "?.()");
 
         if (res.exitCode() != 0) {
             throw new RuntimeException("Failed to call " + function + " in " + path + ":\nSTDOUT:\n" + res.stdout() + "\nSTDERR:\n" + res.stderr());

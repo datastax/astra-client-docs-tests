@@ -26,6 +26,9 @@ dependencies {
     compileOnly("org.projectlombok:lombok:1.18.42")
     annotationProcessor("org.projectlombok:lombok:1.18.42")
 
+    // other utils
+    implementation("commons-io:commons-io:2.21.0")
+
     // no idea what this is :)
     implementation("com.datastax.astra:astra-db-java:2.1.4")
 }
