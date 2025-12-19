@@ -18,6 +18,11 @@ public class TypeScriptDriver extends ClientDriver {
     }
 
     @Override
+    public RunResult beforeAll(VerifierConfig cfg, Path tempEnv) {
+        return ExternalRunners.npm(cfg).run(tempEnv, "install");
+    }
+
+    @Override
     public RunResult execute(VerifierConfig cfg, Path script) {
         return ExternalRunners.tsx(cfg).run(script.toAbsolutePath().toString());
     }

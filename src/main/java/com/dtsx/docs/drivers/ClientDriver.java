@@ -13,6 +13,8 @@ public abstract class ClientDriver {
 
     public abstract RunResult execute(VerifierConfig cfg, Path script);
 
+    public abstract RunResult beforeAll(VerifierConfig cfg, Path tempEnv);
+
     public static Optional<ClientDriver> mkIfAvailable(String driver) {
         return switch (driver.toLowerCase()) {
             case "typescript" -> Optional.of(new TypeScriptDriver());

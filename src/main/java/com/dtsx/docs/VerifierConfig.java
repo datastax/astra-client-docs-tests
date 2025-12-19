@@ -49,9 +49,17 @@ public class VerifierConfig {
         return requirePath(Path.of(env("SNAPSHOTS_FOLDER", "./snapshots"))).toFile();
     }
 
+    public boolean clean() {
+        return Boolean.parseBoolean(env("CLEAN_EXECUTION_ENVIRONMENT", "false"));
+    }
+
     public class Commands {
         public String[] tsx() {
             return env("TSX_COMMAND", "npx tsx").split(" ");
+        }
+
+        public String[] npm() {
+            return env("NPM_COMMAND", "npm").split(" ");
         }
     }
 

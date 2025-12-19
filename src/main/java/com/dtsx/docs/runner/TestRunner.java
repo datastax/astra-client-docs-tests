@@ -37,7 +37,9 @@ public class TestRunner {
 
     private void runTests() {
         val tsx = ExternalRunners.tsx(cfg);
+
         val execEnv = setupTempExecutionEnvironment();
+        driver.beforeAll(cfg, execEnv);
 
         for (val e : tests.entrySet()) {
             val fixture = e.getKey();
@@ -62,8 +64,14 @@ public class TestRunner {
         val srcExecEnv = cfg.sourceExecutionEnvironment(driver.language());
         val destExecEnv = cfg.tmpFolder().resolve("environments").resolve(driver.language().name().toLowerCase());
 
-        Files.createDirectories(destExecEnv);
-        PathUtils.copyDirectory(srcExecEnv, destExecEnv);
+        if (cfg.clean()) {
+            PathUtils.deleteDirectory(destExecEnv);
+        }
+
+        if (!Files.exists(destExecEnv)) {
+            Files.createDirectories(destExecEnv);
+            PathUtils.copyDirectory(srcExecEnv, destExecEnv);
+        }
 
         return destExecEnv;
     }

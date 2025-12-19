@@ -2,10 +2,13 @@ package com.dtsx.docs.lib;
 
 import com.dtsx.docs.VerifierConfig;
 import lombok.val;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.function.Function;
 
 public class ExternalRunners {
@@ -13,6 +16,10 @@ public class ExternalRunners {
 
     public record ExternalRunner(VerifierConfig cfg, Function<VerifierConfig, String[]> cmd) {
         public RunResult run(String... args) {
+            return run(null, args);
+        }
+
+        public RunResult run(@Nullable Path dir, String... args) {
             val baseCmd = cmd.apply(cfg);
             val fullCmd = new String[baseCmd.length + args.length];
             System.arraycopy(baseCmd, 0, fullCmd, 0, baseCmd.length);
@@ -20,6 +27,10 @@ public class ExternalRunners {
 
             val pb = new ProcessBuilder(fullCmd);
             pb.redirectErrorStream(false);
+
+            if (dir != null) {
+                pb.directory(dir.toFile());
+            }
 
             try {
                 val process = pb.start();
@@ -58,5 +69,9 @@ public class ExternalRunners {
 
     public static ExternalRunner tsx(VerifierConfig ctx) {
         return new ExternalRunner(ctx, cfg -> cfg.commands.tsx());
+    }
+
+    public static ExternalRunner npm(VerifierConfig ctx) {
+        return new ExternalRunner(ctx, cfg -> cfg.commands.npm());
     }
 }
