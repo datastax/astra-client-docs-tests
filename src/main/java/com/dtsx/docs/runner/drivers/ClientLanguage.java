@@ -1,4 +1,4 @@
-package com.dtsx.docs.drivers;
+package com.dtsx.docs.runner.drivers;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -12,8 +12,9 @@ public enum ClientLanguage {
     PYTHON(".py"),
     TYPESCRIPT(".ts"),
     CSHARP(".cs"),
-    SHELL(".sh"),
+    BASH(".sh"),
     GO(".go");
 
     private final String extension;
+    private final ClientDriver driver;
 }

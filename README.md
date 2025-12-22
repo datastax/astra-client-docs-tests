@@ -13,7 +13,7 @@ The harness will read the code examples from the `astra-vector-docs` repository,
 ```
 examples/
   _fixtures/
-    base.js
+    prelude.js
     <fixture>.js
   <example>/
     java/
@@ -28,6 +28,7 @@ examples/
 ```
 
 Where:
+- `prelude.js` sets up any common logic needed for all fixtures (e.g. client objects)
 - Fixture files are explained [here](#fixture-files)
 - `<example>/` is a directory for each example to be tested (e.g. `delete-many-filter/`)
 - `meta.yml` is explained [here](#metayml)
@@ -53,7 +54,7 @@ export async function Teardown() {
 ```
 
 Fixture files are placed either in the `_fixtures/` directory (for general fixtures shared between many examples),
-or inside an example directory (for specialized fixtures specific to that example).
+or inside an example directory (for specialized fixtures specific to that example test).
 
 See [below](#metayml) for how fixture files are used.
 
@@ -65,23 +66,23 @@ It has the following structure:
 
 ```yaml
 fixtures:
-  general: <fixture>     # name of the general fixture file (e.g. 'basic-collection.js')
-  specialized: <fixture> # name of the specialized fixture file (optional; defaults to 'fixture.js' if exists)
+  base: <fixture>      # name of the base fixture file (e.g. 'basic-collection.js')
+  test: <fixture>      # name of the test-specific fixture file (optional; defaults to 'fixture.js' if exists)
 snapshots:
-  share: <boolean>       # whether to share snapshot files between clients (default: true)
+  share: <boolean>     # whether to share snapshot files between clients (default: true)
   additional:          
-    - <snapshot_type>    # things to snapshot after test run (e.g. 'collection', 'table', 'keyspaces', 'types', etc.)
-    - ...                # defaults to just ['output'] if not specified
+    - <snapshot_type>  # things to snapshot after test run (e.g. 'collection', 'table', 'keyspaces', 'types', etc.)
+    - ...              # defaults to just ['output'] if not specified
 ```
 
 #### The `fixtures` field
 
 There are two types of fixture files:
-- The required "general" fixture file (living in `_fixtures`)
+- The required "base" fixture file (living in `_fixtures`)
     - This sets up the general expensive resources shared between many examples
     - e.g. creating a specific collection
-- The optional "specialized" (living in the example directory)
-    - Lightweight fixture logic that builds on top of the general fixture to set up specific data needed for that example
+- The optional "test-specific" fixture file (living in the example directory)
+    - Lightweight fixture logic that builds on top of the vase fixture to set up specific data needed for that specific test
     - e.g. inserting specific documents into a collection
 
 Fixtures are only created and destroyed once per suite run, with the same fixture being reused across

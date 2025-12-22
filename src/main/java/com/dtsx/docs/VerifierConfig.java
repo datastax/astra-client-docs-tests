@@ -1,7 +1,8 @@
 package com.dtsx.docs;
 
-import com.dtsx.docs.drivers.ClientDriver;
-import com.dtsx.docs.drivers.ClientLanguage;
+import com.dtsx.docs.reporter.TestReporter;
+import com.dtsx.docs.runner.drivers.ClientDriver;
+import com.dtsx.docs.runner.drivers.ClientLanguage;
 import io.github.cdimascio.dotenv.Dotenv;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +39,11 @@ public class VerifierConfig {
     }
 
     public ClientDriver driver() {
-        return ClientDriver.mkIfAvailable(env("DRIVER")).orElseThrow(() -> new IllegalStateException("No valid DRIVER specified in environment variables"));
+        return ClientDriver.parse(env("DRIVER"));
+    }
+
+    public TestReporter reporter() {
+        return TestReporter.parse(env("REPORTER", "only_failures"));
     }
 
     public Path sourceExecutionEnvironment(ClientLanguage lang) {

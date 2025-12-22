@@ -1,9 +1,11 @@
 package com.dtsx.docs.builder;
 
 import com.dtsx.docs.VerifierConfig;
-import com.dtsx.docs.drivers.ClientLanguage;
+import com.dtsx.docs.builder.fixtures.BaseFixture;
+import com.dtsx.docs.builder.fixtures.TestFixture;
+import com.dtsx.docs.runner.drivers.ClientLanguage;
 import com.dtsx.docs.lib.Yaml;
-import com.dtsx.docs.snapshotters.SnapshotType;
+import com.dtsx.docs.runner.Snapshotter;
 import lombok.NonNull;
 import lombok.val;
 import org.apache.commons.lang3.tuple.Pair;
@@ -16,14 +18,14 @@ import java.util.*;
 import static com.dtsx.docs.lib.Constants.*;
 
 public class TestsBuilder {
-    public static Map<TestFixture, Set<TestMetadata>> buildExampleTests(VerifierConfig cfg) {
+    public static Map<BaseFixture, Set<TestMetadata>> buildExampleTests(VerifierConfig cfg) {
         val examplesFolder = cfg.examplesFolder();
 
         if (!Files.exists(examplesFolder) || !Files.isDirectory(examplesFolder)) {
             throw new IllegalStateException("Examples folder does not exist or is not a directory: " + examplesFolder);
         }
 
-        val res = new HashMap<TestFixture, Set<TestMetadata>>();
+        val res = new HashMap<BaseFixture, Set<TestMetadata>>();
 
         try (val stream = Files.list(examplesFolder)) {
             val exampleDirs = stream
@@ -43,7 +45,7 @@ public class TestsBuilder {
         return res;
     }
 
-    private static Optional<Pair<TestFixture, TestMetadata>> buildTestMetadata(Path exampleDir, VerifierConfig cfg) {
+    private static Optional<Pair<BaseFixture, TestMetadata>> buildTestMetadata(Path exampleDir, VerifierConfig cfg) {
         val metaFile = exampleDir.resolve(META_FILE);
 
         if (!Files.exists(metaFile)) {
@@ -58,8 +60,8 @@ public class TestsBuilder {
             return Optional.empty();
         }
 
-        val generalFixture = resolveGeneralFixture(exampleDir.getParent(), meta.fixtures().general());
-        val specializedFixture = resolveSpecializedFixture(exampleDir, meta.fixtures().specialized());
+        val baseFixture = resolveBaseFixture(exampleDir.getParent(), meta.fixtures().base());
+        val testFixture = resolveTestFixture(exampleDir, meta.fixtures().test());
 
         val snapshots = meta.snapshots().orElse(SnapshotsConfig.EMPTY);
         val snapshotTypes = buildSnapshotTypes(snapshots);
@@ -68,46 +70,46 @@ public class TestsBuilder {
         val testMetadata = new TestMetadata(
             exampleDir,
             exampleFile.get(),
-            specializedFixture,
+            testFixture,
             snapshotTypes,
             shareSnapshots
         );
 
-        return Optional.of(Pair.of(generalFixture, testMetadata));
+        return Optional.of(Pair.of(baseFixture, testMetadata));
     }
 
-    private static TestFixture resolveGeneralFixture(Path rootDir, String fixtureName) {
+    private static BaseFixture resolveBaseFixture(Path rootDir, String fixtureName) {
         val path = rootDir.resolve(FIXTURES_DIR).resolve(fixtureName);
 
         if (!Files.exists(path)) {
-            throw new IllegalStateException("General fixture does not exist: " + path);
+            throw new IllegalStateException("Base fixture does not exist: " + path);
         }
 
-        return new TestFixture(path);
+        return new BaseFixture(path);
     }
 
-    private static Optional<TestFixture> resolveSpecializedFixture(Path exampleDir, Optional<String> fixtureName) {
+    private static Optional<TestFixture> resolveTestFixture(Path exampleDir, Optional<String> fixtureName) {
         if (fixtureName.isEmpty()) {
-            return Files.exists(exampleDir.resolve(DEFAULT_SPECIALIZED_FIXTURE))
-                ? Optional.of(new TestFixture(exampleDir.resolve(DEFAULT_SPECIALIZED_FIXTURE)))
+            return Files.exists(exampleDir.resolve(DEFAULT_TEST_FIXTURE))
+                ? Optional.of(new TestFixture(exampleDir.resolve(DEFAULT_TEST_FIXTURE)))
                 : Optional.empty();
         }
 
         val path = exampleDir.resolve(fixtureName.get()).resolve(fixtureName.get());
 
         if (!Files.exists(path)) {
-            throw new IllegalStateException("Specialized fixture does not exist: " + path);
+            throw new IllegalStateException("Test-specific fixture does not exist: " + path);
         }
 
         return Optional.of(new TestFixture(path));
     }
 
-    private static TreeSet<SnapshotType> buildSnapshotTypes(SnapshotsConfig config) {
-        val types = new TreeSet<SnapshotType>();
+    private static TreeSet<Snapshotter> buildSnapshotTypes(SnapshotsConfig config) {
+        val types = new TreeSet<Snapshotter>();
 
-        for (val typeName : config.additional().orElse(List.of(SnapshotType.OUTPUT.name()))) {
+        for (val typeName : config.additional().orElse(List.of(Snapshotter.OUTPUT.name()))) {
             try {
-                types.add(SnapshotType.valueOf(typeName.toUpperCase()));
+                types.add(Snapshotter.valueOf(typeName.toUpperCase()));
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("Unknown snapshot type: " + typeName, e);
             }
@@ -144,8 +146,8 @@ public class TestsBuilder {
     ) {}
 
     private record FixturesConfig(
-        @NonNull String general,
-        @NonNull Optional<String> specialized
+        @NonNull String base,
+        @NonNull Optional<String> test
     ) {}
 
     private record SnapshotsConfig(

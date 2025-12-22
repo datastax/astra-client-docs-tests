@@ -2,37 +2,40 @@ package com.dtsx.docs.runner;
 
 import com.dtsx.docs.VerifierConfig;
 import com.dtsx.docs.builder.TestMetadata;
-import lombok.val;
+import lombok.Getter;
 import org.approvaltests.namer.ApprovalNamer;
 import org.approvaltests.writers.Writer;
 
 import java.io.File;
 
 public class ExampleResultNamer implements ApprovalNamer {
-    private final String name;
+    @Getter
+    private final String exampleName;
+    private final String fileName;
     private final String additionalInformation;
     private final VerifierConfig cfg;
 
     public ExampleResultNamer(VerifierConfig cfg, TestMetadata md) {
-        val exampleFileName = md.exampleFile().getFileName().toString();
+        this.exampleName = md.exampleFolder().getFileName().toString().split("\\.")[0];
 
-        this.name = (!md.shareSnapshots())
-            ? cfg.driver().language().name().toLowerCase() + ":" + exampleFileName
-            : exampleFileName;
+        this.fileName = (!md.shareSnapshots())
+            ? cfg.driver().language().name().toLowerCase()
+            : "shared";
 
         this.additionalInformation = "";
         this.cfg = cfg;
     }
 
-    private ExampleResultNamer(VerifierConfig cfg, String name, String additionalInformation) {
-        this.name = name;
+    private ExampleResultNamer(VerifierConfig cfg, String exampleName, String fileName, String additionalInformation) {
+        this.exampleName = exampleName;
+        this.fileName = fileName;
         this.additionalInformation = additionalInformation;
         this.cfg = cfg;
     }
 
     @Override
     public String getApprovalName() {
-        return name + getAdditionalInformation();
+        return exampleName + "/" + fileName + getAdditionalInformation();
     }
 
     @Override
@@ -50,8 +53,9 @@ public class ExampleResultNamer implements ApprovalNamer {
         return new File(getSourceFilePath() + "/" + getApprovalName() + Writer.approved + extensionWithDot);
     }
 
+    @Override
     public ApprovalNamer addAdditionalInformation(String additionalInformation) {
-        return new ExampleResultNamer(this.cfg, this.name, additionalInformation);
+        return new ExampleResultNamer(this.cfg, this.exampleName, this.fileName, additionalInformation);
     }
 
     @Override
@@ -59,4 +63,3 @@ public class ExampleResultNamer implements ApprovalNamer {
         return additionalInformation;
     }
 }
-
