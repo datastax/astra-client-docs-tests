@@ -4,6 +4,7 @@ import com.dtsx.docs.VerifierConfig;
 import com.dtsx.docs.lib.ExternalPrograms;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
+import com.dtsx.docs.runner.ExecutionEnvironment;
 import com.dtsx.docs.runner.drivers.ClientDriver;
 import com.dtsx.docs.runner.drivers.ClientLanguage;
 
@@ -25,8 +26,8 @@ public class BashDriver implements ClientDriver {
     }
 
     @Override
-    public Path testFileCopyDestination(Path tempEnv) {
-        return tempEnv.resolve("main.sh");
+    public Path resolveTestFileCopyDestination(ExecutionEnvironment execEnv) {
+        return execEnv.path().resolve("main.sh");
     }
 
     @Override

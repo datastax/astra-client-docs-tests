@@ -1,11 +1,12 @@
 package com.dtsx.docs.builder;
 
 import com.dtsx.docs.VerifierConfig;
-import com.dtsx.docs.builder.fixtures.BaseFixture;
-import com.dtsx.docs.builder.fixtures.TestFixture;
-import com.dtsx.docs.runner.drivers.ClientLanguage;
+import com.dtsx.docs.builder.fixtures.JSFixture;
+import com.dtsx.docs.builder.fixtures.JSFixtureImpl;
+import com.dtsx.docs.builder.fixtures.NoopFixture;
 import com.dtsx.docs.lib.Yaml;
 import com.dtsx.docs.runner.Snapshotter;
+import com.dtsx.docs.runner.drivers.ClientLanguage;
 import lombok.NonNull;
 import lombok.val;
 import org.apache.commons.lang3.tuple.Pair;
@@ -17,15 +18,15 @@ import java.util.*;
 
 import static com.dtsx.docs.lib.Constants.*;
 
-public class TestsBuilder {
-    public static Map<BaseFixture, Set<TestMetadata>> buildExampleTests(VerifierConfig cfg) {
+public class TestPlanBuilder {
+    public static TestPlan buildPlan(VerifierConfig cfg) {
         val examplesFolder = cfg.examplesFolder();
 
         if (!Files.exists(examplesFolder) || !Files.isDirectory(examplesFolder)) {
             throw new IllegalStateException("Examples folder does not exist or is not a directory: " + examplesFolder);
         }
 
-        val res = new HashMap<BaseFixture, Set<TestMetadata>>();
+        val plan = new TestPlan();
 
         try (val stream = Files.list(examplesFolder)) {
             val exampleDirs = stream
@@ -34,18 +35,16 @@ public class TestsBuilder {
                 .toList();
 
             for (val exampleDir : exampleDirs) {
-                buildTestMetadata(exampleDir, cfg).ifPresent((pair) -> {
-                    res.computeIfAbsent(pair.getLeft(), _ -> new HashSet<>()).add(pair.getRight());
-                });
+                buildTestMetadata(exampleDir, cfg).ifPresent(plan::add);
             }
         } catch (IOException e) {
             throw new RuntimeException("Failed to list examples folder: " + examplesFolder, e);
         }
 
-        return res;
+        return plan;
     }
 
-    private static Optional<Pair<BaseFixture, TestMetadata>> buildTestMetadata(Path exampleDir, VerifierConfig cfg) {
+    private static Optional<Pair<JSFixture, TestMetadata>> buildTestMetadata(Path exampleDir, VerifierConfig cfg) {
         val metaFile = exampleDir.resolve(META_FILE);
 
         if (!Files.exists(metaFile)) {
@@ -70,7 +69,7 @@ public class TestsBuilder {
         val testMetadata = new TestMetadata(
             exampleDir,
             exampleFile.get(),
-            testFixture,
+            testFixture.orElse(NoopFixture.INSTANCE),
             snapshotTypes,
             shareSnapshots
         );
@@ -78,20 +77,20 @@ public class TestsBuilder {
         return Optional.of(Pair.of(baseFixture, testMetadata));
     }
 
-    private static BaseFixture resolveBaseFixture(Path rootDir, String fixtureName) {
+    private static JSFixture resolveBaseFixture(Path rootDir, String fixtureName) {
         val path = rootDir.resolve(FIXTURES_DIR).resolve(fixtureName);
 
         if (!Files.exists(path)) {
             throw new IllegalStateException("Base fixture does not exist: " + path);
         }
 
-        return new BaseFixture(path);
+        return new JSFixtureImpl(path);
     }
 
-    private static Optional<TestFixture> resolveTestFixture(Path exampleDir, Optional<String> fixtureName) {
+    private static Optional<JSFixture> resolveTestFixture(Path exampleDir, Optional<String> fixtureName) {
         if (fixtureName.isEmpty()) {
             return Files.exists(exampleDir.resolve(DEFAULT_TEST_FIXTURE))
-                ? Optional.of(new TestFixture(exampleDir.resolve(DEFAULT_TEST_FIXTURE)))
+                ? Optional.of(new JSFixtureImpl(exampleDir.resolve(DEFAULT_TEST_FIXTURE)))
                 : Optional.empty();
         }
 
@@ -101,7 +100,7 @@ public class TestsBuilder {
             throw new IllegalStateException("Test-specific fixture does not exist: " + path);
         }
 
-        return Optional.of(new TestFixture(path));
+        return Optional.of(new JSFixtureImpl(path));
     }
 
     private static TreeSet<Snapshotter> buildSnapshotTypes(SnapshotsConfig config) {

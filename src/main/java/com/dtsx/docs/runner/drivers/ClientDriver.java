@@ -3,6 +3,7 @@ package com.dtsx.docs.runner.drivers;
 import com.dtsx.docs.VerifierConfig;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
+import com.dtsx.docs.runner.ExecutionEnvironment;
 import com.dtsx.docs.runner.drivers.impls.BashDriver;
 import com.dtsx.docs.runner.drivers.impls.TypeScriptDriver;
 import lombok.val;
@@ -18,9 +19,9 @@ public interface ClientDriver {
 
     List<Function<VerifierConfig, ExternalProgram>> requiredPrograms();
 
-    Path testFileCopyDestination(Path tempEnv);
+    Path resolveTestFileCopyDestination(ExecutionEnvironment execEnv);
 
-    default void setup(VerifierConfig cfg, Path tempEnv) {
+    default void setup(VerifierConfig cfg, ExecutionEnvironment execEnv) {
         // noop
     }
 

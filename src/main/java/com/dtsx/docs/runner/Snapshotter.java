@@ -18,11 +18,9 @@ public enum Snapshotter {
         return Arrays.toString(DataAPIUtils.getCollection(cfg).findAll().stream().toArray());
     }),
 
-    TABLE(null),
-    COLLECTIONS(null),
-    TABLES(null),
-    KEYSPACES(null),
-    TYPES(null);
+    TABLE((cfg, _) -> {
+        return Arrays.toString(DataAPIUtils.getTable(cfg).findAll().stream().toArray());
+    });
 
     private final BiFunction<VerifierConfig, RunResult, String> mkSnapshot;
 

@@ -1,23 +1,27 @@
 package com.dtsx.docs.runner;
 
 import com.dtsx.docs.VerifierConfig;
+import lombok.val;
+
+import java.util.Map;
+import java.util.function.Function;
 
 import static com.dtsx.docs.lib.Constants.*;
 
 public class SourceCodeReplacer {
-    public static final String TEST_KEYSPACE_PLACEHOLDER = "**KEYSPACE_NAME**";
-    public static final String TEST_COLLECTION_PLACEHOLDER = "**COLLECTION_NAME**";
-    public static final String TEST_TABLE_PLACEHOLDER = "**TABLE_NAME**";
-    public static final String ASTRA_TOKEN_PLACEHOLDER = "**APPLICATION_TOKEN**";
-    public static final String API_ENDPOINT_PLACEHOLDER = "**ASTRA_API_ENDPOINT**";
+    private static final Map<String, Function<VerifierConfig, String>> PLACEHOLDERS = Map.of(
+        "KEYSPACE_NAME", _ -> TEST_KEYSPACE_NAME,
+        "COLLECTION_NAME", _ -> TEST_COLLECTION_NAME,
+        "TABLE_NAME", _ -> TEST_TABLE_NAME,
+        "APPLICATION_TOKEN", VerifierConfig::token,
+        "ASTRA_API_ENDPOINT", VerifierConfig::apiEndpoint
+    );
 
     public static String replacePlaceholders(String src, VerifierConfig cfg) {
-        return src
-            .replace(TEST_KEYSPACE_PLACEHOLDER, TEST_KEYSPACE_NAME)
-            .replace(TEST_COLLECTION_PLACEHOLDER, TEST_COLLECTION_NAME)
-            .replace(TEST_TABLE_PLACEHOLDER, TEST_TABLE_NAME)
-            .replace(ASTRA_TOKEN_PLACEHOLDER, cfg.token())
-            .replace(API_ENDPOINT_PLACEHOLDER, cfg.apiEndpoint());
-
+        var result = src;
+        for (val entry : PLACEHOLDERS.entrySet()) {
+            result = result.replace("**" + entry.getKey() + "**", entry.getValue().apply(cfg));
+        }
+        return result;
     }
 }

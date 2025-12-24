@@ -1,16 +1,22 @@
 package com.dtsx.docs;
 
-import com.dtsx.docs.reporter.TestReporter;
+import com.dtsx.docs.lib.ExternalPrograms;
+import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
+import com.dtsx.docs.runner.reporter.TestReporter;
 import com.dtsx.docs.runner.drivers.ClientDriver;
 import com.dtsx.docs.runner.drivers.ClientLanguage;
 import io.github.cdimascio.dotenv.Dotenv;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.val;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.function.Function;
 
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class VerifierConfig {
@@ -19,7 +25,24 @@ public class VerifierConfig {
     public final Commands commands = new Commands();
 
     public static VerifierConfig load() {
-        return new VerifierConfig(Dotenv.configure().load());
+        val cfg = new VerifierConfig(Dotenv.configure().load());
+        verifyRequiredProgramsAvailable(cfg);
+        return cfg;
+    }
+
+    private static void verifyRequiredProgramsAvailable(VerifierConfig cfg) {
+        val requiredPrograms = new HashSet<Function<VerifierConfig, ExternalProgram>>() {{
+            add(ExternalPrograms::tsx);
+            addAll(cfg.driver().requiredPrograms());
+        }};
+
+        for (val mkProgram : requiredPrograms) {
+            val program = mkProgram.apply(cfg);
+
+            if (!program.exists()) {
+                throw new IllegalStateException(program.name() + " could not be found. Please install it or set the " + program.envVar() + " environment variable.");
+            }
+        }
     }
 
     public String token() {
@@ -38,12 +61,22 @@ public class VerifierConfig {
         return Path.of(env("TMP_FOLDER", "./tmp/"));
     }
 
+    private @Nullable ClientDriver driver = null;
+
     public ClientDriver driver() {
-        return ClientDriver.parse(env("DRIVER"));
+        if (driver == null) {
+            driver = ClientDriver.parse(env("DRIVER"));
+        }
+        return driver;
     }
 
+    private @Nullable TestReporter reporter = null;
+
     public TestReporter reporter() {
-        return TestReporter.parse(env("REPORTER", "only_failures"));
+        if (reporter == null) {
+            reporter = TestReporter.parse(env("REPORTER", "only_failures"));
+        }
+        return reporter;
     }
 
     public Path sourceExecutionEnvironment(ClientLanguage lang) {

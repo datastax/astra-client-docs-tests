@@ -1,18 +1,18 @@
 package com.dtsx.docs.runner;
 
 import com.dtsx.docs.builder.TestMetadata;
-import com.dtsx.docs.builder.fixtures.BaseFixture;
+import com.dtsx.docs.builder.fixtures.JSFixture;
 
 import java.util.*;
 
 public class TestResults {
-    private final Map<BaseFixture, List<TestResult>> results = new HashMap<>();
+    private final Map<JSFixture, List<TestResult>> results = new HashMap<>();
 
-    public void add(BaseFixture baseFixture, TestResult result) {
+    public void add(JSFixture baseFixture, TestResult result) {
         results.computeIfAbsent(baseFixture, _ -> new ArrayList<>()).add(result);
     }
 
-    public Map<BaseFixture, List<TestResult>> results() {
+    public Map<JSFixture, List<TestResult>> unwrap() {
         return results;
     }
 

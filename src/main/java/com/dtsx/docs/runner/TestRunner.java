@@ -2,116 +2,64 @@ package com.dtsx.docs.runner;
 
 import com.dtsx.docs.VerifierConfig;
 import com.dtsx.docs.builder.TestMetadata;
-import com.dtsx.docs.builder.fixtures.BaseFixture;
+import com.dtsx.docs.builder.TestPlan;
 import com.dtsx.docs.lib.ExternalPrograms;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import com.dtsx.docs.runner.TestResults.TestResult;
 import com.dtsx.docs.runner.drivers.ClientDriver;
-import lombok.SneakyThrows;
+import lombok.Cleanup;
 import lombok.val;
-import org.apache.commons.io.file.PathUtils;
 import org.approvaltests.Approvals;
 import org.approvaltests.core.Options;
 import org.graalvm.collections.Pair;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Map;
-import java.util.Set;
-
 public class TestRunner {
     private final VerifierConfig cfg;
     private final ExternalProgram tsx;
-    private final Map<BaseFixture, Set<TestMetadata>> tests;
+    private final TestPlan plan;
     private final ClientDriver driver;
 
-    private TestRunner(VerifierConfig cfg, Map<BaseFixture, Set<TestMetadata>> tests) {
+    private TestRunner(VerifierConfig cfg, TestPlan plan) {
         this.cfg = cfg;
         this.tsx = ExternalPrograms.tsx(cfg);
-        this.tests = tests;
+        this.plan = plan;
         this.driver = cfg.driver();
     }
 
-    public static TestResults runTests(VerifierConfig cfg, Map<BaseFixture, Set<TestMetadata>> tests) {
-        return new TestRunner(cfg, tests).runTests();
+    public static void runTests(VerifierConfig cfg, TestPlan plan) {
+        new TestRunner(cfg, plan).runTests();
     }
 
-    private TestResults runTests() {
-        val tsx = ExternalPrograms.tsx(cfg);
-
-        val execEnv = setupTempExecutionEnvironment();
+    private void runTests() {
+        @Cleanup val execEnv = ExecutionEnvironment.setup(cfg, driver);
         driver.setup(cfg, execEnv);
 
         val results = new TestResults();
 
-        for (val e : tests.entrySet()) {
-            val baseFixture = e.getKey();
-            val metadata = e.getValue().stream().toList();
+        cfg.reporter().printHeader(plan);
 
-            baseFixture.setup(tsx);
+        plan.forEachBaseFixture((baseFixture, mds) -> {
+            cfg.reporter().printBaseFixtureHeading(baseFixture, results);
 
-            for (var i = 0; i < metadata.size(); i++) {
-                results.add(baseFixture, runTest(metadata.get(i), execEnv));
+            baseFixture.useResetting(tsx, mds, (md) -> {
+                val res = runTest(md, execEnv);
+                results.add(baseFixture, res);
+                cfg.reporter().printTestResult(baseFixture, res, results);
+            });
+        });
 
-                if (i < metadata.size() - 1) {
-                    baseFixture.reset(tsx);
-                }
-            }
-
-            baseFixture.teardown(tsx);
-        }
-
-        return results;
+        cfg.reporter().printSummary(results);
     }
 
-    @SneakyThrows
-    private Path setupTempExecutionEnvironment() {
-        val srcExecEnv = cfg.sourceExecutionEnvironment(driver.language());
-        val destExecEnv = cfg.tmpFolder().resolve("environments").resolve(driver.language().name().toLowerCase());
-
-        if (cfg.clean()) {
-            PathUtils.deleteDirectory(destExecEnv);
-        }
-
-        if (!Files.exists(destExecEnv)) {
-            Files.createDirectories(destExecEnv);
-            PathUtils.copyDirectory(srcExecEnv, destExecEnv);
-        }
-
-        return destExecEnv;
-    }
-
-    private TestResults.TestResult runTest(TestMetadata md, Path execEnv) {
-        md.testFixture().ifPresent(f -> f.setup(tsx));
-
-        val testFilePath = setupFileForTesting(md.exampleFile(), execEnv);
-
-        val result = driver.execute(cfg, testFilePath);
-        val snapshot = mkSnapshot(md, result);
-        val res = verifySnapshot(md, snapshot);
-
-        cleanupFileAfterTesting(testFilePath);
-
-        md.testFixture().ifPresent(f -> f.teardown(tsx));
-        return res;
-    }
-
-    @SneakyThrows
-    private Path setupFileForTesting(Path source, Path execEnv) {
-        val dest = cfg.driver().testFileCopyDestination(execEnv);
-
-        var content = Files.readString(source);
-        content = SourceCodeReplacer.replacePlaceholders(content, cfg);
-        content = cfg.driver().preprocessScript(cfg, content);
-
-        Files.writeString(dest, content);
-        return dest;
-    }
-
-    @SneakyThrows
-    private void cleanupFileAfterTesting(Path file) {
-        Files.deleteIfExists(file);
+    private TestResult runTest(TestMetadata md, ExecutionEnvironment execEnv) {
+        return md.testFixture().use(tsx, () -> {
+            return execEnv.useTestFile(md.exampleFile(), (path) -> {
+                val result = driver.execute(cfg, path);
+                val snapshot = mkSnapshot(md, result);
+                return verifySnapshot(md, snapshot);
+            });
+        });
     }
 
     private String mkSnapshot(TestMetadata md, RunResult result) {
@@ -128,10 +76,16 @@ public class TestRunner {
         val namer = new ExampleResultNamer(cfg, md);
 
         try {
-            Approvals.verify(snapshot, new Options().forFile().withNamer(new ExampleResultNamer(cfg, md)));
+            Approvals.verify(snapshot, mkApprovalOptions(md));
             return TestResult.passed(md, namer.getExampleName());
         } catch (Error e) {
             return TestResult.failed(md, namer.getExampleName(), e);
         }
+    }
+
+    private Options mkApprovalOptions(TestMetadata md) {
+        return new Options()
+            .forFile().withNamer(new ExampleResultNamer(cfg, md))
+            .withReporter((_, _) -> true);
     }
 }

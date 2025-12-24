@@ -16,5 +16,4 @@ public enum ClientLanguage {
     GO(".go");
 
     private final String extension;
-    private final ClientDriver driver;
 }
