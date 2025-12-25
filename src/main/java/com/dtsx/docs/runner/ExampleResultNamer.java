@@ -1,6 +1,6 @@
 package com.dtsx.docs.runner;
 
-import com.dtsx.docs.VerifierConfig;
+import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.builder.TestMetadata;
 import lombok.Getter;
 import org.approvaltests.namer.ApprovalNamer;
@@ -13,24 +13,24 @@ public class ExampleResultNamer implements ApprovalNamer {
     private final String exampleName;
     private final String fileName;
     private final String additionalInformation;
-    private final VerifierConfig cfg;
+    private final VerifierCtx ctx;
 
-    public ExampleResultNamer(VerifierConfig cfg, TestMetadata md) {
+    public ExampleResultNamer(VerifierCtx ctx, TestMetadata md) {
         this.exampleName = md.exampleFolder().getFileName().toString().split("\\.")[0];
 
         this.fileName = (!md.shareSnapshots())
-            ? cfg.driver().language().name().toLowerCase()
+            ? ctx.driver().language().name().toLowerCase()
             : "shared";
 
         this.additionalInformation = "";
-        this.cfg = cfg;
+        this.ctx = ctx;
     }
 
-    private ExampleResultNamer(VerifierConfig cfg, String exampleName, String fileName, String additionalInformation) {
+    private ExampleResultNamer(VerifierCtx ctx, String exampleName, String fileName, String additionalInformation) {
         this.exampleName = exampleName;
         this.fileName = fileName;
         this.additionalInformation = additionalInformation;
-        this.cfg = cfg;
+        this.ctx = ctx;
     }
 
     @Override
@@ -40,7 +40,7 @@ public class ExampleResultNamer implements ApprovalNamer {
 
     @Override
     public String getSourceFilePath() {
-        return cfg.snapshotsFolder().getAbsolutePath();
+        return ctx.snapshotsFolder().toAbsolutePath().toString();
     }
 
     @Override
@@ -55,7 +55,7 @@ public class ExampleResultNamer implements ApprovalNamer {
 
     @Override
     public ApprovalNamer addAdditionalInformation(String additionalInformation) {
-        return new ExampleResultNamer(this.cfg, this.exampleName, this.fileName, additionalInformation);
+        return new ExampleResultNamer(this.ctx, this.exampleName, this.fileName, additionalInformation);
     }
 
     @Override

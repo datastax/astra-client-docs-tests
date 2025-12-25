@@ -7,32 +7,25 @@ import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import com.dtsx.docs.runner.ExecutionEnvironment;
 import com.dtsx.docs.runner.drivers.ClientDriver;
 import com.dtsx.docs.runner.drivers.ClientLanguage;
-import lombok.val;
 
 import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Function;
 
-public class TypeScriptDriver implements ClientDriver {
+public class PythonDriver implements ClientDriver {
     @Override
     public ClientLanguage language() {
-        return ClientLanguage.TYPESCRIPT;
+        return ClientLanguage.PYTHON;
     }
 
     @Override
     public List<Function<VerifierCtx, ExternalProgram>> requiredPrograms() {
-        return List.of(ExternalPrograms::npm, ExternalPrograms::tsx);
+        return List.of(ExternalPrograms::python);
     }
 
     @Override
     public Path setupExecutionEnvironment(VerifierCtx ctx, ExecutionEnvironment execEnv) {
-        val res = ExternalPrograms.npm(ctx).run(execEnv.path(), "install", ctx.clientVersion());
-
-        if (res.exitCode() != 0) {
-            throw new IllegalStateException("Failed to setup TypeScript environment: " + res.output());
-        }
-
-        return execEnv.path().resolve("main.ts");
+        return execEnv.path().resolve("main.py");
     }
 
     @Override
@@ -42,6 +35,6 @@ public class TypeScriptDriver implements ClientDriver {
 
     @Override
     public RunResult execute(VerifierCtx ctx, ExecutionEnvironment execEnv) {
-        return ExternalPrograms.tsx(ctx).run(execEnv.path(), execEnv.scriptPath().toString());
+        return null;
     }
 }

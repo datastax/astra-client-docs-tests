@@ -1,5 +1,0 @@
-{
-  "dependencies": {
-    "@datastax/astra-db-ts": "^2.0.1"
-  }
-}

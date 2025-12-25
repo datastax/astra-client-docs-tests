@@ -11,6 +11,10 @@ repositories {
 }
 
 dependencies {
+    // cli stuff
+    implementation("info.picocli:picocli:4.7.7")
+    annotationProcessor("info.picocli:picocli-codegen:4.7.7")
+
     // snapshot testing
     implementation("com.approvaltests:approvaltests:25.0.23")
 
@@ -34,5 +38,27 @@ dependencies {
 }
 
 application {
-    mainClass.set("com.dtsx.docs.Verifier")
+    mainClass.set("com.dtsx.docs.VerifierCli")
+}
+
+tasks.register<Jar>("fatJar") {
+    dependsOn(configurations.runtimeClasspath)
+
+    group = "build"
+    description = "fat jar"
+
+    archiveFileName.set("verifier.jar")
+    archiveVersion.set(project.version.toString())
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    manifest {
+        attributes["Main-Class"] = "com.dtsx.docs.VerifierCli"
+    }
+
+    from(sourceSets.main.get().output)
+
+    from({
+        configurations.runtimeClasspath.get().filter { it.name.endsWith("jar") }.map { zipTree(it) }
+    })
 }

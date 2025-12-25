@@ -1,0 +1,1 @@
+alias verifier='./gradlew -q fatJar && java --enable-native-access=ALL-UNNAMED -jar build/libs/verifier.jar'

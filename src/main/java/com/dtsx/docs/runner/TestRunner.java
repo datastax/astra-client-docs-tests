@@ -1,6 +1,7 @@
 package com.dtsx.docs.runner;
 
-import com.dtsx.docs.VerifierConfig;
+import com.dtsx.docs.builder.fixtures.JSFixture;
+import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.builder.TestMetadata;
 import com.dtsx.docs.builder.TestPlan;
 import com.dtsx.docs.lib.ExternalPrograms;
@@ -15,47 +16,47 @@ import org.approvaltests.core.Options;
 import org.graalvm.collections.Pair;
 
 public class TestRunner {
-    private final VerifierConfig cfg;
+    private final VerifierCtx ctx;
     private final ExternalProgram tsx;
     private final TestPlan plan;
     private final ClientDriver driver;
 
-    private TestRunner(VerifierConfig cfg, TestPlan plan) {
-        this.cfg = cfg;
-        this.tsx = ExternalPrograms.tsx(cfg);
+    private TestRunner(VerifierCtx ctx, TestPlan plan) {
+        this.ctx = ctx;
+        this.tsx = ExternalPrograms.tsx(ctx);
         this.plan = plan;
-        this.driver = cfg.driver();
+        this.driver = ctx.driver();
     }
 
-    public static void runTests(VerifierConfig cfg, TestPlan plan) {
-        new TestRunner(cfg, plan).runTests();
+    public static void runTests(VerifierCtx ctx, TestPlan plan) {
+        new TestRunner(ctx, plan).runTests();
     }
 
     private void runTests() {
-        @Cleanup val execEnv = ExecutionEnvironment.setup(cfg, driver);
-        driver.setup(cfg, execEnv);
+        JSFixture.installDependencies(ctx);
+        @Cleanup val execEnv = ExecutionEnvironment.setup(ctx, driver);
 
         val results = new TestResults();
 
-        cfg.reporter().printHeader(plan);
+        ctx.reporter().printHeader(plan);
 
         plan.forEachBaseFixture((baseFixture, mds) -> {
-            cfg.reporter().printBaseFixtureHeading(baseFixture, results);
+            ctx.reporter().printBaseFixtureHeading(baseFixture, results);
 
             baseFixture.useResetting(tsx, mds, (md) -> {
                 val res = runTest(md, execEnv);
                 results.add(baseFixture, res);
-                cfg.reporter().printTestResult(baseFixture, res, results);
+                ctx.reporter().printTestResult(baseFixture, res, results);
             });
         });
 
-        cfg.reporter().printSummary(results);
+        ctx.reporter().printSummary(results);
     }
 
     private TestResult runTest(TestMetadata md, ExecutionEnvironment execEnv) {
         return md.testFixture().use(tsx, () -> {
             return execEnv.useTestFile(md.exampleFile(), (path) -> {
-                val result = driver.execute(cfg, path);
+                val result = driver.execute(ctx, execEnv);
                 val snapshot = mkSnapshot(md, result);
                 return verifySnapshot(md, snapshot);
             });
@@ -64,7 +65,7 @@ public class TestRunner {
 
     private String mkSnapshot(TestMetadata md, RunResult result) {
         return md.snapshotters().stream()
-            .map((snapper) -> Pair.create(snapper, snapper.mkSnapshot(cfg, result)))
+            .map((snapper) -> Pair.create(snapper, snapper.mkSnapshot(ctx, result)))
             .reduce(
                 "",
                 (acc, pair) -> acc + "---" + pair.getLeft().name().toLowerCase() + "---\n" + pair.getRight() + "\n",
@@ -73,7 +74,7 @@ public class TestRunner {
     }
 
     private TestResults.TestResult verifySnapshot(TestMetadata md, String snapshot) {
-        val namer = new ExampleResultNamer(cfg, md);
+        val namer = new ExampleResultNamer(ctx, md);
 
         try {
             Approvals.verify(snapshot, mkApprovalOptions(md));
@@ -85,7 +86,7 @@ public class TestRunner {
 
     private Options mkApprovalOptions(TestMetadata md) {
         return new Options()
-            .forFile().withNamer(new ExampleResultNamer(cfg, md))
+            .forFile().withNamer(new ExampleResultNamer(ctx, md))
             .withReporter((_, _) -> true);
     }
 }

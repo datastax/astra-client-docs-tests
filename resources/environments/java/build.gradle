@@ -1,0 +1,16 @@
+plugins {
+    id 'java'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation "${VERSION}"
+}
+
+tasks.register('runExample', JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'Example'
+}

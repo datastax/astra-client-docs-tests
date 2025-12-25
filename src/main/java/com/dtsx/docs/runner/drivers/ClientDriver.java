@@ -1,10 +1,11 @@
 package com.dtsx.docs.runner.drivers;
 
-import com.dtsx.docs.VerifierConfig;
+import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import com.dtsx.docs.runner.ExecutionEnvironment;
 import com.dtsx.docs.runner.drivers.impls.BashDriver;
+import com.dtsx.docs.runner.drivers.impls.PythonDriver;
 import com.dtsx.docs.runner.drivers.impls.TypeScriptDriver;
 import lombok.val;
 
@@ -17,24 +18,19 @@ import java.util.function.Supplier;
 public interface ClientDriver {
     ClientLanguage language();
 
-    List<Function<VerifierConfig, ExternalProgram>> requiredPrograms();
+    List<Function<VerifierCtx, ExternalProgram>> requiredPrograms();
 
-    Path resolveTestFileCopyDestination(ExecutionEnvironment execEnv);
+    Path setupExecutionEnvironment(VerifierCtx ctx, ExecutionEnvironment execEnv);
 
-    default void setup(VerifierConfig cfg, ExecutionEnvironment execEnv) {
-        // noop
-    }
+    String preprocessScript(VerifierCtx ignoredCtx, String content);
 
-    default String preprocessScript(VerifierConfig ignoredCfg, String content) {
-        return content;
-    }
-
-    RunResult execute(VerifierConfig cfg, Path script);
+    RunResult execute(VerifierCtx ctx, ExecutionEnvironment execEnv);
 
     static ClientDriver parse(String driver) {
         final Map<String, Supplier<ClientDriver>> availableDrivers = Map.of(
             "typescript", TypeScriptDriver::new,
-            "bash", BashDriver::new
+            "bash", BashDriver::new,
+            "python", PythonDriver::new
         );
 
         val supplier = availableDrivers.get(driver.toLowerCase());

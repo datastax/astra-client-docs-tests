@@ -9,30 +9,35 @@ import com.dtsx.docs.runner.drivers.ClientDriver;
 import com.dtsx.docs.runner.drivers.ClientLanguage;
 import lombok.val;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Function;
 
-public class TypeScriptDriver implements ClientDriver {
+public class JavaDriver implements ClientDriver {
     @Override
     public ClientLanguage language() {
-        return ClientLanguage.TYPESCRIPT;
+        return ClientLanguage.JAVA;
     }
 
     @Override
     public List<Function<VerifierCtx, ExternalProgram>> requiredPrograms() {
-        return List.of(ExternalPrograms::npm, ExternalPrograms::tsx);
+        return List.of(ExternalPrograms::java);
     }
 
     @Override
     public Path setupExecutionEnvironment(VerifierCtx ctx, ExecutionEnvironment execEnv) {
-        val res = ExternalPrograms.npm(ctx).run(execEnv.path(), "install", ctx.clientVersion());
+       try {
+           val buildGradle = Files.readString(execEnv.path().resolve("build.gradle"));
+           val updatedBuildGradle = buildGradle.replace("${VERSION}", ctx.clientVersion());
+           Files.writeString(execEnv.path().resolve("build.gradle"), updatedBuildGradle);
+       } catch (Exception e) {
+           throw new RuntimeException("Failed to update build.gradle with client version", e);
+       }
 
-        if (res.exitCode() != 0) {
-            throw new IllegalStateException("Failed to setup TypeScript environment: " + res.output());
-        }
+        ExternalPrograms.custom(ctx).run(execEnv.path(), "./gradlew", "build");
 
-        return execEnv.path().resolve("main.ts");
+        return execEnv.path().resolve("src/main/java/Example.java");
     }
 
     @Override
@@ -42,6 +47,6 @@ public class TypeScriptDriver implements ClientDriver {
 
     @Override
     public RunResult execute(VerifierCtx ctx, ExecutionEnvironment execEnv) {
-        return ExternalPrograms.tsx(ctx).run(execEnv.path(), execEnv.scriptPath().toString());
+        return ExternalPrograms.custom(ctx).run(execEnv.path(), "./gradlew", "runExample");
     }
 }

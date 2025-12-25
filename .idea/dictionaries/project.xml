@@ -2,6 +2,7 @@
   <dictionary name="project">
     <words>
       <w>keyspaces</w>
+      <w>pipefail</w>
     </words>
   </dictionary>
 </component>

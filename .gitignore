@@ -43,3 +43,5 @@ bin/
 
 /tmp
 /.env
+/.approval_tests_temp
+/node_modules

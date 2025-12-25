@@ -1,2 +1,5 @@
 fixtures:
   base: basic-collection.js
+snapshot:
+  - collection
+  - stderr

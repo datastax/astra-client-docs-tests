@@ -1,6 +1,6 @@
 package com.dtsx.docs.runner;
 
-import com.dtsx.docs.VerifierConfig;
+import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.lib.DataAPIUtils;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import lombok.RequiredArgsConstructor;
@@ -14,17 +14,25 @@ public enum Snapshotter {
         return res.output();
     }),
 
-    COLLECTION((cfg, _) -> {
-        return Arrays.toString(DataAPIUtils.getCollection(cfg).findAll().stream().toArray());
+    STDOUT((_, res) -> {
+        return res.stdout();
     }),
 
-    TABLE((cfg, _) -> {
-        return Arrays.toString(DataAPIUtils.getTable(cfg).findAll().stream().toArray());
+    STDERR((_, res) -> {
+        return res.stderr();
+    }),
+
+    COLLECTION((ctx, _) -> {
+        return Arrays.toString(DataAPIUtils.getCollection(ctx).findAll().stream().toArray());
+    }),
+
+    TABLE((ctx, _) -> {
+        return Arrays.toString(DataAPIUtils.getTable(ctx).findAll().stream().toArray());
     });
 
-    private final BiFunction<VerifierConfig, RunResult, String> mkSnapshot;
+    private final BiFunction<VerifierCtx, RunResult, String> mkSnapshot;
 
-    public String mkSnapshot(VerifierConfig cfg, RunResult res) {
-        return mkSnapshot.apply(cfg,  res);
+    public String mkSnapshot(VerifierCtx ctx, RunResult res) {
+        return mkSnapshot.apply(ctx,  res);
     }
 }

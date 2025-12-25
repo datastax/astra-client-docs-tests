@@ -8,12 +8,13 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 @RequiredArgsConstructor
 public enum ClientLanguage {
-    JAVA(".java"),
-    PYTHON(".py"),
-    TYPESCRIPT(".ts"),
-    CSHARP(".cs"),
-    BASH(".sh"),
-    GO(".go");
+    JAVA(".java", "com.datastax.astra:astra-db-java:+"),
+    PYTHON(".py", ""),
+    TYPESCRIPT(".ts", "@datastax/astra-db-ts"),
+    CSHARP(".cs", ""),
+    BASH(".sh", ""),
+    GO(".go", "");
 
     private final String extension;
+    private final String defaultVersion;
 }

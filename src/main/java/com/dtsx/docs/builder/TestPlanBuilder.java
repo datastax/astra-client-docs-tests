@@ -1,9 +1,9 @@
 package com.dtsx.docs.builder;
 
-import com.dtsx.docs.VerifierConfig;
 import com.dtsx.docs.builder.fixtures.JSFixture;
 import com.dtsx.docs.builder.fixtures.JSFixtureImpl;
 import com.dtsx.docs.builder.fixtures.NoopFixture;
+import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.lib.Yaml;
 import com.dtsx.docs.runner.Snapshotter;
 import com.dtsx.docs.runner.drivers.ClientLanguage;
@@ -14,13 +14,15 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.TreeSet;
 
 import static com.dtsx.docs.lib.Constants.*;
 
 public class TestPlanBuilder {
-    public static TestPlan buildPlan(VerifierConfig cfg) {
-        val examplesFolder = cfg.examplesFolder();
+    public static TestPlan buildPlan(VerifierCtx ctx) {
+        val examplesFolder = ctx.examplesFolder();
 
         if (!Files.exists(examplesFolder) || !Files.isDirectory(examplesFolder)) {
             throw new IllegalStateException("Examples folder does not exist or is not a directory: " + examplesFolder);
@@ -35,7 +37,7 @@ public class TestPlanBuilder {
                 .toList();
 
             for (val exampleDir : exampleDirs) {
-                buildTestMetadata(exampleDir, cfg).ifPresent(plan::add);
+                buildTestMetadata(exampleDir, ctx).ifPresent(plan::add);
             }
         } catch (IOException e) {
             throw new RuntimeException("Failed to list examples folder: " + examplesFolder, e);
@@ -44,7 +46,7 @@ public class TestPlanBuilder {
         return plan;
     }
 
-    private static Optional<Pair<JSFixture, TestMetadata>> buildTestMetadata(Path exampleDir, VerifierConfig cfg) {
+    private static Optional<Pair<JSFixture, TestMetadata>> buildTestMetadata(Path exampleDir, VerifierCtx ctx) {
         val metaFile = exampleDir.resolve(META_FILE);
 
         if (!Files.exists(metaFile)) {
@@ -53,7 +55,7 @@ public class TestPlanBuilder {
 
         val meta = Yaml.parse(metaFile, MetaYml.class);
 
-        val exampleFile = findExampleFile(exampleDir, cfg.driver().language());
+        val exampleFile = findExampleFile(exampleDir, ctx.driver().language());
 
         if (exampleFile.isEmpty()) {
             return Optional.empty();

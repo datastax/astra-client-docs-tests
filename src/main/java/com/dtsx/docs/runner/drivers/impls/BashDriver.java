@@ -1,6 +1,6 @@
 package com.dtsx.docs.runner.drivers.impls;
 
-import com.dtsx.docs.VerifierConfig;
+import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.lib.ExternalPrograms;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
@@ -19,19 +19,22 @@ public class BashDriver implements ClientDriver {
     }
 
     @Override
-    public List<Function<VerifierConfig, ExternalProgram>> requiredPrograms() {
-        return List.of(
-            ExternalPrograms::bash
-        );
+    public List<Function<VerifierCtx, ExternalProgram>> requiredPrograms() {
+        return List.of(ExternalPrograms::bash);
     }
 
     @Override
-    public Path resolveTestFileCopyDestination(ExecutionEnvironment execEnv) {
+    public Path setupExecutionEnvironment(VerifierCtx ctx, ExecutionEnvironment execEnv) {
         return execEnv.path().resolve("main.sh");
     }
 
     @Override
-    public RunResult execute(VerifierConfig cfg, Path script) {
-        return ExternalPrograms.bash(cfg).run(script.toAbsolutePath().toString());
+    public String preprocessScript(VerifierCtx ignoredCtx, String content) {
+        return "#!/bin/bash\n\nset -euo pipefail\n\n" + content;
+    }
+
+    @Override
+    public RunResult execute(VerifierCtx ctx, ExecutionEnvironment execEnv) {
+        return ExternalPrograms.bash(ctx).run(execEnv.path(), execEnv.scriptPath().toString());
     }
 }

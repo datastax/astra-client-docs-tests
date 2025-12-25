@@ -1,27 +1,29 @@
 package com.dtsx.docs.runner;
 
-import com.dtsx.docs.VerifierConfig;
+import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.runner.drivers.ClientDriver;
-import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
-import lombok.val;
+import lombok.*;
 import org.apache.commons.io.file.PathUtils;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Function;
 
+@AllArgsConstructor
 @RequiredArgsConstructor
 public class ExecutionEnvironment implements AutoCloseable {
-    private final VerifierConfig cfg;
+    private final VerifierCtx ctx;
     private final Path execEnvPath;
 
-    @SneakyThrows
-    public static ExecutionEnvironment setup(VerifierConfig cfg, ClientDriver driver) {
-        val srcExecEnv = cfg.sourceExecutionEnvironment(driver.language());
-        val destExecEnv = cfg.tmpFolder().resolve("environments").resolve(driver.language().name().toLowerCase());
+    @With(AccessLevel.PRIVATE)
+    private final Path testFileCopyPath;
 
-        val execEnv = new ExecutionEnvironment(cfg, destExecEnv);
+    @SneakyThrows
+    public static ExecutionEnvironment setup(VerifierCtx ctx, ClientDriver driver) {
+        val srcExecEnv = ctx.sourceExecutionEnvironment(driver.language());
+        val destExecEnv = ctx.tmpFolder().resolve("data/environments").resolve(driver.language().name().toLowerCase());
+
+        val execEnv = new ExecutionEnvironment(ctx, destExecEnv, null);
         execEnv.cleanIfNeeded();
 
         if (!Files.exists(destExecEnv)) {
@@ -29,11 +31,13 @@ public class ExecutionEnvironment implements AutoCloseable {
             PathUtils.copyDirectory(srcExecEnv, destExecEnv);
         }
 
-        return execEnv;
+        val testFileCopyPath = driver.setupExecutionEnvironment(ctx, execEnv);
+
+        return execEnv.withTestFileCopyPath(testFileCopyPath);
     }
 
     public <T> T useTestFile(Path sourceFile, Function<Path, T> function) {
-        val testFile = setupFileForTesting(sourceFile, this);
+        val testFile = setupFileForTesting(sourceFile);
         try {
             return function.apply(testFile);
         } finally {
@@ -42,7 +46,11 @@ public class ExecutionEnvironment implements AutoCloseable {
     }
 
     public Path path() {
-        return execEnvPath;
+        return execEnvPath.toAbsolutePath();
+    }
+
+    public Path scriptPath() {
+        return testFileCopyPath.toAbsolutePath();
     }
 
     @Override
@@ -52,21 +60,19 @@ public class ExecutionEnvironment implements AutoCloseable {
 
     @SneakyThrows
     private void cleanIfNeeded() {
-        if (cfg.clean()) {
+        if (ctx.clean()) {
             PathUtils.deleteDirectory(execEnvPath);
         }
     }
 
     @SneakyThrows
-    private Path setupFileForTesting(Path sourceFile, ExecutionEnvironment execEnv) {
-        val dest = cfg.driver().resolveTestFileCopyDestination(execEnv);
-
+    private Path setupFileForTesting(Path sourceFile) {
         var content = Files.readString(sourceFile);
-        content = SourceCodeReplacer.replacePlaceholders(content, cfg);
-        content = cfg.driver().preprocessScript(cfg, content);
+        content = SourceCodeReplacer.replacePlaceholders(content, ctx);
+        content = ctx.driver().preprocessScript(ctx, content);
 
-        Files.writeString(dest, content);
-        return dest;
+        Files.writeString(testFileCopyPath, content);
+        return testFileCopyPath;
     }
 
     @SneakyThrows
