@@ -1,5 +1,6 @@
 package com.dtsx.docs.config;
 
+import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgramType;
@@ -46,7 +47,7 @@ public class VerifierCtx {
 
         this.examplesFolder = requirePath(internalArgs.$examplesFolder, "examples folder", "-ef", "EXAMPLES_FOLDER");
         this.snapshotsFolder = requirePath(internalArgs.$snapshotsFolder, "snapshots folder", "-sf", "SNAPSHOTS_FOLDER");
-        this.tmpFolder = requirePath(internalArgs.$tmpFolder, "temporary folder", "-tf", "TMP_FOLDER");
+        this.tmpFolder = Path.of("./.docs_tests_temp");
         this.environmentsFolder = Path.of("./resources/environments/");
 
         this.driver = ClientDriver.parse(require(internalArgs.$driver, "client driver", "-d", "DRIVER"));

@@ -1,5 +1,6 @@
 package com.dtsx.docs.config;
 
+import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgramType;
 import lombok.ToString;
 import picocli.CommandLine.Option;
@@ -33,16 +34,9 @@ public class VerifierArgs {
     @Option(
         names = { "-sf", "--snapshots-folder" },
         description = "Path to the folder containing snapshots.",
-        defaultValue = "${SNAPSHOTS_FOLDER:-./resources/snapshots}"
+        defaultValue = "${SNAPSHOTS_FOLDER:-./snapshots}"
     )
     public String $snapshotsFolder;
-
-    @Option(
-        names = { "-tf", "--tmp-folder" },
-        description = "Path to the temporary folder.",
-        defaultValue = "${TMP_FOLDER:-./tmp}"
-    )
-    public String $tmpFolder;
 
     @Option(
         names = { "-c", "--client-driver" },
@@ -73,10 +67,27 @@ public class VerifierArgs {
     public boolean $clean;
 
     @Option(
+        names = { "-D", "--dry-run" },
+        description = "If set, the verifier will perform a dry run without executing tests.",
+        defaultValue = "${DRY_RUN:-false}"
+    )
+    public boolean $dryRun;
+
+    @Option(
         names = { "-C", "--command-override" },
         description = "Override commands for external programs (e.g., `-Ctsx='npx tsx' -Cbash=/usr/bin/bash`)."
     )
-    public Map<ExternalProgramType, String> $commandOverrides;
+    public Map<ExternalProgramType, String> $commandOverrides = Map.of();
+
+    @Option(
+        names = { "--spinner" },
+        description = "enable/disable spinner in the CLI output.",
+        defaultValue = "${SPINNER:-true}",
+        negatable = true
+    )
+    public void $spinner(boolean enabled) {
+        CliLogger.setSpinnerEnabled(enabled);
+    }
 
     public VerifierCtx toCtx() {
         return new VerifierCtx(this);

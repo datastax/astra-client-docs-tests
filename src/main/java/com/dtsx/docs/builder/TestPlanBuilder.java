@@ -61,8 +61,8 @@ public class TestPlanBuilder {
             return Optional.empty();
         }
 
-        val baseFixture = resolveBaseFixture(exampleDir.getParent(), meta.fixtures().base());
-        val testFixture = resolveTestFixture(exampleDir, meta.fixtures().test());
+        val baseFixture = resolveBaseFixture(ctx, exampleDir.getParent(), meta.fixtures().base());
+        val testFixture = resolveTestFixture(ctx, exampleDir, meta.fixtures().test());
 
         val snapshots = meta.snapshots().orElse(SnapshotsConfig.EMPTY);
         val snapshotTypes = buildSnapshotTypes(snapshots);
@@ -79,20 +79,20 @@ public class TestPlanBuilder {
         return Optional.of(Pair.of(baseFixture, testMetadata));
     }
 
-    private static JSFixture resolveBaseFixture(Path rootDir, String fixtureName) {
+    private static JSFixture resolveBaseFixture(VerifierCtx ctx, Path rootDir, String fixtureName) {
         val path = rootDir.resolve(FIXTURES_DIR).resolve(fixtureName);
 
         if (!Files.exists(path)) {
             throw new IllegalStateException("Base fixture does not exist: " + path);
         }
 
-        return new JSFixtureImpl(path);
+        return new JSFixtureImpl(ctx, path);
     }
 
-    private static Optional<JSFixture> resolveTestFixture(Path exampleDir, Optional<String> fixtureName) {
+    private static Optional<JSFixture> resolveTestFixture(VerifierCtx ctx, Path exampleDir, Optional<String> fixtureName) {
         if (fixtureName.isEmpty()) {
             return Files.exists(exampleDir.resolve(DEFAULT_TEST_FIXTURE))
-                ? Optional.of(new JSFixtureImpl(exampleDir.resolve(DEFAULT_TEST_FIXTURE)))
+                ? Optional.of(new JSFixtureImpl(ctx, exampleDir.resolve(DEFAULT_TEST_FIXTURE)))
                 : Optional.empty();
         }
 
@@ -102,7 +102,7 @@ public class TestPlanBuilder {
             throw new IllegalStateException("Test-specific fixture does not exist: " + path);
         }
 
-        return Optional.of(new JSFixtureImpl(path));
+        return Optional.of(new JSFixtureImpl(ctx, path));
     }
 
     private static TreeSet<Snapshotter> buildSnapshotTypes(SnapshotsConfig config) {

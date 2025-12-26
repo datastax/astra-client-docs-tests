@@ -1,15 +1,15 @@
 package com.dtsx.docs.runner;
 
 import com.dtsx.docs.config.VerifierCtx;
+import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.runner.drivers.ClientDriver;
 import lombok.*;
 import org.apache.commons.io.file.PathUtils;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.function.Function;
+import java.util.function.Supplier;
 
-@AllArgsConstructor
 @RequiredArgsConstructor
 public class ExecutionEnvironment implements AutoCloseable {
     private final VerifierCtx ctx;
@@ -18,28 +18,35 @@ public class ExecutionEnvironment implements AutoCloseable {
     @With(AccessLevel.PRIVATE)
     private final Path testFileCopyPath;
 
-    @SneakyThrows
     public static ExecutionEnvironment setup(VerifierCtx ctx, ClientDriver driver) {
-        val srcExecEnv = ctx.sourceExecutionEnvironment(driver.language());
-        val destExecEnv = ctx.tmpFolder().resolve("data/environments").resolve(driver.language().name().toLowerCase());
+        val languageName = driver.language().name().toLowerCase();
 
-        val execEnv = new ExecutionEnvironment(ctx, destExecEnv, null);
-        execEnv.cleanIfNeeded();
+        return CliLogger.loading("Setting up %s execution environment".formatted(languageName), (_) -> {
+            val srcExecEnv = ctx.sourceExecutionEnvironment(driver.language());
+            val destExecEnv = ctx.tmpFolder().resolve("environments").resolve(driver.language().name().toLowerCase());
 
-        if (!Files.exists(destExecEnv)) {
-            Files.createDirectories(destExecEnv);
-            PathUtils.copyDirectory(srcExecEnv, destExecEnv);
-        }
+            val execEnv = new ExecutionEnvironment(ctx, destExecEnv, null);
+            execEnv.cleanIfNeeded();
 
-        val testFileCopyPath = driver.setupExecutionEnvironment(ctx, execEnv);
+            try {
+                if (!Files.exists(destExecEnv)) {
+                    Files.createDirectories(destExecEnv);
+                    PathUtils.copyDirectory(srcExecEnv, destExecEnv);
+                }
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to setup " + languageName + " execution environment", e);
+            }
 
-        return execEnv.withTestFileCopyPath(testFileCopyPath);
+            val testFileCopyPath = driver.setupExecutionEnvironment(ctx, execEnv);
+
+            return execEnv.withTestFileCopyPath(testFileCopyPath);
+        });
     }
 
-    public <T> T useTestFile(Path sourceFile, Function<Path, T> function) {
+    public <T> T withTestFileCopied(Path sourceFile, Supplier<T> test) {
         val testFile = setupFileForTesting(sourceFile);
         try {
-            return function.apply(testFile);
+            return test.get();
         } finally {
             cleanupFileAfterTesting(testFile);
         }

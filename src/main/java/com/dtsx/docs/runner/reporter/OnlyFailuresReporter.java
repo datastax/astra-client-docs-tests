@@ -1,11 +1,10 @@
 package com.dtsx.docs.runner.reporter;
 
 import com.dtsx.docs.builder.fixtures.JSFixture;
+import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.runner.TestResults;
 import com.dtsx.docs.runner.TestResults.TestResult;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.function.Supplier;
 
 public class OnlyFailuresReporter extends TestReporter {
     private int printedFixtures = 0;
@@ -27,6 +26,6 @@ public class OnlyFailuresReporter extends TestReporter {
             printBaseFixtureName = null;
         }
 
-        System.out.println("- (FAILED) " + result.snapshotFile());
+        CliLogger.println("  - (FAILED) " + result.snapshotFile());
     }
 }

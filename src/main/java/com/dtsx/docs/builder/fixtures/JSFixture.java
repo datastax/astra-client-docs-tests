@@ -1,6 +1,7 @@
 package com.dtsx.docs.builder.fixtures;
 
 import com.dtsx.docs.config.VerifierCtx;
+import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import lombok.val;
@@ -28,8 +29,8 @@ public sealed interface JSFixture permits NoopFixture, JSFixtureImpl {
         setup(tsx);
         try {
             for (val item : t) {
-                consumer.accept(item);
                 reset(tsx);
+                consumer.accept(item);
             }
         } finally {
             teardown(tsx);
@@ -37,7 +38,9 @@ public sealed interface JSFixture permits NoopFixture, JSFixtureImpl {
     }
 
     static void installDependencies(VerifierCtx ctx) {
-        val res = ExternalPrograms.npm(ctx).run("install");
+        val res = CliLogger.loading("Installing JS fixture dependencies...", (_) -> {
+            return ExternalPrograms.npm(ctx).run("install");
+        });
 
         if (res.exitCode() != 0) {
             throw new IllegalStateException("Failed to install JS fixture dependencies: " + res.output());

@@ -38,6 +38,7 @@ dependencies {
 }
 
 application {
+    applicationDefaultJvmArgs = listOf("--enable-native-access=ALL-UNNAMED")
     mainClass.set("com.dtsx.docs.VerifierCli")
 }
 

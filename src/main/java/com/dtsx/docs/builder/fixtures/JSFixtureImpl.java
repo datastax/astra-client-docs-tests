@@ -1,5 +1,7 @@
 package com.dtsx.docs.builder.fixtures;
 
+import com.dtsx.docs.config.VerifierCtx;
+import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -8,6 +10,7 @@ import java.nio.file.Path;
 
 @RequiredArgsConstructor
 public final class JSFixtureImpl implements JSFixture {
+    private final VerifierCtx ctx;
     private final Path path;
 
     private static final String SETUP_FUNCTION_NAME = "Setup";
@@ -35,7 +38,11 @@ public final class JSFixtureImpl implements JSFixture {
     }
 
     private void tryCallJsFunction(ExternalProgram tsx, String function) {
-        val res = tsx.run("-e", "import * as m from '" + path.toAbsolutePath() + "'; m." + function + "?.()");
+        val displayPath = ctx.examplesFolder().relativize(path);
+
+        val res = CliLogger.loading("Calling %s in %s".formatted(function, displayPath), (_) -> {
+            return tsx.run("-e", "import * as m from '" + path.toAbsolutePath() + "'; m." + function + "?.()");
+        });
 
         if (res.exitCode() != 0) {
             throw new RuntimeException("Failed to call " + function + " in " + path + ":\nSTDOUT:\n" + res.stdout() + "\nSTDERR:\n" + res.stderr());

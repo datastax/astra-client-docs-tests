@@ -2,6 +2,7 @@ package com.dtsx.docs;
 
 import com.dtsx.docs.builder.TestPlanBuilder;
 import com.dtsx.docs.config.VerifierArgs;
+import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.runner.TestRunner;
 import io.github.cdimascio.dotenv.Dotenv;
 import lombok.val;
@@ -23,7 +24,19 @@ public class VerifierCli implements Runnable {
     @Override
     public void run() {
         val ctx = $args.toCtx();
-        val plan = TestPlanBuilder.buildPlan(ctx);
-        TestRunner.runTests(ctx, plan);
+
+        try {
+            val plan = CliLogger.loading("Building test plan...", (_) ->
+                TestPlanBuilder.buildPlan(ctx)
+            );
+
+            if ($args.$dryRun) {
+                CliLogger.println("Tests to be executed (dry run):\n\n" + plan);
+            } else {
+                TestRunner.runTests(ctx, plan);
+            }
+        } finally {
+            CliLogger.dumpLogsToFile(ctx);
+        }
     }
 }

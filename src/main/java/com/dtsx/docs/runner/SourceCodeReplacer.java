@@ -14,7 +14,7 @@ public class SourceCodeReplacer {
         "COLLECTION_NAME", _ -> TEST_COLLECTION_NAME,
         "TABLE_NAME", _ -> TEST_TABLE_NAME,
         "APPLICATION_TOKEN", VerifierCtx::token,
-        "ASTRA_API_ENDPOINT", VerifierCtx::apiEndpoint
+        "API_ENDPOINT", VerifierCtx::apiEndpoint
     );
 
     public static String replacePlaceholders(String src, VerifierCtx ctx) {

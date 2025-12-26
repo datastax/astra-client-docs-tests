@@ -1,6 +1,7 @@
 package com.dtsx.docs.runner.reporter;
 
 import com.dtsx.docs.builder.fixtures.JSFixture;
+import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.runner.TestResults;
 import com.dtsx.docs.runner.TestResults.TestResult;
 import lombok.val;
@@ -17,6 +18,6 @@ public class AllTestsReporter extends TestReporter {
             ? "PASSED"
             : "FAILED";
 
-        System.out.println("- (" + status + ") " + result.snapshotFile());
+        CliLogger.println("  - (" + status + ") " + result.snapshotFile());
     }
 }

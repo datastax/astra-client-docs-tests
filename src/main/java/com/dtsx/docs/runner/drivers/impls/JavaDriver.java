@@ -29,7 +29,7 @@ public class JavaDriver implements ClientDriver {
     public Path setupExecutionEnvironment(VerifierCtx ctx, ExecutionEnvironment execEnv) {
        try {
            val buildGradle = Files.readString(execEnv.path().resolve("build.gradle"));
-           val updatedBuildGradle = buildGradle.replace("${VERSION}", ctx.clientVersion());
+           val updatedBuildGradle = buildGradle.replace("${CLIENT_ARTIFACT}", ctx.clientVersion());
            Files.writeString(execEnv.path().resolve("build.gradle"), updatedBuildGradle);
        } catch (Exception e) {
            throw new RuntimeException("Failed to update build.gradle with client version", e);
@@ -47,6 +47,6 @@ public class JavaDriver implements ClientDriver {
 
     @Override
     public RunResult execute(VerifierCtx ctx, ExecutionEnvironment execEnv) {
-        return ExternalPrograms.custom(ctx).run(execEnv.path(), "./gradlew", "runExample");
+        return ExternalPrograms.custom(ctx).run(execEnv.path(), "./gradlew", "run", "--quiet");
     }
 }

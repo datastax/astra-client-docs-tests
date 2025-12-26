@@ -2,6 +2,7 @@ package com.dtsx.docs.runner.reporter;
 
 import com.dtsx.docs.builder.TestPlan;
 import com.dtsx.docs.builder.fixtures.JSFixture;
+import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.runner.TestResults;
 import com.dtsx.docs.runner.TestResults.TestResult;
 import lombok.val;
@@ -13,7 +14,7 @@ import java.util.function.Supplier;
 
 public abstract class TestReporter {
     public void printHeader(TestPlan plan) {
-        System.out.println("Running " + countTotalTests(plan) + " tests...");
+        CliLogger.println("Running " + countTotalTests(plan) + " tests...");
     }
 
     public abstract void printBaseFixtureHeading(JSFixture baseFixture, TestResults history);
@@ -25,10 +26,10 @@ public abstract class TestReporter {
         val passedTests = countPassedTests(history);
         val failedTests = totalTests - passedTests;
 
-        System.out.println("\nTest Summary:");
-        System.out.println("- Total tests: " + totalTests);
-        System.out.println("- Passed tests: " + passedTests);
-        System.out.println("- Failed tests: " + failedTests);
+        CliLogger.println("\nTest Summary:");
+        CliLogger.println("- Total tests: " + totalTests);
+        CliLogger.println("- Passed tests: " + passedTests);
+        CliLogger.println("- Failed tests: " + failedTests);
     }
 
     public static TestReporter parse(String reporter) {
@@ -47,7 +48,7 @@ public abstract class TestReporter {
     }
 
     protected void printFixtureHeading(int index, JSFixture baseFixture) {
-        System.out.println("\n" + index + ") " + baseFixture.fixtureName());
+        CliLogger.println("\n" + index + ") " + baseFixture.fixtureName());
     }
 
     private int countTotalTests(TestPlan plan) {

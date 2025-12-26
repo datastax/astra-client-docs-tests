@@ -1,7 +1,7 @@
 import { DataAPIClient } from '@datastax/astra-db-ts';
 
 export const Token = process.env.APPLICATION_TOKEN;
-export const ApiEndpoint = process.env.ASTRA_API_ENDPOINT;
+export const ApiEndpoint = process.env.API_ENDPOINT;
 
 export const KeyspaceName = process.env.KEYSPACE_NAME;
 export const CollectionName = process.env.COLLECTION_NAME;

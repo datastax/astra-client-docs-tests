@@ -136,7 +136,7 @@ public class ExternalPrograms {
 
         private Runnable mkStreamReader(InputStream stream, List<OutputLine> outputLines, Function<String, OutputLine> mapper) {
             return () -> {
-                try (var reader = new BufferedReader(new InputStreamReader(stream))) {
+                try (val reader = new BufferedReader(new InputStreamReader(stream))) {
                     String line;
                     while ((line = reader.readLine()) != null) {
                         outputLines.add(mapper.apply(line + System.lineSeparator()));

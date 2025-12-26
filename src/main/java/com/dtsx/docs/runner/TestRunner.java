@@ -1,9 +1,10 @@
 package com.dtsx.docs.runner;
 
-import com.dtsx.docs.builder.fixtures.JSFixture;
-import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.builder.TestMetadata;
 import com.dtsx.docs.builder.TestPlan;
+import com.dtsx.docs.builder.fixtures.JSFixture;
+import com.dtsx.docs.config.VerifierCtx;
+import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
@@ -55,10 +56,12 @@ public class TestRunner {
 
     private TestResult runTest(TestMetadata md, ExecutionEnvironment execEnv) {
         return md.testFixture().use(tsx, () -> {
-            return execEnv.useTestFile(md.exampleFile(), (path) -> {
-                val result = driver.execute(ctx, execEnv);
-                val snapshot = mkSnapshot(md, result);
-                return verifySnapshot(md, snapshot);
+            return CliLogger.loading("Running %s test".formatted(md.exampleFolder().getFileName()), (_) -> {
+                return execEnv.withTestFileCopied(md.exampleFile(), () -> {
+                    val result = driver.execute(ctx, execEnv);
+                    val snapshot = mkSnapshot(md, result);
+                    return verifySnapshot(md, snapshot);
+                });
             });
         });
     }
@@ -73,7 +76,7 @@ public class TestRunner {
             );
     }
 
-    private TestResults.TestResult verifySnapshot(TestMetadata md, String snapshot) {
+    private TestResult verifySnapshot(TestMetadata md, String snapshot) {
         val namer = new ExampleResultNamer(ctx, md);
 
         try {

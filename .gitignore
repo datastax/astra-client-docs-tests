@@ -42,6 +42,7 @@ bin/
 .DS_Store
 
 /tmp
-/.env
+/.docs_tests_temp
 /.approval_tests_temp
 /node_modules
+/.env*
