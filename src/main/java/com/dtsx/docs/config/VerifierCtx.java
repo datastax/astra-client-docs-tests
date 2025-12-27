@@ -1,6 +1,5 @@
 package com.dtsx.docs.config;
 
-import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgramType;
@@ -14,11 +13,9 @@ import lombok.val;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 @Getter
 @Accessors(fluent = true)
@@ -40,23 +37,25 @@ public class VerifierCtx {
     private final boolean clean;
 
     private final Map<ExternalProgramType, String[]> commandOverrides;
+    private final Predicate<Path> filter;
 
     public VerifierCtx(VerifierArgs internalArgs) {
-        this.token = require(internalArgs.$token, "astra token", "-t", "ASTRA_TOKEN");
-        this.apiEndpoint = require(internalArgs.$apiEndpoint, "API endpoint", "-e", "API_ENDPOINT");
+        this.token = requireFlag(internalArgs.$token, "astra token", "-t", "ASTRA_TOKEN");
+        this.apiEndpoint = requireFlag(internalArgs.$apiEndpoint, "API endpoint", "-e", "API_ENDPOINT");
 
         this.examplesFolder = requirePath(internalArgs.$examplesFolder, "examples folder", "-ef", "EXAMPLES_FOLDER");
         this.snapshotsFolder = requirePath(internalArgs.$snapshotsFolder, "snapshots folder", "-sf", "SNAPSHOTS_FOLDER");
         this.tmpFolder = Path.of("./.docs_tests_temp");
         this.environmentsFolder = Path.of("./resources/environments/");
 
-        this.driver = ClientDriver.parse(require(internalArgs.$driver, "client driver", "-d", "DRIVER"));
+        this.driver = ClientDriver.parse(requireParameter(internalArgs.$driver, "client driver", 1, "CLIENT_DRIVER"));
         this.reporter = TestReporter.parse(internalArgs.$reporter);
         this.clientVersion = internalArgs.$clientVersion.orElse(driver.language().defaultVersion());
 
         this.clean = internalArgs.$clean;
 
         this.commandOverrides = mkCommandOverrides(internalArgs);
+        this.filter = mkFilter(internalArgs.$filters, internalArgs.$inverseFilters);
 
         verifyRequiredProgramsAvailable();
     }
@@ -65,9 +64,16 @@ public class VerifierCtx {
         return environmentsFolder.resolve(lang.name().toLowerCase());
     }
 
-    private <T> T require(Optional<T> optional, String name, String flag, String envVar) {
+    private <T> T requireFlag(Optional<T> optional, String name, String flag, String envVar) {
         return optional.orElseThrow(() -> new IllegalArgumentException(
-            "Missing required " + name + "; please provide it via the '" + flag + "' command line flag or the '" + envVar + "' environment variable."
+            "Missing required option " + name + "; please provide it via the '" + flag + "' command line flag or the '" + envVar + "' environment variable."
+        ));
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private <T> T requireParameter(Optional<T> parameter, String name, int index, String envVar) {
+        return parameter.orElseThrow(() -> new IllegalArgumentException(
+            "Missing required parameter " + name + "; please provide it as parameter #" + index + " or via the '" + envVar + "' environment variable."
         ));
     }
 
@@ -98,6 +104,25 @@ public class VerifierCtx {
         }
 
         return overrides;
+    }
+
+    private Predicate<Path> mkFilter(List<String> filters, List<String> inverseFilters) {
+        val includePredicate = mkFilterPredicates(filters)
+            .orElse(_ -> true);
+
+        val excludePredicate = mkFilterPredicates(inverseFilters)
+            .map(Predicate::negate)
+            .orElse(_ -> true);
+
+        return includePredicate.and(excludePredicate);
+    }
+
+    private Optional<Predicate<Path>> mkFilterPredicates(List<String> filter) {
+        return filter.stream()
+            .map(String::trim)
+            .filter(s -> !s.isBlank())
+            .map((s) -> (Predicate<Path>) (path) -> path.toString().matches(".*" + s + ".*"))
+            .reduce(Predicate::or);
     }
 
     private void verifyRequiredProgramsAvailable() {

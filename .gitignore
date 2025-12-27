@@ -46,3 +46,4 @@ bin/
 /.approval_tests_temp
 /node_modules
 /.env*
+!/.env.example

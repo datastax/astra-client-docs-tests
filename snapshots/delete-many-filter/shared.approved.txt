@@ -1,0 +1,27 @@
+---stderr---
+
+---collection---
+[
+  {
+    "_id" : "guid_1",
+    "comes" : 2,
+    "naming" : "things",
+    "when" : "it"
+  },
+  {
+    "I" : [
+      "am",
+      "not",
+      {
+        "very" : "creative"
+      }
+    ],
+    "_id" : "guid_2"
+  },
+  {
+    "_id" : "guid_3",
+    "random" : {
+      "fields" : "idk"
+    }
+  }
+]

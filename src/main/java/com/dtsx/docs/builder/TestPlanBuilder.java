@@ -4,7 +4,7 @@ import com.dtsx.docs.builder.fixtures.JSFixture;
 import com.dtsx.docs.builder.fixtures.JSFixtureImpl;
 import com.dtsx.docs.builder.fixtures.NoopFixture;
 import com.dtsx.docs.config.VerifierCtx;
-import com.dtsx.docs.lib.Yaml;
+import com.dtsx.docs.lib.JacksonUtils;
 import com.dtsx.docs.runner.Snapshotter;
 import com.dtsx.docs.runner.drivers.ClientLanguage;
 import lombok.NonNull;
@@ -53,30 +53,38 @@ public class TestPlanBuilder {
             return Optional.empty();
         }
 
-        val meta = Yaml.parse(metaFile, MetaYml.class);
+        try {
+            val meta = JacksonUtils.parseYaml(metaFile, MetaYml.class);
 
-        val exampleFile = findExampleFile(exampleDir, ctx.driver().language());
+            if (meta.skip().orElse(false)) {
+                return Optional.empty();
+            }
 
-        if (exampleFile.isEmpty()) {
-            return Optional.empty();
+            val exampleFile = findExampleFile(exampleDir, ctx.driver().language());
+
+            if (exampleFile.isEmpty() || !ctx.filter().test(exampleFile.get())) {
+                return Optional.empty();
+            }
+
+            val baseFixture = resolveBaseFixture(ctx, exampleDir.getParent(), meta.fixtures().base());
+            val testFixture = resolveTestFixture(ctx, exampleDir, meta.fixtures().test());
+
+            val snapshots = meta.snapshots().orElse(SnapshotsConfig.EMPTY);
+            val snapshotTypes = buildSnapshotTypes(snapshots);
+            val shareSnapshots = snapshots.share().orElse(true);
+
+            val testMetadata = new TestMetadata(
+                exampleDir,
+                exampleFile.get(),
+                testFixture.orElse(NoopFixture.INSTANCE),
+                snapshotTypes,
+                shareSnapshots
+            );
+
+            return Optional.of(Pair.of(baseFixture, testMetadata));
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse " + metaFile, e);
         }
-
-        val baseFixture = resolveBaseFixture(ctx, exampleDir.getParent(), meta.fixtures().base());
-        val testFixture = resolveTestFixture(ctx, exampleDir, meta.fixtures().test());
-
-        val snapshots = meta.snapshots().orElse(SnapshotsConfig.EMPTY);
-        val snapshotTypes = buildSnapshotTypes(snapshots);
-        val shareSnapshots = snapshots.share().orElse(true);
-
-        val testMetadata = new TestMetadata(
-            exampleDir,
-            exampleFile.get(),
-            testFixture.orElse(NoopFixture.INSTANCE),
-            snapshotTypes,
-            shareSnapshots
-        );
-
-        return Optional.of(Pair.of(baseFixture, testMetadata));
     }
 
     private static JSFixture resolveBaseFixture(VerifierCtx ctx, Path rootDir, String fixtureName) {
@@ -108,7 +116,7 @@ public class TestPlanBuilder {
     private static TreeSet<Snapshotter> buildSnapshotTypes(SnapshotsConfig config) {
         val types = new TreeSet<Snapshotter>();
 
-        for (val typeName : config.additional().orElse(List.of(Snapshotter.OUTPUT.name()))) {
+        for (val typeName : config.sources().orElse(List.of(Snapshotter.OUTPUT.name()))) {
             try {
                 types.add(Snapshotter.valueOf(typeName.toUpperCase()));
             } catch (IllegalArgumentException e) {
@@ -142,6 +150,7 @@ public class TestPlanBuilder {
     }
 
     private record MetaYml(
+        @NonNull Optional<Boolean> skip,
         @NonNull FixturesConfig fixtures,
         @NonNull Optional<SnapshotsConfig> snapshots
     ) {}
@@ -153,7 +162,7 @@ public class TestPlanBuilder {
 
     private record SnapshotsConfig(
         @NonNull Optional<Boolean> share,
-        @NonNull Optional<List<String>> additional
+        @NonNull Optional<List<String>> sources
     ) {
         public static final SnapshotsConfig EMPTY = new SnapshotsConfig(Optional.empty(), Optional.empty());
     }

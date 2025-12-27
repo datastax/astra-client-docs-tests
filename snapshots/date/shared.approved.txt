@@ -1,0 +1,24 @@
+---stderr---
+
+---collection---
+[
+  {
+    "_id" : "guid_1",
+    "message" : "happy Sunday!",
+    "registered_at" : {
+      "$date" : 1766810391125
+    }
+  },
+  {
+    "_id" : "guid_2",
+    "date_of_birth" : {
+      "$date" : 1766810391711
+    }
+  },
+  {
+    "_id" : "guid_3",
+    "just_a_date" : {
+      "$date" : 1766810391786
+    }
+  }
+]

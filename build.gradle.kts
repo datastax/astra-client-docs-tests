@@ -21,6 +21,9 @@ dependencies {
     // test settings from .env files
     implementation("io.github.cdimascio:dotenv-java:3.2.0")
 
+    // shuts up some errors about missing SLF4J implementations
+    implementation("org.slf4j:slf4j-nop:2.0.17")
+
     // yaml
     implementation("tools.jackson.dataformat:jackson-dataformat-yaml:3.0.3")
     implementation("tools.jackson.core:jackson-databind:3.0.3")

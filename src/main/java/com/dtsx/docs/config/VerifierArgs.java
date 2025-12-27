@@ -4,12 +4,22 @@ import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgramType;
 import lombok.ToString;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 @ToString
 public class VerifierArgs {
+    @Parameters(
+        index = "0",
+        arity = "0..1",
+        description = "Client driver to use (e.g., 'java', 'typescript').",
+        defaultValue = "${CLIENT_DRIVER}"
+    )
+    public Optional<String> $driver;
+
     @Option(
         names = { "-t", "--astra-token" },
         description = "Astra token",
@@ -37,13 +47,6 @@ public class VerifierArgs {
         defaultValue = "${SNAPSHOTS_FOLDER:-./snapshots}"
     )
     public String $snapshotsFolder;
-
-    @Option(
-        names = { "-c", "--client-driver" },
-        description = "Client driver to use (e.g., 'java', 'typescript').",
-        defaultValue = "${CLIENT_DRIVER}"
-    )
-    public Optional<String> $driver;
 
     @Option(
         names = { "-r", "--test-reporter" },
@@ -83,11 +86,28 @@ public class VerifierArgs {
         names = { "--spinner" },
         description = "enable/disable spinner in the CLI output.",
         defaultValue = "${SPINNER:-true}",
+        fallbackValue = "true",
         negatable = true
     )
     public void $spinner(boolean enabled) {
         CliLogger.setSpinnerEnabled(enabled);
     }
+
+    @Option(
+        names = { "-f", "--filter" },
+        description = "Comma-separated regex filters to select specific tests to run. Can be used multiple times.",
+        defaultValue = "${FILTERS:-}",
+        split = ","
+    )
+    public List<String> $filters;
+
+    @Option(
+        names = { "-F", "--filter-not" },
+        description = "Comma-separated regex filters to select specific tests to exclude. Can be used multiple times.",
+        defaultValue = "${INVERSE_FILTERS:-}",
+        split = ","
+    )
+    public List<String> $inverseFilters;
 
     public VerifierCtx toCtx() {
         return new VerifierCtx(this);
