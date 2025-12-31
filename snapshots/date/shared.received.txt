@@ -1,0 +1,30 @@
+---stderr---
+
+---collection---
+[
+  {
+    "_id" : "guid_1",
+    "message" : "happy Sunday!",
+    "registered_at" : { "$date" : "date_1" }
+  },
+  {
+    "_id" : "guid_2",
+    "date_of_birth" : { "$date" : "date_2" }
+  },
+  {
+    "_id" : "guid_3",
+    "dateOfBirth" : { "$date" : "date_3" }
+  },
+  {
+    "_id" : "guid_4",
+    "dateOfBirth" : {
+      "$date" : -3363897600000
+    },
+    "lastModified" : { "$date" : "date_4" },
+    "message" : "Happy Birthday!"
+  },
+  {
+    "_id" : "guid_5",
+    "just_a_date" : { "$date" : "date_5" }
+  }
+]

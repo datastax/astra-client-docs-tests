@@ -8,6 +8,8 @@ import com.dtsx.docs.runner.drivers.impls.BashDriver;
 import com.dtsx.docs.runner.drivers.impls.JavaDriver;
 import com.dtsx.docs.runner.drivers.impls.PythonDriver;
 import com.dtsx.docs.runner.drivers.impls.TypeScriptDriver;
+import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.val;
 
 import java.nio.file.Path;
@@ -16,31 +18,17 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public interface ClientDriver {
-    ClientLanguage language();
+@AllArgsConstructor
+public abstract class ClientDriver {
+    protected final String artifact;
 
-    List<Function<VerifierCtx, ExternalProgram>> requiredPrograms();
+    public abstract ClientLanguage language();
 
-    Path setupExecutionEnvironment(VerifierCtx ctx, ExecutionEnvironment execEnv);
+    public abstract List<Function<VerifierCtx, ExternalProgram>> requiredPrograms();
 
-    String preprocessScript(VerifierCtx ignoredCtx, String content);
+    public abstract Path setupExecutionEnvironment(VerifierCtx ctx, ExecutionEnvironment execEnv);
 
-    RunResult execute(VerifierCtx ctx, ExecutionEnvironment execEnv);
+    public abstract String preprocessScript(VerifierCtx ignoredCtx, String content);
 
-    static ClientDriver parse(String driver) {
-        final Map<String, Supplier<ClientDriver>> availableDrivers = Map.of(
-            "typescript", TypeScriptDriver::new,
-            "bash", BashDriver::new,
-            "python", PythonDriver::new,
-            "java", JavaDriver::new
-        );
-
-        val supplier = availableDrivers.get(driver.toLowerCase());
-
-        if (supplier == null) {
-            throw new IllegalArgumentException("Unknown driver: '" + driver + "' (expected one of: " + String.join(", ", availableDrivers.keySet()) + ")");
-        }
-
-        return supplier.get();
-    }
+    public abstract RunResult execute(VerifierCtx ctx, ExecutionEnvironment execEnv);
 }

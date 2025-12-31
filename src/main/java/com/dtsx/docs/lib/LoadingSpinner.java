@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.dtsx.docs.VerifierCli.ACCENT_COLOR;
+import static com.dtsx.docs.lib.CliLogger.highlight;
 
 // Vendored from Astra CLI
 public class LoadingSpinner {
@@ -118,7 +119,7 @@ public class LoadingSpinner {
                 continue;
             }
 
-            val currentLine = ACCENT_COLOR.on() + SPINNER_FRAMES[frameIndex] + ACCENT_COLOR.off() + " " + getCurrentMessage() + "...";
+            val currentLine = highlight(SPINNER_FRAMES[frameIndex]) + " " + getCurrentMessage() + "...";
             val clearLine = "\r" + " ".repeat(lastLineLength.get()) + "\r";
 
             System.err.print(clearLine + currentLine);

@@ -3,13 +3,16 @@ package com.dtsx.docs.builder.fixtures;
 import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
+import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 
 import java.nio.file.Path;
 
+@EqualsAndHashCode
 @RequiredArgsConstructor
 public final class JSFixtureImpl implements JSFixture {
+    @EqualsAndHashCode.Exclude
     private final VerifierCtx ctx;
     private final Path path;
 
@@ -40,7 +43,7 @@ public final class JSFixtureImpl implements JSFixture {
     private void tryCallJsFunction(ExternalProgram tsx, String function) {
         val displayPath = ctx.examplesFolder().relativize(path);
 
-        val res = CliLogger.loading("Calling %s in %s".formatted(function, displayPath), (_) -> {
+        val res = CliLogger.loading("Calling @!%s!@ in @!%s!@".formatted(function, displayPath), (_) -> {
             return tsx.run("-e", "import * as m from '" + path.toAbsolutePath() + "'; m." + function + "?.()");
         });
 

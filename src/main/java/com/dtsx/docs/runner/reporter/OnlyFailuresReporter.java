@@ -26,6 +26,6 @@ public class OnlyFailuresReporter extends TestReporter {
             printBaseFixtureName = null;
         }
 
-        CliLogger.println("  - (FAILED) " + result.snapshotFile());
+        printTestResult("FAILED", result);
     }
 }

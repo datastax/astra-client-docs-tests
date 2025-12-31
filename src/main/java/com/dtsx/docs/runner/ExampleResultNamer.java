@@ -2,6 +2,8 @@ package com.dtsx.docs.runner;
 
 import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.builder.TestMetadata;
+import com.dtsx.docs.runner.drivers.ClientDriver;
+import com.dtsx.docs.runner.drivers.ClientLanguage;
 import lombok.Getter;
 import org.approvaltests.namer.ApprovalNamer;
 import org.approvaltests.writers.Writer;
@@ -15,11 +17,11 @@ public class ExampleResultNamer implements ApprovalNamer {
     private final String additionalInformation;
     private final VerifierCtx ctx;
 
-    public ExampleResultNamer(VerifierCtx ctx, TestMetadata md) {
+    public ExampleResultNamer(VerifierCtx ctx, ClientLanguage language, TestMetadata md) {
         this.exampleName = md.exampleFolder().getFileName().toString().split("\\.")[0];
 
         this.fileName = (!md.shareSnapshots())
-            ? ctx.driver().language().name().toLowerCase()
+            ? language.name().toLowerCase()
             : "shared";
 
         this.additionalInformation = "";

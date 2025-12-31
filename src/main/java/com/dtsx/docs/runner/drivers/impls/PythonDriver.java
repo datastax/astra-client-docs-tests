@@ -12,7 +12,11 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Function;
 
-public class PythonDriver implements ClientDriver {
+public class PythonDriver extends ClientDriver {
+    public PythonDriver(String artifact) {
+        super(artifact);
+    }
+
     @Override
     public ClientLanguage language() {
         return ClientLanguage.PYTHON;

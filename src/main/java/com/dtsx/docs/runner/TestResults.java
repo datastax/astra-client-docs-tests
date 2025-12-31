@@ -16,13 +16,13 @@ public class TestResults {
         return results;
     }
 
-    public record TestResult(TestMetadata metadata, String snapshotFile, Optional<Error> error) {
-        public static TestResult passed(TestMetadata metadata, String snapshotFile) {
-            return new TestResult(metadata, snapshotFile, Optional.empty());
+    public record TestResult(TestMetadata metadata, String exampleFile, String snapshotFile, Optional<Error> error) {
+        public static TestResult passed(TestMetadata metadata, String exampleFile, String snapshotFile) {
+            return new TestResult(metadata, exampleFile, snapshotFile, Optional.empty());
         }
 
-        public static TestResult failed(TestMetadata metadata, String snapshotFile, Error error) {
-            return new TestResult(metadata, snapshotFile, Optional.of(error));
+        public static TestResult failed(TestMetadata metadata, String exampleFile, String snapshotFile, Error error) {
+            return new TestResult(metadata, exampleFile, snapshotFile, Optional.of(error));
         }
 
         public boolean approved() {

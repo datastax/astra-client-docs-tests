@@ -30,32 +30,30 @@ public class VerifierCtx {
     @Getter(AccessLevel.NONE)
     private final Path environmentsFolder;
 
-    private final ClientDriver driver;
+    private final Map<ClientLanguage, ClientDriver> drivers;
     private final TestReporter reporter;
-    private final String clientVersion;
 
     private final boolean clean;
 
     private final Map<ExternalProgramType, String[]> commandOverrides;
     private final Predicate<Path> filter;
 
-    public VerifierCtx(VerifierArgs internalArgs) {
-        this.token = requireFlag(internalArgs.$token, "astra token", "-t", "ASTRA_TOKEN");
-        this.apiEndpoint = requireFlag(internalArgs.$apiEndpoint, "API endpoint", "-e", "API_ENDPOINT");
+    public VerifierCtx(VerifierArgs args) {
+        this.token = requireFlag(args.$token, "astra token", "-t", "ASTRA_TOKEN");
+        this.apiEndpoint = requireFlag(args.$apiEndpoint, "API endpoint", "-e", "API_ENDPOINT");
 
-        this.examplesFolder = requirePath(internalArgs.$examplesFolder, "examples folder", "-ef", "EXAMPLES_FOLDER");
-        this.snapshotsFolder = requirePath(internalArgs.$snapshotsFolder, "snapshots folder", "-sf", "SNAPSHOTS_FOLDER");
+        this.examplesFolder = requirePath(args.$examplesFolder, "examples folder", "-ef", "EXAMPLES_FOLDER");
+        this.snapshotsFolder = requirePath(args.$snapshotsFolder, "snapshots folder", "-sf", "SNAPSHOTS_FOLDER");
         this.tmpFolder = Path.of("./.docs_tests_temp");
         this.environmentsFolder = Path.of("./resources/environments/");
 
-        this.driver = ClientDriver.parse(requireParameter(internalArgs.$driver, "client driver", 1, "CLIENT_DRIVER"));
-        this.reporter = TestReporter.parse(internalArgs.$reporter);
-        this.clientVersion = internalArgs.$clientVersion.orElse(driver.language().defaultVersion());
+        this.drivers = mkDrivers(args);
+        this.reporter = TestReporter.parse(args.$reporter);
 
-        this.clean = internalArgs.$clean;
+        this.clean = args.$clean;
 
-        this.commandOverrides = mkCommandOverrides(internalArgs);
-        this.filter = mkFilter(internalArgs.$filters, internalArgs.$inverseFilters);
+        this.commandOverrides = mkCommandOverrides(args);
+        this.filter = mkFilter(args.$filters, args.$inverseFilters);
 
         verifyRequiredProgramsAvailable();
     }
@@ -64,13 +62,17 @@ public class VerifierCtx {
         return environmentsFolder.resolve(lang.name().toLowerCase());
     }
 
+    public List<ClientLanguage> languages() {
+        return new ArrayList<>(drivers.keySet());
+    }
+
     private <T> T requireFlag(Optional<T> optional, String name, String flag, String envVar) {
         return optional.orElseThrow(() -> new IllegalArgumentException(
             "Missing required option " + name + "; please provide it via the '" + flag + "' command line flag or the '" + envVar + "' environment variable."
         ));
     }
 
-    @SuppressWarnings("SameParameterValue")
+    @SuppressWarnings({ "SameParameterValue", "UnusedReturnValue" })
     private <T> T requireParameter(Optional<T> parameter, String name, int index, String envVar) {
         return parameter.orElseThrow(() -> new IllegalArgumentException(
             "Missing required parameter " + name + "; please provide it as parameter #" + index + " or via the '" + envVar + "' environment variable."
@@ -88,7 +90,20 @@ public class VerifierCtx {
         return path;
     }
 
-    private Map<ExternalProgramType, String[]> mkCommandOverrides(VerifierArgs internalArgs) {
+    private Map<ClientLanguage, ClientDriver> mkDrivers(VerifierArgs args) {
+        requireParameter(args.$drivers.stream().findFirst(), "client driver", 1, "CLIENT_DRIVER");
+
+        val driversMap = new HashMap<ClientLanguage, ClientDriver>();
+
+        for (val lang : args.$drivers) {
+            val artifact = args.$clientVersions.getOrDefault(lang, lang.defaultVersion());
+            driversMap.put(lang, lang.mkDriver().apply(artifact));
+        }
+
+        return driversMap;
+    }
+
+    private Map<ExternalProgramType, String[]> mkCommandOverrides(VerifierArgs args) {
         val overrides = new HashMap<ExternalProgramType, String[]>();
 
         for (val programType : ExternalProgramType.values()) {
@@ -99,7 +114,7 @@ public class VerifierCtx {
             });
         }
 
-        for (val override : internalArgs.$commandOverrides.entrySet()) {
+        for (val override : args.$commandOverrides.entrySet()) {
             overrides.put(override.getKey(), override.getValue().split(" "));
         }
 
@@ -129,7 +144,10 @@ public class VerifierCtx {
         val requiredPrograms = new HashSet<Function<VerifierCtx, ExternalProgram>>() {{
             add(ExternalPrograms::tsx);
             add(ExternalPrograms::npm);
-            addAll(driver.requiredPrograms());
+
+            for (val driver : drivers.values()) {
+                addAll(driver.requiredPrograms());
+            }
         }};
 
         for (val mkProgram : requiredPrograms) {

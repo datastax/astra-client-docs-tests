@@ -9,6 +9,10 @@ export const TableName = process.env.TABLE_NAME;
 
 export const client = new DataAPIClient(Token, {
   dbOptions: { keyspace: KeyspaceName },
+  timeoutDefaults: {
+    generalMethodTimeoutMs: 60000,
+    requestTimeoutMs: 60000,
+  }
 });
 
 export const db = client.db(ApiEndpoint);

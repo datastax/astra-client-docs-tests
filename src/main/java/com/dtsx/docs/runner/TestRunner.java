@@ -7,58 +7,75 @@ import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
+import com.dtsx.docs.runner.ExecutionEnvironment.ExecutionEnvironments;
 import com.dtsx.docs.runner.TestResults.TestResult;
 import com.dtsx.docs.runner.drivers.ClientDriver;
+import com.dtsx.docs.runner.drivers.ClientLanguage;
 import lombok.Cleanup;
 import lombok.val;
+
+import java.nio.file.Path;
+import java.util.Map;
+import java.util.function.Consumer;
 
 public class TestRunner {
     private final VerifierCtx ctx;
     private final ExternalProgram tsx;
     private final TestPlan plan;
-    private final ClientDriver driver;
+    private final Map<ClientLanguage, ClientDriver> drivers;
     private final TestVerifier verifier;
 
     private TestRunner(VerifierCtx ctx, TestPlan plan) {
         this.ctx = ctx;
         this.tsx = ExternalPrograms.tsx(ctx);
         this.plan = plan;
-        this.driver = ctx.driver();
+        this.drivers = ctx.drivers();
         this.verifier = new TestVerifier(ctx);
     }
 
     public static void runTests(VerifierCtx ctx, TestPlan plan) {
-        new TestRunner(ctx, plan).runTests();
+        new TestRunner(ctx, plan).runAllTests();
     }
 
-    private void runTests() {
+    private void runAllTests() {
         JSFixture.installDependencies(ctx);
-        @Cleanup val execEnv = ExecutionEnvironment.setup(ctx, driver);
+        @Cleanup val execEnvs = ExecutionEnvironment.setup(ctx, drivers.values());
 
-        val results = new TestResults();
+        val allResults = new TestResults();
 
         ctx.reporter().printHeader(plan);
 
         plan.forEachBaseFixture((baseFixture, mds) -> {
-            ctx.reporter().printBaseFixtureHeading(baseFixture, results);
+            ctx.reporter().printBaseFixtureHeading(baseFixture, allResults);
 
             baseFixture.useResetting(tsx, mds, (md) -> {
-                val res = runTest(md, execEnv);
-                results.add(baseFixture, res);
-                ctx.reporter().printTestResult(baseFixture, res, results);
+                runTestsForExample(md, execEnvs, (result) -> {
+                    allResults.add(baseFixture, result);
+                    ctx.reporter().printTestResult(baseFixture, result, allResults);
+                });
             });
         });
 
-        ctx.reporter().printSummary(results);
+        ctx.reporter().printSummary(allResults);
     }
 
-    private TestResult runTest(TestMetadata md, ExecutionEnvironment execEnv) {
-        return md.testFixture().use(tsx, () -> {
-            return execEnv.withTestFileCopied(md.exampleFile(), () -> {
-                return CliLogger.loading("Running %s test".formatted(md.exampleFolder().getFileName()), (_) -> {
-                    val result = driver.execute(ctx, execEnv);
-                    return verifier.verify(md, result);
-                });
+    private void runTestsForExample(TestMetadata md, ExecutionEnvironments execEnvs, Consumer<TestResult> resultConsumer) {
+        md.testFixture().useResetting(tsx, md.exampleFiles(), (pair) -> {
+            val language = pair.getLeft();
+            val exampleFile = pair.getRight();
+
+            val result = runSpecificTest(drivers.get(language), md, exampleFile, execEnvs.get(language));
+            resultConsumer.accept(result);
+        });
+    }
+
+    private TestResult runSpecificTest(ClientDriver driver, TestMetadata md, Path exampleFile, ExecutionEnvironment execEnv) {
+        val displayPath = md.exampleFolder().getParent().relativize(exampleFile).toString();
+
+        return execEnv.withTestFileCopied(driver, exampleFile, () -> {
+            return CliLogger.loading("Testing @!%s!@".formatted(displayPath), (_) -> {
+                val result = driver.execute(ctx, execEnv);
+                return verifier.verify(driver.language(), md, exampleFile, result);
             });
         });
     }

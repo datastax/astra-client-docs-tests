@@ -13,7 +13,11 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Function;
 
-public class TypeScriptDriver implements ClientDriver {
+public class TypeScriptDriver extends ClientDriver {
+    public TypeScriptDriver(String artifact) {
+        super(artifact);
+    }
+
     @Override
     public ClientLanguage language() {
         return ClientLanguage.TYPESCRIPT;
@@ -26,7 +30,7 @@ public class TypeScriptDriver implements ClientDriver {
 
     @Override
     public Path setupExecutionEnvironment(VerifierCtx ctx, ExecutionEnvironment execEnv) {
-        val res = ExternalPrograms.npm(ctx).run(execEnv.path(), "install", ctx.clientVersion());
+        val res = ExternalPrograms.npm(ctx).run(execEnv.path(), "install", artifact);
 
         if (res.exitCode() != 0) {
             throw new IllegalStateException("Failed to setup TypeScript environment: " + res.output());

@@ -20,6 +20,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.regex.Pattern;
+
+import static com.dtsx.docs.VerifierCli.ACCENT_COLOR;
 
 // Adapted from Astra CLI
 public class CliLogger {
@@ -52,8 +55,11 @@ public class CliLogger {
         log("[DEBUG] " + String.join("", msg), null);
     }
 
+    private static final Pattern HIGHLIGHT_PATTERN = Pattern.compile("@!(.*?)!@");
+
     public static <T> T loading(@NonNull String rawInitialMsg, Function<Consumer<String>, T> supplier) {
-        val initialMsg = rawInitialMsg;
+        val initialMsg = HIGHLIGHT_PATTERN.matcher(rawInitialMsg)
+            .replaceAll((match) -> highlight(match.group(1)));
 
         started(initialMsg);
 
@@ -80,6 +86,10 @@ public class CliLogger {
             }
             done(initialMsg);
         }
+    }
+
+    public static String highlight(CharSequence s) {
+        return ACCENT_COLOR.on() + s + ACCENT_COLOR.off();
     }
 
     private static void started(String... msg) {

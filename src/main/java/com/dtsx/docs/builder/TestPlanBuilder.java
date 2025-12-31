@@ -14,6 +14,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.TreeSet;
@@ -60,9 +61,11 @@ public class TestPlanBuilder {
                 return Optional.empty();
             }
 
-            val exampleFile = findExampleFile(exampleDir, ctx.driver().language());
+            val exampleFiles = findExampleFiles(exampleDir, ctx.languages()).stream()
+                .filter(pair -> ctx.filter().test(pair.getRight()))
+                .toList();
 
-            if (exampleFile.isEmpty() || !ctx.filter().test(exampleFile.get())) {
+            if (exampleFiles.isEmpty()) {
                 return Optional.empty();
             }
 
@@ -75,7 +78,7 @@ public class TestPlanBuilder {
 
             val testMetadata = new TestMetadata(
                 exampleDir,
-                exampleFile.get(),
+                exampleFiles,
                 testFixture.orElse(NoopFixture.INSTANCE),
                 snapshotTypes,
                 shareSnapshots
@@ -127,26 +130,27 @@ public class TestPlanBuilder {
         return types;
     }
 
-    private static Optional<Path> findExampleFile(Path dir, ClientLanguage lang) {
-        try (val paths = Files.walk(dir).skip(1)) {
-            for (val path : paths.toList()) {
-                if (Files.isDirectory(path)) {
-                    val maybeExampleFile = findExampleFile(path, lang);
+    private static List<Pair<ClientLanguage, Path>> findExampleFiles(Path exampleDir, List<ClientLanguage> langs) {
+        val ret = new ArrayList<Pair<ClientLanguage, Path>>();
 
-                    if (maybeExampleFile.isPresent()) {
-                        return maybeExampleFile;
-                    }
+        try (val children = Files.walk(exampleDir).skip(1)) {
+            for (val child : children.toList()) {
+                if (!Files.isRegularFile(child)) {
+                    continue;
                 }
 
-                if (Files.isRegularFile(path) && path.getFileName().toString().endsWith(lang.extension())) {
-                    return Optional.of(path);
+                for (val lang : langs) {
+                    if (child.getFileName().toString().endsWith(lang.extension())) {
+                        ret.add(Pair.of(lang, child));
+                        break;
+                    }
                 }
             }
         } catch (IOException e) {
-            throw new RuntimeException("Failed to detect available drivers in " + dir, e);
+            throw new RuntimeException("Failed to detect available example files in " + exampleDir, e);
         }
 
-        return Optional.empty();
+        return ret;
     }
 
     private record MetaYml(

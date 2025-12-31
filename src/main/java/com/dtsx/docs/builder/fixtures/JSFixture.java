@@ -16,15 +16,6 @@ public sealed interface JSFixture permits NoopFixture, JSFixtureImpl {
     void reset(ExternalProgram tsx);
     void teardown(ExternalProgram tsx);
 
-    default <T> T use(ExternalProgram tsx, Supplier<T> supplier) {
-        setup(tsx);
-        try {
-            return supplier.get();
-        } finally {
-            teardown(tsx);
-        }
-    }
-
     default <T> void useResetting(ExternalProgram tsx, Iterable<T> t, Consumer<T> consumer) {
         setup(tsx);
         try {

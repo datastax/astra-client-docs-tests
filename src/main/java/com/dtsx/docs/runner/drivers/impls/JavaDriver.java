@@ -14,7 +14,11 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Function;
 
-public class JavaDriver implements ClientDriver {
+public class JavaDriver extends ClientDriver {
+    public JavaDriver(String artifact) {
+        super(artifact);
+    }
+
     @Override
     public ClientLanguage language() {
         return ClientLanguage.JAVA;
@@ -29,7 +33,7 @@ public class JavaDriver implements ClientDriver {
     public Path setupExecutionEnvironment(VerifierCtx ctx, ExecutionEnvironment execEnv) {
        try {
            val buildGradle = Files.readString(execEnv.path().resolve("build.gradle"));
-           val updatedBuildGradle = buildGradle.replace("${CLIENT_ARTIFACT}", ctx.clientVersion());
+           val updatedBuildGradle = buildGradle.replace("${CLIENT_ARTIFACT}", artifact);
            Files.writeString(execEnv.path().resolve("build.gradle"), updatedBuildGradle);
        } catch (Exception e) {
            throw new RuntimeException("Failed to update build.gradle with client version", e);

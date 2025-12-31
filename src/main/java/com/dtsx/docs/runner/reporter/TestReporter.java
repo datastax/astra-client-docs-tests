@@ -6,15 +6,17 @@ import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.runner.TestResults;
 import com.dtsx.docs.runner.TestResults.TestResult;
 import lombok.val;
+import picocli.CommandLine.Help.Ansi.Style;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Supplier;
+
+import static com.dtsx.docs.lib.CliLogger.highlight;
 
 public abstract class TestReporter {
     public void printHeader(TestPlan plan) {
-        CliLogger.println("Running " + countTotalTests(plan) + " tests...");
+        CliLogger.println("Running " + highlight(String.valueOf(countTotalTests(plan))) + " tests...");
     }
 
     public abstract void printBaseFixtureHeading(JSFixture baseFixture, TestResults history);
@@ -48,11 +50,16 @@ public abstract class TestReporter {
     }
 
     protected void printFixtureHeading(int index, JSFixture baseFixture) {
-        CliLogger.println("\n" + index + ") " + baseFixture.fixtureName());
+        CliLogger.println("\n" + highlight(index + ") ") + baseFixture.fixtureName());
+    }
+
+    protected void printTestResult(String status, TestResult result) {
+        val exampleFile = Style.faint.on() + "(" + result.exampleFile() + ")" + Style.faint.off();
+        CliLogger.println("  - (" + status + ") " + result.snapshotFile() + " " + exampleFile);
     }
 
     private int countTotalTests(TestPlan plan) {
-        return plan.unwrap().values().stream().mapToInt(Set::size).sum();
+        return plan.unwrap().values().stream().mapToInt(s -> s.stream().mapToInt(p -> p.exampleFiles().size()).sum()).sum();
     }
 
     private int countTotalTests(TestResults history) {

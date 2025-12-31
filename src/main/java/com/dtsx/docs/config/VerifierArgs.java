@@ -2,6 +2,7 @@ package com.dtsx.docs.config;
 
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgramType;
+import com.dtsx.docs.runner.drivers.ClientLanguage;
 import lombok.ToString;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -15,11 +16,19 @@ public class VerifierArgs {
     @Parameters(
         index = "0",
         arity = "0..1",
-        description = "Client driver to use (e.g., 'java', 'typescript').",
-        defaultValue = "${CLIENT_DRIVER}",
-        paramLabel = "DRIVER"
+        description = "Client drivers to use (e.g., 'java', 'typescript').",
+        defaultValue = "${CLIENT_DRIVERS}",
+        paramLabel = "DRIVER",
+        split = ","
     )
-    public Optional<String> $driver;
+    public List<ClientLanguage> $drivers;
+
+    @Option(
+        names = { "-A", "--client-artifact" },
+        description = "Client artifacts to install (e.g.,`-Atypescript=@datastax/astra-db-ts@v2.0.0' -Apython=/path/to/local/package`).",
+        paramLabel = "CLIENT=ARTIFACT"
+    )
+    public Map<ClientLanguage, String> $clientVersions = Map.of();
 
     @Option(
         names = { "-t", "--astra-token" },
@@ -56,18 +65,10 @@ public class VerifierArgs {
     @Option(
         names = { "-r", "--test-reporter" },
         description = "Test reporter type (e.g., 'only_failures', 'all_tests').",
-        defaultValue = "${TEST_REPORTER:-only_failures}",
+        defaultValue = "${TEST_REPORTER:-all_tests}",
         paramLabel = "TYPE"
     )
     public String $reporter;
-
-    @Option(
-        names = { "-cv", "--client-artifact" },
-        description = "Client artifact to install (e.g., '@datastax/astra-db-ts@v2.0.0', '/path/to/local/package').",
-        defaultValue = "${CLIENT_ARTIFACT}",
-        paramLabel = "ARTIFACT"
-    )
-    public Optional<String> $clientVersion;
 
     @Option(
         names = { "--clean" },

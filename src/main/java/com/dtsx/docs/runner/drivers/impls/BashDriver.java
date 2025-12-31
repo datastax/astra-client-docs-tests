@@ -12,7 +12,11 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Function;
 
-public class BashDriver implements ClientDriver {
+public class BashDriver extends ClientDriver {
+    public BashDriver(String artifact) {
+        super(artifact);
+    }
+
     @Override
     public ClientLanguage language() {
         return ClientLanguage.BASH;
