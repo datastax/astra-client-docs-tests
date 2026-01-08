@@ -72,7 +72,7 @@ public sealed abstract class RecordSnapshotSource extends SnapshotSource {
 
         @Override
         public Stream<Map<String, Object>> streamRecords(VerifierCtx ctx) {
-            return DataAPIUtils.getCollection(ctx).find(filter).stream().map(Document::getDocumentMap);
+            return DataAPIUtils.getCollection(ctx.connectionInfo()).find(filter).stream().map(Document::getDocumentMap);
         }
     }
 
@@ -84,7 +84,7 @@ public sealed abstract class RecordSnapshotSource extends SnapshotSource {
 
         @Override
         public Stream<Map<String, Object>> streamRecords(VerifierCtx ctx) {
-            return DataAPIUtils.getTable(ctx).find(filter).stream().map(Row::getColumnMap);
+            return DataAPIUtils.getTable(ctx.connectionInfo()).find(filter).stream().map(Row::getColumnMap);
         }
     }
 

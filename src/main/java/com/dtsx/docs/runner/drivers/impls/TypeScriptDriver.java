@@ -31,13 +31,13 @@ public class TypeScriptDriver extends ClientDriver {
 
     @Override
     public Path setupExecutionEnvironment(VerifierCtx ctx, ExecutionEnvironment execEnv) {
-        val res = ExternalPrograms.npm(ctx).run(execEnv.path(), "install", artifact);
+        val res = ExternalPrograms.npm(ctx).run(execEnv.envDir(), "install", artifact);
 
         if (res.exitCode() != 0) {
             throw new TestRunException("Failed to setup TypeScript environment: " + res.output());
         }
 
-        return execEnv.path().resolve("main.ts");
+        return execEnv.envDir().resolve("main.ts");
     }
 
     @Override
@@ -47,6 +47,6 @@ public class TypeScriptDriver extends ClientDriver {
 
     @Override
     public RunResult execute(VerifierCtx ctx, ExecutionEnvironment execEnv) {
-        return ExternalPrograms.tsx(ctx).run(execEnv.path(), execEnv.scriptPath().toString());
+        return ExternalPrograms.tsx(ctx).run(execEnv.envDir(), execEnv.scriptPath().toString());
     }
 }

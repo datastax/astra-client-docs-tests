@@ -121,9 +121,9 @@ public sealed abstract class JSFixture permits NoopFixture, JSFixtureImpl {
     ///
     /// @param ctx the verifier context containing the examples directory path and execution environment path
     /// @throws TestRunException if npm install fails
-    public static void installDependencies(VerifierCtx ctx) {
+    public static void installDependencies(VerifierCtx ctx, Path execEnvRoot) {
         val res = CliLogger.loading("Installing JS fixture dependencies...", (_) -> {
-            return ExternalPrograms.npm(ctx).run(ctx.rootExecEnvFolder(), "install");
+            return ExternalPrograms.npm(ctx).run(execEnvRoot, "install");
         });
 
         if (res.exitCode() != 0) {

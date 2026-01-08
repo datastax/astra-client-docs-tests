@@ -53,6 +53,13 @@ public class TestPlan {
         results.forEach(consumer);
     }
 
+    /// Returns the total number of example files across all test roots.
+    ///
+    /// @return total count of example files to test
+    public int totalTests() {
+        return results.values().stream().flatMap(Set::stream).mapToInt(root -> root.filesToTest().size()).sum();
+    }
+
     /// Builder for constructing a [TestPlan] by grouping test roots by their base fixture.
     public static class Builder {
         private final SequencedMap<JSFixture, SequencedSet<TestRoot>> results = new LinkedHashMap<>();
@@ -62,13 +69,6 @@ public class TestPlan {
         /// @param pair a (base fixture, test root) pair
         public void addRoot(Pair<JSFixture, TestRoot> pair) {
             results.computeIfAbsent(pair.getLeft(), _ -> new LinkedHashSet<>()).add(pair.getRight());
-        }
-
-        /// Returns the total number of example files across all test roots.
-        ///
-        /// @return total count of example files to test
-        public int totalTests() {
-            return results.values().stream().flatMap(Set::stream).mapToInt(root -> root.filesToTest().size()).sum();
         }
 
         /// Builds the final test plan.

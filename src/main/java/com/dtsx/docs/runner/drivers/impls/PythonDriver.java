@@ -29,7 +29,7 @@ public class PythonDriver extends ClientDriver {
 
     @Override
     public Path setupExecutionEnvironment(VerifierCtx ctx, ExecutionEnvironment execEnv) {
-        return execEnv.path().resolve("main.py");
+        return execEnv.envDir().resolve("main.py");
     }
 
     @Override

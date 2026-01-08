@@ -30,7 +30,7 @@ public class VerifierArgs {
         description = "Client artifacts to install (e.g.,`-Atypescript=@datastax/astra-db-ts@v2.0.0' -Apython=/path/to/local/package`).",
         paramLabel = "CLIENT=ARTIFACT"
     )
-    public Map<ClientLanguage, String> $clientVersions = Map.of();
+    public Map<ClientLanguage, String> $artifactOverrides = Map.of();
 
     @Option(
         names = { "-t", "--astra-token" },

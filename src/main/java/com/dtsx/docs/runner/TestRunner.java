@@ -40,7 +40,6 @@ public class TestRunner {
     }
 
     private boolean runAllTests() {
-        JSFixture.installDependencies(ctx);
         @Cleanup val execEnvs = ExecutionEnvironment.setup(ctx, drivers.values());
 
         val history = new TestResults();

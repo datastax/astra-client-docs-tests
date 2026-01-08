@@ -29,7 +29,7 @@ public class BashDriver extends ClientDriver {
 
     @Override
     public Path setupExecutionEnvironment(VerifierCtx ctx, ExecutionEnvironment execEnv) {
-        return execEnv.path().resolve("main.sh");
+        return execEnv.envDir().resolve("main.sh");
     }
 
     @Override
@@ -39,6 +39,6 @@ public class BashDriver extends ClientDriver {
 
     @Override
     public RunResult execute(VerifierCtx ctx, ExecutionEnvironment execEnv) {
-        return ExternalPrograms.bash(ctx).run(execEnv.path(), execEnv.scriptPath().toString());
+        return ExternalPrograms.bash(ctx).run(execEnv.envDir(), execEnv.scriptPath().toString());
     }
 }

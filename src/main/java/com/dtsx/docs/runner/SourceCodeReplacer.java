@@ -3,6 +3,7 @@ package com.dtsx.docs.runner;
 import com.dtsx.docs.config.VerifierCtx;
 import lombok.val;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -13,8 +14,8 @@ public class SourceCodeReplacer {
         "KEYSPACE_NAME", _ -> TEST_KEYSPACE_NAME,
         "COLLECTION_NAME", _ -> TEST_COLLECTION_NAME,
         "TABLE_NAME", _ -> TEST_TABLE_NAME,
-        "APPLICATION_TOKEN", VerifierCtx::token,
-        "API_ENDPOINT", VerifierCtx::apiEndpoint
+        "APPLICATION_TOKEN", ctx -> ctx.connectionInfo().token(),
+        "API_ENDPOINT", ctx -> ctx.connectionInfo().endpoint()
     );
 
     public static String replacePlaceholders(String src, VerifierCtx ctx) {
@@ -26,7 +27,7 @@ public class SourceCodeReplacer {
     }
 
     public static Map<String, String> mkEnvVars(VerifierCtx ctx) {
-        val envVars = new java.util.HashMap<String, String>();
+        val envVars = new HashMap<String, String>();
         for (val entry : PLACEHOLDERS.entrySet()) {
             envVars.put(entry.getKey(), entry.getValue().apply(ctx));
         }

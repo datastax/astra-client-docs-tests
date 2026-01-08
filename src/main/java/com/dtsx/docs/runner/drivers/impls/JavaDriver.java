@@ -33,16 +33,16 @@ public class JavaDriver extends ClientDriver {
     @Override
     public Path setupExecutionEnvironment(VerifierCtx ctx, ExecutionEnvironment execEnv) {
        try {
-           val buildGradle = Files.readString(execEnv.path().resolve("build.gradle"));
+           val buildGradle = Files.readString(execEnv.envDir().resolve("build.gradle"));
            val updatedBuildGradle = buildGradle.replace("${CLIENT_ARTIFACT}", artifact);
-           Files.writeString(execEnv.path().resolve("build.gradle"), updatedBuildGradle);
+           Files.writeString(execEnv.envDir().resolve("build.gradle"), updatedBuildGradle);
        } catch (Exception e) {
            throw new TestRunException("Failed to update build.gradle with client version", e);
        }
 
-        ExternalPrograms.custom(ctx).run(execEnv.path(), "./gradlew", "build");
+        ExternalPrograms.custom(ctx).run(execEnv.envDir(), "./gradlew", "build");
 
-        return execEnv.path().resolve("src/main/java/Example.java");
+        return execEnv.envDir().resolve("src/main/java/Example.java");
     }
 
     @Override
@@ -52,6 +52,6 @@ public class JavaDriver extends ClientDriver {
 
     @Override
     public RunResult execute(VerifierCtx ctx, ExecutionEnvironment execEnv) {
-        return ExternalPrograms.custom(ctx).run(execEnv.path(), "./gradlew", "run", "--quiet");
+        return ExternalPrograms.custom(ctx).run(execEnv.envDir(), "./gradlew", "run", "--quiet");
     }
 }

@@ -7,31 +7,28 @@ import com.dtsx.docs.runner.drivers.ClientDriver;
 import com.dtsx.docs.runner.drivers.ClientLanguage;
 import com.dtsx.docs.runner.reporter.TestReporter;
 import com.dtsx.docs.runner.verifier.VerifyMode;
+import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.experimental.Accessors;
 import lombok.val;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.ParameterException;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
 @Getter
-@Accessors(fluent = true)
 public class VerifierCtx {
-    private final CommandLine cmd;
-
-    private final String token;
-    private final String apiEndpoint;
+    private final ConnectionInfo connectionInfo;
 
     private final Path examplesFolder;
     private final Path snapshotsFolder;
     private final Path tmpFolder;
-    private final Path rootExecEnvFolder;
+
+    @Getter(AccessLevel.NONE)
+    private final Path execEnvTemplatesFolder;
 
     private final Map<ClientLanguage, ClientDriver> drivers;
     private final TestReporter reporter;
@@ -43,17 +40,16 @@ public class VerifierCtx {
     private final Predicate<Path> filter;
 
     public VerifierCtx(VerifierArgs args, CommandSpec spec) {
-        this.cmd = spec.commandLine();
+        val cmd = spec.commandLine();
 
-        this.token = requireFlag(args.$token, "astra token", "-t", "ASTRA_TOKEN");
-        this.apiEndpoint = requireFlag(args.$apiEndpoint, "API endpoint", "-e", "API_ENDPOINT");
+        this.connectionInfo = mkConnectionInfo(cmd, args);
 
-        this.examplesFolder = requirePath(args.$examplesFolder, "examples folder", "-ef", "EXAMPLES_FOLDER");
-        this.snapshotsFolder = requirePath(args.$snapshotsFolder, "snapshots folder", "-sf", "SNAPSHOTS_FOLDER");
+        this.examplesFolder = ArgUtils.requirePath(cmd, args.$examplesFolder, "examples folder", "-ef", "EXAMPLES_FOLDER");
+        this.snapshotsFolder = ArgUtils.requirePath(cmd, args.$snapshotsFolder, "snapshots folder", "-sf", "SNAPSHOTS_FOLDER");
         this.tmpFolder = Path.of("./.docs_tests_temp");
-        this.rootExecEnvFolder = Path.of("./resources/environments/");
+        this.execEnvTemplatesFolder = Path.of("./resources/environments/");
 
-        this.drivers = mkDrivers(args);
+        this.drivers = mkDrivers(cmd, args);
         this.reporter = TestReporter.parse(this, args.$reporter);
         this.verifyMode = resolveVerifyMode(args);
 
@@ -62,49 +58,39 @@ public class VerifierCtx {
         this.commandOverrides = mkCommandOverrides(args);
         this.filter = mkFilter(args.$filters, args.$inverseFilters);
 
-        verifyRequiredProgramsAvailable();
+        verifyRequiredProgramsAvailable(cmd);
     }
 
-    public Path executionEnvironmentPathFor(ClientLanguage lang) {
-        return rootExecEnvFolder.resolve(lang.name().toLowerCase());
+    private ConnectionInfo mkConnectionInfo(CommandLine cmd, VerifierArgs args) {
+        val token = ArgUtils.requireFlag(cmd, args.$token, "astra token", "-t", "ASTRA_TOKEN");
+        val apiEndpoint = ArgUtils.requireFlag(cmd, args.$apiEndpoint, "API endpoint", "-e", "API_ENDPOINT");
+        return ConnectionInfo.parse(token, apiEndpoint);
+    }
+
+    public Path executionEnvironmentTemplate(ClientLanguage lang) {
+        return execEnvTemplatesFolder.resolve(lang.name().toLowerCase());
     }
 
     public List<ClientLanguage> languages() {
         return new ArrayList<>(drivers.keySet());
     }
 
-    private <T> T requireFlag(Optional<T> optional, String name, String flag, String envVar) {
-        return optional.orElseThrow(() -> new ParameterException(cmd,
-            "Missing required option " + name + "; please provide it via the '" + flag + "' command line flag or the '" + envVar + "' environment variable."
-        ));
-    }
-
-    @SuppressWarnings({ "SameParameterValue", "UnusedReturnValue" })
-    private <T> T requireParameter(Optional<T> parameter, String name, int index, String envVar) {
-        return parameter.orElseThrow(() -> new ParameterException(cmd,
-            "Missing required parameter " + name + "; please provide it as parameter #" + index + " or via the '" + envVar + "' environment variable."
-        ));
-    }
-
-    private Path requirePath(String rawPath, String name, String flag, String envVar) {
-        val path = Path.of(rawPath);
-
-        if (!Files.exists(path)) {
-            throw new ParameterException(cmd,
-                "The provided " + name + " path '" + path.toAbsolutePath() + "' does not exist; please provide a valid path via the '" + flag + "' command line flag or the '" + envVar + "' environment variable."
-            );
-        }
-        return path;
-    }
-
-    private Map<ClientLanguage, ClientDriver> mkDrivers(VerifierArgs args) {
-        requireParameter(args.$drivers.stream().findFirst(), "client driver", 1, "CLIENT_DRIVER");
+    private Map<ClientLanguage, ClientDriver> mkDrivers(CommandLine cmd, VerifierArgs args) {
+        ArgUtils.requireParameter(cmd, args.$drivers.stream().findFirst(), "client driver", 1, "CLIENT_DRIVER");
 
         val driversMap = new HashMap<ClientLanguage, ClientDriver>();
 
         for (val lang : args.$drivers) {
-            val artifact = args.$clientVersions.getOrDefault(lang, lang.defaultVersion());
-            driversMap.put(lang, lang.mkDriver().apply(artifact));
+            val usesArtifact = lang.defaultArtifact() != null;
+
+            val envVarName = lang.name().toUpperCase() + "_ARTIFACT";
+            val resolvedArtifact = Optional.ofNullable(args.$artifactOverrides.get(lang)).or(() -> Optional.ofNullable(System.getProperty(envVarName)));
+
+            if (resolvedArtifact.isPresent() && !usesArtifact) {
+                throw new ParameterException(cmd, lang.name() + " does not support artifact overrides.");
+            }
+
+            driversMap.put(lang, lang.mkDriver().apply(resolvedArtifact.orElse(lang.defaultArtifact())));
         }
 
         return driversMap;
@@ -153,7 +139,7 @@ public class VerifierCtx {
             .reduce(Predicate::or);
     }
 
-    private void verifyRequiredProgramsAvailable() {
+    private void verifyRequiredProgramsAvailable(CommandLine cmd) {
         val requiredPrograms = new HashSet<Function<VerifierCtx, ExternalProgram>>() {{
             add(ExternalPrograms::tsx);
             add(ExternalPrograms::npm);
