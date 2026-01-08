@@ -49,11 +49,8 @@ public class VerifierCli implements Callable<Integer> {
         val ctx = $args.toCtx(spec);
 
         try {
-            val passed = TestRunner.runTests(ctx, TestPlanBuilder.buildPlan(ctx));
-
-            return (passed)
-                ? 0
-                : 1;
+            val ok = TestRunner.runTests(ctx, TestPlanBuilder.buildPlan(ctx));
+            return (ok) ? 0 : 1;
         } finally {
             CliLogger.dumpLogsToFile(ctx);
         }

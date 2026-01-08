@@ -3,16 +3,15 @@ package com.dtsx.docs.builder.fixtures;
 import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
+import com.dtsx.docs.runner.TestRunException;
 import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 
 import java.nio.file.Path;
 
-@EqualsAndHashCode
 @RequiredArgsConstructor
-public final class JSFixtureImpl implements JSFixture {
-    @EqualsAndHashCode.Exclude
+public final class JSFixtureImpl extends JSFixture {
     private final VerifierCtx ctx;
     private final Path path;
 
@@ -43,12 +42,13 @@ public final class JSFixtureImpl implements JSFixture {
     private void tryCallJsFunction(ExternalProgram tsx, String function) {
         val displayPath = ctx.examplesFolder().relativize(path);
 
+        // Calls the function if it exists
         val res = CliLogger.loading("Calling @!%s!@ in @!%s!@".formatted(function, displayPath), (_) -> {
             return tsx.run("-e", "import * as m from '" + path.toAbsolutePath() + "'; m." + function + "?.()");
         });
 
         if (res.exitCode() != 0) {
-            throw new RuntimeException("Failed to call " + function + " in " + path + ":\nSTDOUT:\n" + res.stdout() + "\nSTDERR:\n" + res.stderr());
+            throw new TestRunException("Failed to call " + function + " in " + path + ":\nSTDOUT:\n" + res.stdout() + "\nSTDERR:\n" + res.stderr());
         }
     }
 }

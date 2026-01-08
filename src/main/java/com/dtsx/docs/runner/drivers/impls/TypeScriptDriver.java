@@ -5,6 +5,7 @@ import com.dtsx.docs.lib.ExternalPrograms;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import com.dtsx.docs.runner.ExecutionEnvironment;
+import com.dtsx.docs.runner.TestRunException;
 import com.dtsx.docs.runner.drivers.ClientDriver;
 import com.dtsx.docs.runner.drivers.ClientLanguage;
 import lombok.val;
@@ -33,7 +34,7 @@ public class TypeScriptDriver extends ClientDriver {
         val res = ExternalPrograms.npm(ctx).run(execEnv.path(), "install", artifact);
 
         if (res.exitCode() != 0) {
-            throw new IllegalStateException("Failed to setup TypeScript environment: " + res.output());
+            throw new TestRunException("Failed to setup TypeScript environment: " + res.output());
         }
 
         return execEnv.path().resolve("main.ts");

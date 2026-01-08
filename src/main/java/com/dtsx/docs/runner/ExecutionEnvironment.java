@@ -10,7 +10,6 @@ import org.apache.commons.io.file.PathUtils;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -30,7 +29,7 @@ public class ExecutionEnvironment implements AutoCloseable {
                 val languageName = driver.language().name().toLowerCase();
 
                 return CliLogger.loading("Setting up @!%s!@ execution environment".formatted(languageName), (_) -> {
-                    val srcExecEnv = ctx.sourceExecutionEnvironment(driver.language());
+                    val srcExecEnv = ctx.executionEnvironmentPathFor(driver.language());
                     val destExecEnv = ctx.tmpFolder().resolve("environments").resolve(driver.language().name().toLowerCase());
 
                     val execEnv = new ExecutionEnvironment(ctx, destExecEnv, null);
@@ -42,7 +41,7 @@ public class ExecutionEnvironment implements AutoCloseable {
                             PathUtils.copyDirectory(srcExecEnv, destExecEnv);
                         }
                     } catch (Exception e) {
-                        throw new RuntimeException("Failed to setup " + languageName + " execution environment", e);
+                        throw new TestRunException("Failed to setup " + languageName + " execution environment", e);
                     }
 
                     val testFileCopyPath = driver.setupExecutionEnvironment(ctx, execEnv);
@@ -99,14 +98,17 @@ public class ExecutionEnvironment implements AutoCloseable {
         Files.deleteIfExists(file);
     }
 
-    public static class ExecutionEnvironments extends HashMap<ClientLanguage, ExecutionEnvironment> implements AutoCloseable {
-        public ExecutionEnvironments(Map<ClientLanguage, ExecutionEnvironment> map) {
-            super(map);
+    @RequiredArgsConstructor
+    public static class ExecutionEnvironments implements AutoCloseable {
+        private final Map<ClientLanguage, ExecutionEnvironment> map;
+
+        public ExecutionEnvironment get(ClientLanguage language) {
+            return map.get(language);
         }
 
         @Override
         public void close() {
-            forEach((_, env) -> env.close());
+            map.forEach((_, env) -> env.close());
         }
     }
 }

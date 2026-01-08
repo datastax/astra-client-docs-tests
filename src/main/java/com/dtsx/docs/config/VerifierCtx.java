@@ -7,7 +7,6 @@ import com.dtsx.docs.runner.drivers.ClientDriver;
 import com.dtsx.docs.runner.drivers.ClientLanguage;
 import com.dtsx.docs.runner.reporter.TestReporter;
 import com.dtsx.docs.runner.verifier.VerifyMode;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 import lombok.val;
@@ -32,9 +31,7 @@ public class VerifierCtx {
     private final Path examplesFolder;
     private final Path snapshotsFolder;
     private final Path tmpFolder;
-
-    @Getter(AccessLevel.NONE)
-    private final Path environmentsFolder;
+    private final Path rootExecEnvFolder;
 
     private final Map<ClientLanguage, ClientDriver> drivers;
     private final TestReporter reporter;
@@ -54,7 +51,7 @@ public class VerifierCtx {
         this.examplesFolder = requirePath(args.$examplesFolder, "examples folder", "-ef", "EXAMPLES_FOLDER");
         this.snapshotsFolder = requirePath(args.$snapshotsFolder, "snapshots folder", "-sf", "SNAPSHOTS_FOLDER");
         this.tmpFolder = Path.of("./.docs_tests_temp");
-        this.environmentsFolder = Path.of("./resources/environments/");
+        this.rootExecEnvFolder = Path.of("./resources/environments/");
 
         this.drivers = mkDrivers(args);
         this.reporter = TestReporter.parse(this, args.$reporter);
@@ -68,8 +65,8 @@ public class VerifierCtx {
         verifyRequiredProgramsAvailable();
     }
 
-    public Path sourceExecutionEnvironment(ClientLanguage lang) {
-        return environmentsFolder.resolve(lang.name().toLowerCase());
+    public Path executionEnvironmentPathFor(ClientLanguage lang) {
+        return rootExecEnvFolder.resolve(lang.name().toLowerCase());
     }
 
     public List<ClientLanguage> languages() {

@@ -58,7 +58,7 @@ public class TestPlanBuilder {
             CliLogger.println("@|faint Building test plan...|@");
             CliLogger.println("@|faint -> Found " + testRoots.size() + " test roots|@");
 
-            val plan = new TestPlan();
+            val plan = new TestPlan.Builder();
 
             for (val testRoot : testRoots) {
                 mkTestRoot(testRoot, ctx).ifPresent(plan::addRoot);
@@ -67,7 +67,7 @@ public class TestPlanBuilder {
             CliLogger.println("@|faint -> Found " + plan.totalTests() + " example files to test|@");
             CliLogger.println();
 
-            return plan;
+            return plan.build();
         });
     }
 

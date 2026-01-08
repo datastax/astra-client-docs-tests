@@ -1,6 +1,7 @@
 package com.dtsx.docs.runner.reporter;
 
 import com.dtsx.docs.builder.TestPlan;
+import com.dtsx.docs.builder.TestPlanException;
 import com.dtsx.docs.builder.fixtures.JSFixture;
 import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.lib.CliLogger;
@@ -45,7 +46,7 @@ public abstract class TestReporter {
         val supplier = availableReporters.get(reporter.toLowerCase());
 
         if (supplier == null) {
-            throw new IllegalArgumentException("Unknown reporter: '" + reporter + "' (expected one of: " + String.join(", ", availableReporters.keySet()) + ")");
+            throw new TestPlanException("Unknown reporter: '" + reporter + "' (expected one of: " + String.join(", ", availableReporters.keySet()) + ")");
         }
 
         return supplier.apply(ctx);

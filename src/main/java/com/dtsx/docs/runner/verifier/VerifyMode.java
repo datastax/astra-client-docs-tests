@@ -27,7 +27,7 @@ public enum VerifyMode {
                 try {
                     return o.inline(Files.readString(approvedFile), InlineOptions.showCode(false));
                 } catch (IOException e) {
-                    throw new RuntimeException("Failed to read example file for VERIFY_ONLY verification mode: " + approvedFile, e);
+                    throw new TestRunException("Failed to read example file for VERIFY_ONLY verification mode: " + approvedFile, e);
                 }
             };
             case DRY_RUN -> {

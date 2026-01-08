@@ -1,6 +1,7 @@
 package com.dtsx.docs.runner.snapshots;
 
 import com.dtsx.docs.builder.MetaYml;
+import com.dtsx.docs.builder.TestPlanException;
 import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 
@@ -41,7 +42,7 @@ public class OutputSnapshotSource extends SnapshotSource {
             try {
                 this.capture = Capture.valueOf(params.get("capture").toString().toUpperCase());
             } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("Unexpected value for snapshot source output capture: " + params.get("capture") + " (expected one of 'all', 'stdout', 'stderr')");
+                throw new TestPlanException("Unexpected value for snapshot source output capture: " + params.get("capture") + " (expected one of 'all', 'stdout', 'stderr')");
             }
         }
     }

@@ -4,6 +4,7 @@ import com.datastax.astra.client.collections.definition.documents.Document;
 import com.datastax.astra.client.core.query.Filter;
 import com.datastax.astra.client.tables.definition.rows.Row;
 import com.dtsx.docs.builder.MetaYml;
+import com.dtsx.docs.builder.TestPlanException;
 import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.lib.DataAPIUtils;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
@@ -45,7 +46,7 @@ public sealed abstract class RecordSnapshotSource extends SnapshotSource {
             if (params.get("filter") instanceof Map<?, ?> filterMap) {
                 this.filter = new Filter((Map<String, Object>) filterMap);
             } else {
-                throw new IllegalArgumentException("The 'filter' parameter must be a Map<String, Object>");
+                throw new TestPlanException("The 'filter' parameter must be a Map<String, Object>");
             }
         }
     }

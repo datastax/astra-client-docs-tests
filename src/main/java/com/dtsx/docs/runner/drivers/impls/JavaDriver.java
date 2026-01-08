@@ -5,6 +5,7 @@ import com.dtsx.docs.lib.ExternalPrograms;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import com.dtsx.docs.runner.ExecutionEnvironment;
+import com.dtsx.docs.runner.TestRunException;
 import com.dtsx.docs.runner.drivers.ClientDriver;
 import com.dtsx.docs.runner.drivers.ClientLanguage;
 import lombok.val;
@@ -36,7 +37,7 @@ public class JavaDriver extends ClientDriver {
            val updatedBuildGradle = buildGradle.replace("${CLIENT_ARTIFACT}", artifact);
            Files.writeString(execEnv.path().resolve("build.gradle"), updatedBuildGradle);
        } catch (Exception e) {
-           throw new RuntimeException("Failed to update build.gradle with client version", e);
+           throw new TestRunException("Failed to update build.gradle with client version", e);
        }
 
         ExternalPrograms.custom(ctx).run(execEnv.path(), "./gradlew", "build");

@@ -1,12 +1,10 @@
 package com.dtsx.docs.builder.fixtures;
 
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
-import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 
-@EqualsAndHashCode
 @RequiredArgsConstructor
-public final class NoopFixture implements JSFixture {
+public final class NoopFixture extends JSFixture {
     public static final NoopFixture INSTANCE = new NoopFixture("<noop>");
 
     private final String name;
