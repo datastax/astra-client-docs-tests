@@ -1,7 +1,9 @@
+$schema: "../_fixtures/meta.schema.json"
 fixtures:
   base: basic-collection.js
 snapshots:
   share: true
   sources:
-    - collection
-    - stderr
+    output:
+      capture: stderr
+    documents:

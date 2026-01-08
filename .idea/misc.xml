@@ -6,6 +6,7 @@
     </list>
     <writeAnnotations>
       <writeAnnotation name="picocli.CommandLine.Mixin" />
+      <writeAnnotation name="picocli.CommandLine.Spec" />
     </writeAnnotations>
   </component>
   <component name="ExternalStorageConfigurationManager" enabled="true" />

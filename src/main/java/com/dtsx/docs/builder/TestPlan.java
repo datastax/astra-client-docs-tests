@@ -1,50 +1,43 @@
 package com.dtsx.docs.builder;
 
 import com.dtsx.docs.builder.fixtures.JSFixture;
+import com.dtsx.docs.config.VerifierCtx;
+import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.apache.commons.lang3.tuple.Pair;
+import picocli.CommandLine.Help.Ansi.Style;
 
 import java.util.*;
 import java.util.function.BiConsumer;
 
-public class TestPlan {
-    private final SequencedMap<JSFixture, SequencedSet<TestMetadata>> results = new LinkedHashMap<>();
+import static com.dtsx.docs.lib.ColorUtils.ACCENT_COLOR;
+import static com.dtsx.docs.lib.ColorUtils.color;
+import static com.dtsx.docs.lib.ColorUtils.highlight;
+import static java.util.stream.Collectors.joining;
+import static picocli.CommandLine.Help.Ansi.IStyle.CSI;
 
-    public void add(Pair<JSFixture, TestMetadata> pair) {
+@RequiredArgsConstructor
+public class TestPlan {
+    private final VerifierCtx ctx;
+    private final SequencedMap<JSFixture, SequencedSet<TestRoot>> results = new LinkedHashMap<>();
+
+    public void addRoot(Pair<JSFixture, TestRoot> pair) {
         results.computeIfAbsent(pair.getLeft(), _ -> new LinkedHashSet<>()).add(pair.getRight());
     }
 
-    public void forEachBaseFixture(BiConsumer<JSFixture, SequencedSet<TestMetadata>> consumer) {
+    public void forEachBaseFixture(BiConsumer<JSFixture, SequencedSet<TestRoot>> consumer) {
         results.forEach(consumer);
     }
 
-    public SequencedMap<JSFixture, SequencedSet<TestMetadata>> unwrap() {
+    public SequencedMap<JSFixture, SequencedSet<TestRoot>> unwrap() {
         return results;
     }
 
-    @Override
-    public String toString() {
-        val sb = new StringBuilder();
+    public int totalRoots() {
+        return results.values().stream().mapToInt(Set::size).sum();
+    }
 
-        val fixtureIndex = new Object() {
-            int ref = 1;
-        };
-
-        results.forEach((fixture, tests) -> {
-            sb.append(fixtureIndex.ref++)
-                .append(") ")
-                .append(fixture.fixtureName())
-                .append("\n");
-
-            tests.forEach((test) ->
-                test.exampleFiles().forEach((exampleFile) ->
-                    sb.append("  - ")
-                        .append(test.exampleFolder().getFileName())
-                        .append("/")
-                        .append(test.exampleFolder().relativize(exampleFile.getRight()))
-                        .append("\n")));
-        });
-
-        return sb.toString();
+    public int totalTests() {
+        return results.values().stream().flatMap(Set::stream).mapToInt(root -> root.filesToTest().size()).sum();
     }
 }

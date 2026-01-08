@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["fixtures", "snapshots"],
+  "properties": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "skip": {
+      "type": "boolean"
+    },
+    "fixtures":  {
+      "type": "object",
+      "required": ["base"],
+      "properties": {
+        "base": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "snapshots": {
+      "type": "object",
+      "required": ["sources"],
+      "properties": {
+        "share": {
+          "type": "boolean"
+        },
+        "sources": {
+          "type": "object",
+          "properties": {
+            "output": {
+              "type": ["object", "null"],
+              "properties": {
+                "capture": {
+                  "type": "string",
+                  "enum": ["add", "stdout", "stderr"]
+                }
+              },
+              "additionalProperties": false
+            },
+            "documents": {
+              "type": ["object", "null"],
+              "properties": {
+                "filter": {
+                  "type": "object"
+                }
+              },
+              "additionalProperties": false
+            },
+            "rows": {
+              "type": ["object", "null"],
+              "properties": {
+                "filter": {
+                  "type": "object"
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

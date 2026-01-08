@@ -1,150 +1,110 @@
 package com.dtsx.docs.lib;
 
 import lombok.val;
+import org.apache.commons.lang3.function.FailableRunnable;
 
-import java.util.ArrayDeque;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
-import static com.dtsx.docs.VerifierCli.ACCENT_COLOR;
-import static com.dtsx.docs.lib.CliLogger.highlight;
+import static com.dtsx.docs.lib.ColorUtils.stripAnsi;
 
 // Vendored from Astra CLI
 public class LoadingSpinner {
     private final String[] SPINNER_FRAMES = new String[]{ "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏" };
     private static final int FRAME_DELAY_MS = 80;
 
-    private final ArrayDeque<String> messageStack = new ArrayDeque<>();
-    private final AtomicBoolean isRunning = new AtomicBoolean(false);
-    private final AtomicBoolean isPaused = new AtomicBoolean(false);
+    private final AtomicReference<String> message;
     private final AtomicInteger lastLineLength = new AtomicInteger(0);
-    private Thread spinnerThread;
-    private volatile CountDownLatch pauseLatch;
 
-    public LoadingSpinner(String initialMessage) {
-        messageStack.push(initialMessage);
+    private final AtomicBoolean paused = new AtomicBoolean(false);
+    private final Object pauseLock = new Object();
+
+    private final Thread spinnerThread;
+
+    private LoadingSpinner(String message) {
+        this.message = new AtomicReference<>(message);
+        this.spinnerThread = Thread.ofVirtual().start(this::runSpinner);
     }
-    
-    public void start() {
-        if (isRunning.compareAndSet(false, true)) {
-            spinnerThread = Thread.ofVirtual().start(this::runSpinner);
-        }
+
+    public static LoadingSpinner start(String message) {
+        return new LoadingSpinner(message);
     }
-    
+
     public void stop() {
-        isRunning.set(false);
-        if (spinnerThread != null) {
-            try {
-                spinnerThread.join();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-            clearLine();
+        spinnerThread.interrupt();
+        try {
+            spinnerThread.join(1000); // Wait max 1 second
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
+        clearLine();
     }
     
     public void updateMessage(String newMessage) {
-        synchronized (messageStack) {
-            if (!messageStack.isEmpty()) {
-                messageStack.pop();
-                messageStack.push(newMessage);
-            }
-        }
+        message.set(newMessage);
     }
-    
-    public void pushMessage(String message) {
-        synchronized (messageStack) {
-            messageStack.push(message);
-        }
-    }
-    
-    public void popMessage() {
-        synchronized (messageStack) {
-            if (!messageStack.isEmpty()) {
-                messageStack.pop();
-            }
-        }
-    }
-    
-    private String getCurrentMessage() {
-        synchronized (messageStack) {
-            return messageStack.isEmpty() ? "" : messageStack.peekLast();
-        }
-    }
-    
-    public void pause() {
-        if (spinnerThread != null) {
-            pauseLatch = new CountDownLatch(1);
-            isPaused.set(true);
-            
-            try {
-                pauseLatch.await();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
-    }
-    
-    public void resume() {
-        if (spinnerThread != null) {
-            try {
-                Thread.sleep(1);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-            isPaused.set(false);
-        }
-    }
-    
-    private void runSpinner() {
-        int frameIndex = 0;
 
-        while (isRunning.get()) {
-            if (isPaused.get()) {
+    public Runnable pause() {
+        synchronized (pauseLock) {
+            paused.set(true);
+            // Wait for spinner to acknowledge pause
+            try {
+                pauseLock.wait(500); // Wait max 500ms for spinner to pause
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        return () -> {
+            synchronized (pauseLock) {
+                paused.set(false);
+                pauseLock.notifyAll();
+            }
+        };
+    }
+
+    private void runSpinner() {
+        var frameIndex = 0;
+
+        while (!Thread.currentThread().isInterrupted()) {
+            if (paused.get()) {
                 clearLine();
-                CountDownLatch latch = pauseLatch;
-                if (latch != null) {
-                    latch.countDown();
-                }
-                
-                while (isPaused.get() && isRunning.get()) {
-                    try {
-                        Thread.sleep(10);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        return;
+
+                synchronized (pauseLock) {
+                    pauseLock.notifyAll();
+
+                    while (paused.get()) {
+                        catchInterrupt(pauseLock::wait);
                     }
                 }
                 continue;
             }
 
-            val currentLine = highlight(SPINNER_FRAMES[frameIndex]) + " " + getCurrentMessage() + "...";
-            val clearLine = "\r" + " ".repeat(lastLineLength.get()) + "\r";
+            clearLine();
 
-            System.err.print(clearLine + currentLine);
+            val currentLine = ColorUtils.highlight(SPINNER_FRAMES[frameIndex]) + " " + message.get() + "...";
+            System.err.print(currentLine);
             System.err.flush();
 
             lastLineLength.set(stripAnsi(currentLine).length());
-            
+
             frameIndex = (frameIndex + 1) % SPINNER_FRAMES.length;
-            
-            try {
-                Thread.sleep(FRAME_DELAY_MS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-            }
+
+            catchInterrupt(() -> Thread.sleep(FRAME_DELAY_MS));
         }
     }
     
     private void clearLine() {
-        val clearSpaces = Math.max(50, lastLineLength.get());
-        System.err.print("\r" + " ".repeat(clearSpaces) + "\r");
+        System.err.print("\r" + " ".repeat(lastLineLength.get()) + "\r");
         System.err.flush();
     }
 
-    public String stripAnsi(String str) {
-        return str.replaceAll("\\u001B\\[[;\\d]*m", "");
+    private void catchInterrupt(FailableRunnable<Exception> runnable) {
+        try {
+            runnable.run();
+        } catch (Exception e) {
+            Thread.currentThread().interrupt();
+        }
     }
 }

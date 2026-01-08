@@ -3,7 +3,9 @@ package com.dtsx.docs.config;
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgramType;
 import com.dtsx.docs.runner.drivers.ClientLanguage;
+import com.dtsx.docs.runner.verifier.VerifyMode;
 import lombok.ToString;
+import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
@@ -78,18 +80,25 @@ public class VerifierArgs {
     public boolean $clean;
 
     @Option(
-        names = { "-D", "--dry-run" },
-        description = "If set, the verifier will perform a dry run without executing tests.",
-        defaultValue = "${DRY_RUN:-false}"
-    )
-    public boolean $dryRun;
-
-    @Option(
         names = { "-C", "--command-override" },
         description = "Override commands for external programs (e.g., `-Ctsx='npx tsx' -Cbash=/usr/bin/bash`).",
         paramLabel = "PROGRAM=COMMAND"
     )
     public Map<ExternalProgramType, String> $commandOverrides = Map.of();
+
+    @Option(
+        names = { "-m", "--verify-mode" },
+        description = "Verification mode to use (normal, verify_only, dry_run).",
+        defaultValue = "${VERIFY_MODE:-normal}",
+        paramLabel = "MODE"
+    )
+    public VerifyMode $verifyMode;
+
+    @Option(
+        names = { "-D", "--dry-run" },
+        description = "Short for `--verify-mode dry_run`."
+    )
+    public boolean $dryRun;
 
     @Option(
         names = { "--spinner" },
@@ -120,7 +129,7 @@ public class VerifierArgs {
     )
     public List<String> $inverseFilters;
 
-    public VerifierCtx toCtx() {
-        return new VerifierCtx(this);
+    public VerifierCtx toCtx(CommandSpec spec) {
+        return new VerifierCtx(this, spec);
     }
 }

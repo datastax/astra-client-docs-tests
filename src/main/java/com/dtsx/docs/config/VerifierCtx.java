@@ -6,10 +6,14 @@ import com.dtsx.docs.lib.ExternalPrograms.ExternalProgramType;
 import com.dtsx.docs.runner.drivers.ClientDriver;
 import com.dtsx.docs.runner.drivers.ClientLanguage;
 import com.dtsx.docs.runner.reporter.TestReporter;
+import com.dtsx.docs.runner.verifier.VerifyMode;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 import lombok.val;
+import picocli.CommandLine;
+import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.ParameterException;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -20,6 +24,8 @@ import java.util.function.Predicate;
 @Getter
 @Accessors(fluent = true)
 public class VerifierCtx {
+    private final CommandLine cmd;
+
     private final String token;
     private final String apiEndpoint;
 
@@ -32,13 +38,16 @@ public class VerifierCtx {
 
     private final Map<ClientLanguage, ClientDriver> drivers;
     private final TestReporter reporter;
+    private final VerifyMode verifyMode;
 
     private final boolean clean;
 
     private final Map<ExternalProgramType, String[]> commandOverrides;
     private final Predicate<Path> filter;
 
-    public VerifierCtx(VerifierArgs args) {
+    public VerifierCtx(VerifierArgs args, CommandSpec spec) {
+        this.cmd = spec.commandLine();
+
         this.token = requireFlag(args.$token, "astra token", "-t", "ASTRA_TOKEN");
         this.apiEndpoint = requireFlag(args.$apiEndpoint, "API endpoint", "-e", "API_ENDPOINT");
 
@@ -48,7 +57,8 @@ public class VerifierCtx {
         this.environmentsFolder = Path.of("./resources/environments/");
 
         this.drivers = mkDrivers(args);
-        this.reporter = TestReporter.parse(args.$reporter);
+        this.reporter = TestReporter.parse(this, args.$reporter);
+        this.verifyMode = resolveVerifyMode(args);
 
         this.clean = args.$clean;
 
@@ -67,14 +77,14 @@ public class VerifierCtx {
     }
 
     private <T> T requireFlag(Optional<T> optional, String name, String flag, String envVar) {
-        return optional.orElseThrow(() -> new IllegalArgumentException(
+        return optional.orElseThrow(() -> new ParameterException(cmd,
             "Missing required option " + name + "; please provide it via the '" + flag + "' command line flag or the '" + envVar + "' environment variable."
         ));
     }
 
     @SuppressWarnings({ "SameParameterValue", "UnusedReturnValue" })
     private <T> T requireParameter(Optional<T> parameter, String name, int index, String envVar) {
-        return parameter.orElseThrow(() -> new IllegalArgumentException(
+        return parameter.orElseThrow(() -> new ParameterException(cmd,
             "Missing required parameter " + name + "; please provide it as parameter #" + index + " or via the '" + envVar + "' environment variable."
         ));
     }
@@ -83,7 +93,7 @@ public class VerifierCtx {
         val path = Path.of(rawPath);
 
         if (!Files.exists(path)) {
-            throw new IllegalArgumentException(
+            throw new ParameterException(cmd,
                 "The provided " + name + " path '" + path.toAbsolutePath() + "' does not exist; please provide a valid path via the '" + flag + "' command line flag or the '" + envVar + "' environment variable."
             );
         }
@@ -101,6 +111,12 @@ public class VerifierCtx {
         }
 
         return driversMap;
+    }
+
+    private VerifyMode resolveVerifyMode(VerifierArgs args) {
+        return (args.$dryRun)
+            ? VerifyMode.DRY_RUN
+            : args.$verifyMode;
     }
 
     private Map<ExternalProgramType, String[]> mkCommandOverrides(VerifierArgs args) {
@@ -154,7 +170,7 @@ public class VerifierCtx {
             val program = mkProgram.apply(this);
 
             if (!program.exists()) {
-                throw new IllegalStateException(program.name() + " could not be found. Please install it or set the " + program.envVar() + " environment variable.");
+                throw new ParameterException(cmd, program.name() + " could not be found. Please install it or set the " + program.envVar() + " environment variable.");
             }
         }
     }

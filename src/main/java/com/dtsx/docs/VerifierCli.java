@@ -3,25 +3,29 @@ package com.dtsx.docs;
 import com.dtsx.docs.builder.TestPlanBuilder;
 import com.dtsx.docs.config.VerifierArgs;
 import com.dtsx.docs.lib.CliLogger;
+import com.dtsx.docs.lib.ColorUtils;
 import com.dtsx.docs.runner.TestRunner;
 import io.github.cdimascio.dotenv.Dotenv;
 import lombok.val;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Help.Ansi.IStyle;
 import picocli.CommandLine.Help.Ansi.Style;
 import picocli.CommandLine.Help.ColorScheme;
 import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Spec;
+
+import java.util.concurrent.Callable;
+
+import static com.dtsx.docs.lib.ColorUtils.ACCENT_COLOR;
 
 @Command(mixinStandardHelpOptions = true)
-public class VerifierCli implements Runnable {
+public class VerifierCli implements Callable<Integer> {
     @Mixin
     private VerifierArgs $args;
 
-    public static IStyle ACCENT_COLOR = new IStyle() {
-        public String on() { return CSI + "38;5;110m"; }
-        public String off() { return CSI + "0m"; }
-    };
+    @Spec
+    private CommandSpec spec;
 
     public static void main(String[] args) {
         Dotenv.configure().systemProperties().ignoreIfMissing().load();
@@ -36,23 +40,20 @@ public class VerifierCli implements Runnable {
                 .build()
             );
 
-        cli.execute(args);
+        val exitCode = cli.execute(args);
+        System.exit(exitCode);
     }
 
     @Override
-    public void run() {
-        val ctx = $args.toCtx();
+    public Integer call() {
+        val ctx = $args.toCtx(spec);
 
         try {
-            val plan = CliLogger.loading("Building test plan...", (_) ->
-                TestPlanBuilder.buildPlan(ctx)
-            );
+            val passed = TestRunner.runTests(ctx, TestPlanBuilder.buildPlan(ctx));
 
-            if ($args.$dryRun) {
-                CliLogger.println("Tests to be executed (dry run):\n\n" + plan);
-            } else {
-                TestRunner.runTests(ctx, plan);
-            }
+            return (passed)
+                ? 0
+                : 1;
         } finally {
             CliLogger.dumpLogsToFile(ctx);
         }

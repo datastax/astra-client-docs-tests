@@ -1,14 +1,18 @@
 package com.dtsx.docs.runner.reporter;
 
 import com.dtsx.docs.builder.fixtures.JSFixture;
-import com.dtsx.docs.lib.CliLogger;
+import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.runner.TestResults;
-import com.dtsx.docs.runner.TestResults.TestResult;
+import com.dtsx.docs.runner.TestResults.TestRootResults;
 import org.jetbrains.annotations.Nullable;
 
 public class OnlyFailuresReporter extends TestReporter {
     private int printedFixtures = 0;
     private @Nullable Runnable printBaseFixtureName;
+
+    public OnlyFailuresReporter(VerifierCtx ctx) {
+        super(ctx);
+    }
 
     @Override
     public void printBaseFixtureHeading(JSFixture baseFixture, TestResults history) {
@@ -16,8 +20,8 @@ public class OnlyFailuresReporter extends TestReporter {
     }
 
     @Override
-    public void printTestResult(JSFixture baseFixture, TestResult result, TestResults history) {
-        if (result.approved()) {
+    public void printTestRootResults(JSFixture baseFixture, TestRootResults results, TestResults history) {
+        if (results.allApproved()) {
             return;
         }
 
@@ -26,6 +30,6 @@ public class OnlyFailuresReporter extends TestReporter {
             printBaseFixtureName = null;
         }
 
-        printTestResult("FAILED", result);
+        printTestRootResults(results);
     }
 }

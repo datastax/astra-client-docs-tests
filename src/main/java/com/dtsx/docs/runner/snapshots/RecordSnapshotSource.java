@@ -1,48 +1,69 @@
-package com.dtsx.docs.runner;
+package com.dtsx.docs.runner.snapshots;
 
 import com.datastax.astra.client.collections.definition.documents.Document;
+import com.datastax.astra.client.core.query.Filter;
 import com.datastax.astra.client.tables.definition.rows.Row;
 import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.lib.DataAPIUtils;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import com.dtsx.docs.lib.JacksonUtils;
-import lombok.RequiredArgsConstructor;
+import com.dtsx.docs.runner.verifier.TestVerifier;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiFunction;
+import java.util.stream.Stream;
 
-@RequiredArgsConstructor
-public enum Snapshotter {
-    OUTPUT((_, res) -> {
-        return res.output();
-    }),
+public sealed abstract class RecordSnapshotSource extends SnapshotSource {
+    protected @Nullable Filter filter;
 
-    STDOUT((_, res) -> {
-        return res.stdout();
-    }),
+    @SuppressWarnings("unchecked")
+    public RecordSnapshotSource(Map<String, Object> params, SnapshotSources enumRep) {
+        super(enumRep);
 
-    STDERR((_, res) -> {
-        return res.stderr();
-    }),
+        if (params.get("filter") != null) {
+            if (params.get("filter") instanceof Map<?, ?> filterMap) {
+                this.filter = new Filter((Map<String, Object>) filterMap);
+            } else {
+                throw new IllegalArgumentException("The 'filter' parameter must be a Map<String, Object>");
+            }
+        }
+    }
 
-    COLLECTION((ctx, _) -> {
-        return JacksonUtils.prettyPrintJson(
-            mkJsonDeterministic(DataAPIUtils.getCollection(ctx).findAll().stream().map(Document::getDocumentMap).toList())
-        );
-    }),
+    public abstract Stream<Map<String, Object>> streamRecords(VerifierCtx ctx);
 
-    TABLE((ctx, _) -> {
-        return JacksonUtils.prettyPrintJson(
-            mkJsonDeterministic(DataAPIUtils.getTable(ctx).findAll().stream().map(Row::getColumnMap).toList())
-        );
-    });
-
-    private final BiFunction<VerifierCtx, RunResult, String> mkSnapshot;
-
+    @Override
     public String mkSnapshot(VerifierCtx ctx, RunResult res) {
-        return mkSnapshot.apply(ctx,  res);
+        return JacksonUtils.prettyPrintJson(
+            mkJsonDeterministic(streamRecords(ctx).toList())
+        );
+    }
+
+    public static List<String> supportedParams() {
+        return List.of("filter");
+    }
+
+    public static final class DocumentsSnapshotSource extends RecordSnapshotSource {
+        public DocumentsSnapshotSource(Map<String, Object> params, SnapshotSources enumRep) {
+            super(params, enumRep);
+        }
+
+        @Override
+        public Stream<Map<String, Object>> streamRecords(VerifierCtx ctx) {
+            return DataAPIUtils.getCollection(ctx).find(filter).stream().map(Document::getDocumentMap);
+        }
+    }
+
+    public static final class RowsSnapshotSource extends RecordSnapshotSource {
+        public RowsSnapshotSource(Map<String, Object> params, SnapshotSources enumRep) {
+            super(params, enumRep);
+        }
+
+        @Override
+        public Stream<Map<String, Object>> streamRecords(VerifierCtx ctx) {
+            return DataAPIUtils.getTable(ctx).find(filter).stream().map(Row::getColumnMap);
+        }
     }
 
     // Sorts records returned by the Data API to ensure deterministic ordering for snapshot comparisons
@@ -53,13 +74,13 @@ public enum Snapshotter {
     // Any deeper lists would already be returned deterministically by the Data API
     //
     // Any deeper maps will be sorted by SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS
-    private static List<?> mkJsonDeterministic(List<?> records) {
+    protected List<?> mkJsonDeterministic(List<?> records) {
         return records.stream()
-            .sorted(Comparator.comparing(Snapshotter::calcSortValue))
+            .sorted(Comparator.comparing(this::calcSortValue))
             .toList();
     }
 
-    private static int calcSortValue(Object obj) {
+    private int calcSortValue(Object obj) {
         return switch (obj) {
             case Map<?, ?> map -> {
                 yield map.entrySet().stream()
@@ -68,7 +89,7 @@ public enum Snapshotter {
             }
             case List<?> list -> {
                 yield list.stream()
-                    .mapToInt(Snapshotter::calcSortValue)
+                    .mapToInt(this::calcSortValue)
                     .sum();
             }
             case String str -> {
@@ -86,7 +107,7 @@ public enum Snapshotter {
         };
     }
 
-    private static void recursivelyPrintTypes(Object obj, String indent) {
+    private void recursivelyPrintTypes(Object obj, String indent) {
         if (obj instanceof Map<?, ?> map) {
             System.out.println(indent + "Map:");
             for (var entry : map.entrySet()) {

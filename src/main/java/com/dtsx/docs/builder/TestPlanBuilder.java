@@ -1,173 +1,160 @@
 package com.dtsx.docs.builder;
 
+import com.dtsx.docs.builder.MetaYml.SnapshotsConfig;
 import com.dtsx.docs.builder.fixtures.JSFixture;
-import com.dtsx.docs.builder.fixtures.JSFixtureImpl;
-import com.dtsx.docs.builder.fixtures.NoopFixture;
 import com.dtsx.docs.config.VerifierCtx;
+import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.JacksonUtils;
-import com.dtsx.docs.runner.Snapshotter;
 import com.dtsx.docs.runner.drivers.ClientLanguage;
-import lombok.NonNull;
+import com.dtsx.docs.runner.snapshots.SnapshotSource;
+import com.dtsx.docs.runner.snapshots.SnapshotSources;
 import lombok.val;
 import org.apache.commons.lang3.tuple.Pair;
+import tools.jackson.core.JacksonException;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.TreeSet;
+import java.util.*;
 
 import static com.dtsx.docs.lib.Constants.*;
 
 public class TestPlanBuilder {
     public static TestPlan buildPlan(VerifierCtx ctx) {
-        val examplesFolder = ctx.examplesFolder();
+        return CliLogger.loading("Building test plan...", (_) -> {
+            val testRoots = findTestRoots(ctx.examplesFolder());
 
-        if (!Files.exists(examplesFolder) || !Files.isDirectory(examplesFolder)) {
-            throw new IllegalStateException("Examples folder does not exist or is not a directory: " + examplesFolder);
-        }
+            CliLogger.println("@|faint Building test plan...");
+            CliLogger.println("@|faint -> Found " + testRoots.size() + " test roots");
 
-        val plan = new TestPlan();
+            val plan = new TestPlan(ctx);
 
-        try (val stream = Files.list(examplesFolder)) {
-            val exampleDirs = stream
-                .filter(Files::isDirectory)
-                .filter(path -> !path.getFileName().startsWith("_"))
-                .toList();
-
-            for (val exampleDir : exampleDirs) {
-                buildTestMetadata(exampleDir, ctx).ifPresent(plan::add);
+            for (val testRoot : testRoots) {
+                mkTestRoot(testRoot, ctx).ifPresent(plan::addRoot);
             }
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to list examples folder: " + examplesFolder, e);
-        }
 
-        return plan;
+            CliLogger.println("@|faint -> Found " + plan.totalTests() + " example files to test");
+            CliLogger.println();
+
+            return plan;
+        });
     }
 
-    private static Optional<Pair<JSFixture, TestMetadata>> buildTestMetadata(Path exampleDir, VerifierCtx ctx) {
-        val metaFile = exampleDir.resolve(META_FILE);
+    private static List<Path> findTestRoots(Path examplesFolder) {
+        if (!Files.exists(examplesFolder) || !Files.isDirectory(examplesFolder)) {
+            throw new TestPlanException("Examples folder '" + examplesFolder + "' does not exist or is not a directory");
+        }
 
-        if (!Files.exists(metaFile)) {
+        try (val files = Files.walk(examplesFolder)) {
+            val dirs = files
+                .skip(1)
+                .filter(Files::isDirectory)
+                .filter(path -> !path.getFileName().toString().startsWith("_"))
+                .filter(path -> Files.exists(path.resolve(META_FILE)))
+                .toList();
+
+            if (dirs.isEmpty()) {
+                throw new TestPlanException("No test roots found in examples directory '" + examplesFolder + "'");
+            }
+
+            return dirs;
+        } catch (IOException e) {
+            throw new TestPlanException("Failed to traverse examples directory '" + examplesFolder + "' to find test roots", e);
+        }
+    }
+
+    private static Optional<Pair<JSFixture, TestRoot>> mkTestRoot(Path testRoot, VerifierCtx ctx) {
+        val meta = parseMetaFile(testRoot.resolve(META_FILE));
+
+        if (meta.skip().orElse(false)) {
             return Optional.empty();
         }
 
+        val filesToTest = findFilesToTestInRoot(testRoot, ctx);
+
+        if (filesToTest.isEmpty()) {
+            return Optional.empty();
+        }
+
+        val baseFixture = resolveBaseFixture(ctx, meta.fixtures().base());
+        val testFixture = resolveTestFixture(ctx, testRoot);
+
+        val snapshotTypes = buildSnapshotTypes(meta.snapshots());
+        val shareSnapshots = meta.snapshots().share().orElse(true);
+
+        val testMetadata = new TestRoot(
+            testRoot,
+            filesToTest,
+            testFixture,
+            snapshotTypes,
+            shareSnapshots
+        );
+
+        return Optional.of(Pair.of(baseFixture, testMetadata));
+    }
+
+    private static MetaYml parseMetaFile(Path metaFile) {
         try {
-            val meta = JacksonUtils.parseYaml(metaFile, MetaYml.class);
-
-            if (meta.skip().orElse(false)) {
-                return Optional.empty();
-            }
-
-            val exampleFiles = findExampleFiles(exampleDir, ctx.languages()).stream()
-                .filter(pair -> ctx.filter().test(pair.getRight()))
-                .toList();
-
-            if (exampleFiles.isEmpty()) {
-                return Optional.empty();
-            }
-
-            val baseFixture = resolveBaseFixture(ctx, exampleDir.getParent(), meta.fixtures().base());
-            val testFixture = resolveTestFixture(ctx, exampleDir, meta.fixtures().test());
-
-            val snapshots = meta.snapshots().orElse(SnapshotsConfig.EMPTY);
-            val snapshotTypes = buildSnapshotTypes(snapshots);
-            val shareSnapshots = snapshots.share().orElse(true);
-
-            val testMetadata = new TestMetadata(
-                exampleDir,
-                exampleFiles,
-                testFixture.orElse(NoopFixture.INSTANCE),
-                snapshotTypes,
-                shareSnapshots
-            );
-
-            return Optional.of(Pair.of(baseFixture, testMetadata));
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to parse " + metaFile, e);
+            return JacksonUtils.parseYaml(metaFile, MetaYml.class);
+        } catch (JacksonException e) {
+            throw new TestPlanException("Failed to parse " + metaFile, e);
         }
     }
 
-    private static JSFixture resolveBaseFixture(VerifierCtx ctx, Path rootDir, String fixtureName) {
-        val path = rootDir.resolve(FIXTURES_DIR).resolve(fixtureName);
+    private static TreeMap<ClientLanguage, Path> findFilesToTestInRoot(Path root, VerifierCtx ctx) {
+        val ret = new TreeMap<ClientLanguage, Path>();
 
-        if (!Files.exists(path)) {
-            throw new IllegalStateException("Base fixture does not exist: " + path);
-        }
-
-        return new JSFixtureImpl(ctx, path);
-    }
-
-    private static Optional<JSFixture> resolveTestFixture(VerifierCtx ctx, Path exampleDir, Optional<String> fixtureName) {
-        if (fixtureName.isEmpty()) {
-            return Files.exists(exampleDir.resolve(DEFAULT_TEST_FIXTURE))
-                ? Optional.of(new JSFixtureImpl(ctx, exampleDir.resolve(DEFAULT_TEST_FIXTURE)))
-                : Optional.empty();
-        }
-
-        val path = exampleDir.resolve(fixtureName.get()).resolve(fixtureName.get());
-
-        if (!Files.exists(path)) {
-            throw new IllegalStateException("Test-specific fixture does not exist: " + path);
-        }
-
-        return Optional.of(new JSFixtureImpl(ctx, path));
-    }
-
-    private static TreeSet<Snapshotter> buildSnapshotTypes(SnapshotsConfig config) {
-        val types = new TreeSet<Snapshotter>();
-
-        for (val typeName : config.sources().orElse(List.of(Snapshotter.OUTPUT.name()))) {
-            try {
-                types.add(Snapshotter.valueOf(typeName.toUpperCase()));
-            } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("Unknown snapshot type: " + typeName, e);
-            }
-        }
-
-        return types;
-    }
-
-    private static List<Pair<ClientLanguage, Path>> findExampleFiles(Path exampleDir, List<ClientLanguage> langs) {
-        val ret = new ArrayList<Pair<ClientLanguage, Path>>();
-
-        try (val children = Files.walk(exampleDir).skip(1)) {
-            for (val child : children.toList()) {
+        try (val children = Files.walk(root).skip(1)) {
+            children.forEach((child) -> {
                 if (!Files.isRegularFile(child)) {
-                    continue;
+                    return;
                 }
 
-                for (val lang : langs) {
-                    if (child.getFileName().toString().endsWith(lang.extension())) {
-                        ret.add(Pair.of(lang, child));
-                        break;
+                val fileName = child.getFileName().toString().toLowerCase();
+
+                for (val lang : ctx.languages()) {
+                    if (fileName.equals("example" + lang.extension()) && ctx.filter().test(child)) {
+                        ret.put(lang, child);
+                        return;
                     }
                 }
-            }
+            });
         } catch (IOException e) {
-            throw new RuntimeException("Failed to detect available example files in " + exampleDir, e);
+            throw new TestPlanException("Failed to traverse test root '" + root + "' to find example files", e);
         }
 
         return ret;
     }
 
-    private record MetaYml(
-        @NonNull Optional<Boolean> skip,
-        @NonNull FixturesConfig fixtures,
-        @NonNull Optional<SnapshotsConfig> snapshots
-    ) {}
+    private static JSFixture resolveBaseFixture(VerifierCtx ctx, String fixtureName) {
+        val path = ctx.examplesFolder().resolve(FIXTURES_DIR).resolve(fixtureName);
 
-    private record FixturesConfig(
-        @NonNull String base,
-        @NonNull Optional<String> test
-    ) {}
+        if (!Files.exists(path)) {
+            throw new TestPlanException("Base fixture '" + fixtureName + "' does not exist in '" + FIXTURES_DIR + "'");
+        }
 
-    private record SnapshotsConfig(
-        @NonNull Optional<Boolean> share,
-        @NonNull Optional<List<String>> sources
-    ) {
-        public static final SnapshotsConfig EMPTY = new SnapshotsConfig(Optional.empty(), Optional.empty());
+        return JSFixture.mkFor(ctx, path);
+    }
+
+    private static JSFixture resolveTestFixture(VerifierCtx ctx, Path testRoot) {
+        val path = testRoot.resolve(DEFAULT_TEST_FIXTURE);
+        return JSFixture.mkFor(ctx, path);
+    }
+
+    private static TreeSet<SnapshotSource> buildSnapshotTypes(SnapshotsConfig config) {
+        val sources = new TreeSet<SnapshotSource>();
+
+        for (val rawSource : config.sources().entrySet()) {
+            val source = SnapshotSources.valueOf(rawSource.getKey().toUpperCase());
+            val params = Objects.requireNonNullElse(rawSource.getValue(), Collections.<String, Object>emptyMap());
+
+            if (params.keySet().stream().anyMatch(param -> !source.supportedParams().contains(param))) {
+                throw new TestPlanException("Unsupported parameter found for snapshot source " + source.name() + ". Supported parameters are: " + String.join(", ", source.supportedParams()));
+            }
+
+            sources.add(source.create(params));
+        }
+
+        return sources;
     }
 }

@@ -1,27 +1,15 @@
----stderr---
+---output---
 
----collection---
+---documents---
 [
   {
     "_id" : "guid_1",
-    "comes" : 2,
-    "naming" : "things",
-    "when" : "it"
+    "is_checked_out" : false,
+    "number_of_pages" : 300
   },
   {
-    "I" : [
-      "am",
-      "not",
-      {
-        "very" : "creative"
-      }
-    ],
-    "_id" : "guid_2"
-  },
-  {
-    "_id" : "guid_3",
-    "random" : {
-      "fields" : "idk"
-    }
+    "_id" : "guid_2",
+    "is_checked_out" : true,
+    "number_of_pages" : 150
   }
 ]

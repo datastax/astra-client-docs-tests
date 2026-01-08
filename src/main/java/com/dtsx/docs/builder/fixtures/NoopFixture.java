@@ -1,13 +1,19 @@
 package com.dtsx.docs.builder.fixtures;
 
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
+import lombok.EqualsAndHashCode;
+import lombok.RequiredArgsConstructor;
 
-public enum NoopFixture implements JSFixture {
-    INSTANCE;
+@EqualsAndHashCode
+@RequiredArgsConstructor
+public final class NoopFixture implements JSFixture {
+    public static final NoopFixture INSTANCE = new NoopFixture("<noop>");
+
+    private final String name;
 
     @Override
     public String fixtureName() {
-        return "None";
+        return name;
     }
 
     @Override

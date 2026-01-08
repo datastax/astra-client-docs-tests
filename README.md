@@ -13,7 +13,7 @@ The harness will read the code examples from the `astra-vector-docs` repository,
 ```
 examples/
   _fixtures/
-    _prelude.js
+    prelude.js
     <fixture>.js
   <example>/
     java/
@@ -28,7 +28,7 @@ examples/
 ```
 
 Where:
-- `_prelude.js` sets up any common logic needed for all fixtures (e.g. client objects)
+- `prelude.js` sets up any common logic needed for all fixtures (e.g. client objects)
 - Fixture files are explained [here](#fixture-files)
 - `<example>/` is a directory for each example to be tested (e.g. `delete-many-filter/`)
 - `meta.yml` is explained [here](#metayml)
