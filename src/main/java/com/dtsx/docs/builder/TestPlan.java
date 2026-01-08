@@ -18,7 +18,6 @@ import static picocli.CommandLine.Help.Ansi.IStyle.CSI;
 
 @RequiredArgsConstructor
 public class TestPlan {
-    private final VerifierCtx ctx;
     private final SequencedMap<JSFixture, SequencedSet<TestRoot>> results = new LinkedHashMap<>();
 
     public void addRoot(Pair<JSFixture, TestRoot> pair) {

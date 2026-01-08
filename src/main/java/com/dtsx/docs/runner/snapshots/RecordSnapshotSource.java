@@ -3,6 +3,7 @@ package com.dtsx.docs.runner.snapshots;
 import com.datastax.astra.client.collections.definition.documents.Document;
 import com.datastax.astra.client.core.query.Filter;
 import com.datastax.astra.client.tables.definition.rows.Row;
+import com.dtsx.docs.builder.MetaYml;
 import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.lib.DataAPIUtils;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
@@ -15,6 +16,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+/// Base class for snapshot sources that deterministically captures database records (documents or rows).
+///
+/// Implemented by [DocumentsSnapshotSource] and [RowsSnapshotSource].
+///
+/// Records are sorted to ensure deterministic ordering for snapshot comparisons, even with dynamically generated IDs or timestamps.
+///
+/// Supports an optional collection/table filter to narrow the records captured in the snapshot.
+///
+/// Example configuration:
+/// ```
+/// documents:
+///   filter: { "status": "active" } <- optional Data API filter
+/// ```
+///
+/// @apiNote Pairs well with [OutputSnapshotSource] to capture any undesired warnings or errors
+///
+/// @see SnapshotSources
+/// @see MetaYml
 public sealed abstract class RecordSnapshotSource extends SnapshotSource {
     protected @Nullable Filter filter;
 
@@ -44,6 +63,7 @@ public sealed abstract class RecordSnapshotSource extends SnapshotSource {
         return List.of("filter");
     }
 
+    /// Implementation of [RecordSnapshotSource] that captures documents from a collection.
     public static final class DocumentsSnapshotSource extends RecordSnapshotSource {
         public DocumentsSnapshotSource(Map<String, Object> params, SnapshotSources enumRep) {
             super(params, enumRep);
@@ -55,6 +75,7 @@ public sealed abstract class RecordSnapshotSource extends SnapshotSource {
         }
     }
 
+    /// Implementation of [RecordSnapshotSource] that captures rows from a table.
     public static final class RowsSnapshotSource extends RecordSnapshotSource {
         public RowsSnapshotSource(Map<String, Object> params, SnapshotSources enumRep) {
             super(params, enumRep);

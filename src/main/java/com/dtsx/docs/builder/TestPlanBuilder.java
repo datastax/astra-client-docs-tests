@@ -19,27 +19,76 @@ import java.util.*;
 
 import static com.dtsx.docs.lib.Constants.*;
 
+/// Builds a [TestPlan] by discovering and parsing test roots in the examples directory.
+///
+/// The build process:
+/// 1. Finds all _test roots_ (directories containing a `meta.yml` file)
+/// 2. Parses each `meta.yml` to get fixture and snapshot configuration
+/// 3. Discovers example files (`example.<ext>`) for each client language
+/// 4. Resolves base and test-specific fixtures
+/// 5. Groups test roots by their base fixture
+///
+/// Example directory structure:
+/// ```
+/// examples/
+///   _fixtures/
+///     basic-collection.js  <- base fixture
+///   dates/                 <- test root
+///     meta.yml
+///     example.ts
+///     example.py
+///     fixture.js           <- optional test-specific fixture
+/// ```
+///
+/// @see TestPlan
+/// @see TestRoot
+/// @see MetaYml
 public class TestPlanBuilder {
+    /// Builds a complete {@linkplain TestPlan test plan} by discovering and processing all test roots.
+    ///
+    /// @param ctx the verifier context containing configuration and paths
+    /// @return a test plan containing all discovered test roots grouped by base fixture
+    /// @throws TestPlanException if any errors occur during plan building
+    ///
+    /// @see TestPlan
     public static TestPlan buildPlan(VerifierCtx ctx) {
         return CliLogger.loading("Building test plan...", (_) -> {
             val testRoots = findTestRoots(ctx.examplesFolder());
 
-            CliLogger.println("@|faint Building test plan...");
-            CliLogger.println("@|faint -> Found " + testRoots.size() + " test roots");
+            CliLogger.println("@|faint Building test plan...|@");
+            CliLogger.println("@|faint -> Found " + testRoots.size() + " test roots|@");
 
-            val plan = new TestPlan(ctx);
+            val plan = new TestPlan();
 
             for (val testRoot : testRoots) {
                 mkTestRoot(testRoot, ctx).ifPresent(plan::addRoot);
             }
 
-            CliLogger.println("@|faint -> Found " + plan.totalTests() + " example files to test");
+            CliLogger.println("@|faint -> Found " + plan.totalTests() + " example files to test|@");
             CliLogger.println();
 
             return plan;
         });
     }
 
+    /// Finds all {@linkplain TestRoot test roots} in the examples directory.
+    ///
+    /// Example:
+    /// ```
+    /// examples/
+    ///   _fixtures/        <- ignored (starts with _)
+    ///   dates/
+    ///     meta.yml        <- test root found
+    ///   delete-many/
+    ///     with-filter/
+    ///       meta.yml      <- test root found
+    /// ```
+    ///
+    /// @param examplesFolder the root examples directory to search
+    /// @return list of paths to directories containing meta.yml files
+    /// @throws TestPlanException if the examples folder doesn't exist or no test roots are found
+    ///
+    /// @see TestRoot
     private static List<Path> findTestRoots(Path examplesFolder) {
         if (!Files.exists(examplesFolder) || !Files.isDirectory(examplesFolder)) {
             throw new TestPlanException("Examples folder '" + examplesFolder + "' does not exist or is not a directory");
@@ -63,6 +112,19 @@ public class TestPlanBuilder {
         }
     }
 
+    /// Creates a test root from a directory containing a `meta.yml` file.
+    ///
+    /// Steps:
+    /// 1. Parse `meta.yml` configuration
+    /// 2. Skip if `skip: true` is set
+    /// 3. Find all `example.<ext>` files for configured languages
+    /// 4. Resolve base fixture from `_fixtures/` directory
+    /// 5. Resolve test-specific fixture (if `fixture.js` exists)
+    /// 6. Build snapshot sources from configuration
+    ///
+    /// @param testRoot path to the test root directory
+    /// @param ctx the verifier context
+    /// @return a pair of (base fixture, test root), or empty if skipped or no example files found
     private static Optional<Pair<JSFixture, TestRoot>> mkTestRoot(Path testRoot, VerifierCtx ctx) {
         val meta = parseMetaFile(testRoot.resolve(META_FILE));
 
@@ -93,6 +155,11 @@ public class TestPlanBuilder {
         return Optional.of(Pair.of(baseFixture, testMetadata));
     }
 
+    /// Parses a `meta.yml` file into a [MetaYml] object.
+    ///
+    /// @param metaFile path to the meta.yml file
+    /// @return parsed [MetaYml] configuration
+    /// @throws TestPlanException if parsing fails
     private static MetaYml parseMetaFile(Path metaFile) {
         try {
             return JacksonUtils.parseYaml(metaFile, MetaYml.class);
@@ -101,6 +168,24 @@ public class TestPlanBuilder {
         }
     }
 
+    /// Finds all example files in a test root for the configured client languages.
+    ///
+    /// Searches for files named `example.<ext>` where `<ext>` matches a configured language extension.
+    ///
+    /// Example:
+    /// ```
+    /// dates/
+    ///   example.ts         <- found for TypeScript
+    ///   example.py         <- found for Python
+    ///   java/
+    ///     src/main/java/
+    ///       Example.java   <- found for Java (example.java at any depth)
+    /// ```
+    ///
+    /// @param root the test root directory to search
+    /// @param ctx the verifier context containing language configuration
+    /// @return map of client languages to their example file paths
+    /// @throws TestPlanException if traversal fails
     private static TreeMap<ClientLanguage, Path> findFilesToTestInRoot(Path root, VerifierCtx ctx) {
         val ret = new TreeMap<ClientLanguage, Path>();
 
@@ -126,6 +211,21 @@ public class TestPlanBuilder {
         return ret;
     }
 
+    /// Resolves a base fixture from the `_fixtures/` directory.
+    ///
+    /// Example:
+    /// ```
+    /// examples/
+    ///   _fixtures/
+    ///     basic-collection.js  <- resolves "basic-collection.js"
+    /// ```
+    ///
+    /// @param ctx the verifier context
+    /// @param fixtureName the fixture file name from meta.yml
+    /// @return the resolved [JSFixture]
+    /// @throws TestPlanException if the fixture doesn't exist
+    ///
+    /// @see JSFixture
     private static JSFixture resolveBaseFixture(VerifierCtx ctx, String fixtureName) {
         val path = ctx.examplesFolder().resolve(FIXTURES_DIR).resolve(fixtureName);
 
@@ -136,16 +236,53 @@ public class TestPlanBuilder {
         return JSFixture.mkFor(ctx, path);
     }
 
+    /// Resolves a test-specific fixture from the test root directory.
+    ///
+    /// Looks for `fixture.js` in the test root, if it exists; otherwise returns a no-op fixture.
+    ///
+    /// Example:
+    /// ```
+    /// examples/
+    ///   dates/
+    ///    fixture.js      <- resolves this file
+    ///    meta.yml
+    ///   delete-many/
+    ///    (no fixture.js) <- resolves no-op fixture
+    ///    meta.yml
+    /// ```
+    ///
+    /// @param ctx the verifier context
+    /// @param testRoot the test root directory
+    /// @return the resolved [JSFixture] (or no-op if fixture.js doesn't exist)
+    ///
+    /// @see JSFixture
     private static JSFixture resolveTestFixture(VerifierCtx ctx, Path testRoot) {
         val path = testRoot.resolve(DEFAULT_TEST_FIXTURE);
         return JSFixture.mkFor(ctx, path);
     }
 
+    /// Builds snapshot sources from the snapshots configuration.
+    ///
+    /// Example configuration:
+    /// ```
+    /// snapshots:
+    ///   sources:
+    ///     output:
+    ///       capture: stderr
+    ///     documents:
+    ///       filter: { "status": "active" }
+    /// ```
+    ///
+    /// @param config the snapshots configuration from meta.yml
+    /// @return set of configured snapshot sources
+    /// @throws TestPlanException if unsupported parameters are provided
+    ///
+    /// @see SnapshotSources
     private static TreeSet<SnapshotSource> buildSnapshotTypes(SnapshotsConfig config) {
         val sources = new TreeSet<SnapshotSource>();
 
         for (val rawSource : config.sources().entrySet()) {
-            val source = SnapshotSources.valueOf(rawSource.getKey().toUpperCase());
+            val source = rawSource.getKey();
             val params = Objects.requireNonNullElse(rawSource.getValue(), Collections.<String, Object>emptyMap());
 
             if (params.keySet().stream().anyMatch(param -> !source.supportedParams().contains(param))) {

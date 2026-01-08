@@ -1,23 +1,68 @@
 package com.dtsx.docs.builder;
 
+import com.dtsx.docs.runner.snapshots.SnapshotSources;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.NonNull;
 
 import java.util.Map;
 import java.util.Optional;
 
+/// Represents the structure of a `meta.yml` configuration file that defines a [TestRoot].
+///
+/// Example `meta.yml`:
+/// ```
+/// fixtures:
+///   base: basic-collection.js
+/// snapshots:
+///   share: true
+///   sources:
+///     output:
+///       capture: stderr
+///     documents:
+/// ```
+///
+/// @param skip optional flag to skip running tests in this test root
+/// @param fixtures configuration for test fixtures
+/// @param snapshots configuration for snapshot verification
+///
+/// @see TestRoot
 @JsonIgnoreProperties("$schema")
 public record MetaYml(
     @NonNull Optional<Boolean> skip,
     @NonNull FixturesConfig fixtures,
     @NonNull SnapshotsConfig snapshots
 ) {
+    /// Configuration for test fixtures that set up the test environment.
+    ///
+    /// Example:
+    /// ```
+    /// fixtures:
+    ///   base: basic-collection.js  <- references _fixtures/basic-collection.js
+    /// ```
+    ///
+    /// @param base the name of the base fixture file from the `_fixtures` directory
     public record FixturesConfig(
         @NonNull String base
     ) {}
 
+    /// Configuration for snapshot sources used to verify test output.
+    ///
+    /// Example:
+    /// ```
+    /// snapshots:
+    ///   share: true       <- all languages share the same snapshot file
+    ///   sources:
+    ///     output:         <- snapshot source name
+    ///       capture: stderr
+    ///     documents:      <- snapshot source with no additional params
+    /// ```
+    ///
+    /// @param share whether all client languages share the same snapshot file (defaults to true)
+    /// @param sources map of snapshot source names to their configuration parameters
+    ///
+    /// @see SnapshotSources
     public record SnapshotsConfig(
         @NonNull Optional<Boolean> share,
-        @NonNull Map<String, Map<String, Object>> sources
+        @NonNull Map<SnapshotSources, Map<String, Object>> sources
     ) {}
 }

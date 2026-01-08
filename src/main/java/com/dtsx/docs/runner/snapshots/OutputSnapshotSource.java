@@ -1,26 +1,45 @@
 package com.dtsx.docs.runner.snapshots;
 
+import com.dtsx.docs.builder.MetaYml;
 import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 
 import java.util.List;
 import java.util.Map;
 
+/// Snapshot source that captures program output (stdout, stderr, or both).
+///
+/// The `capture` parameter determines what output to capture:
+///   - `all` - captures both stdout and stderr sequenced together (default)
+///   - `stdout` - captures only stdout
+///   - `stderr` - captures only stderr
+///
+/// Example configuration:
+/// ```
+/// output:
+///   capture: stderr
+/// ```
+///
+/// @apiNote It's often a good idea to just capture `stderr` to ensure there's no warnings or errors, and leave the
+/// actual verification to other snapshot sources (e.g. [RecordSnapshotSource])
+///
+/// @see SnapshotSources
+/// @see MetaYml
 public class OutputSnapshotSource extends SnapshotSource {
-    private enum Type {
+    private enum Capture {
         ALL,
         STDOUT,
         STDERR
     }
 
-    private Type type = Type.ALL;
+    private Capture capture = Capture.ALL;
 
     public OutputSnapshotSource(Map<String, Object> params, SnapshotSources enumRep) {
         super(enumRep);
 
         if (params.get("capture") != null) {
             try {
-                this.type = Type.valueOf(params.get("capture").toString().toUpperCase());
+                this.capture = Capture.valueOf(params.get("capture").toString().toUpperCase());
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("Unexpected value for snapshot source output capture: " + params.get("capture") + " (expected one of 'all', 'stdout', 'stderr')");
             }
@@ -29,7 +48,7 @@ public class OutputSnapshotSource extends SnapshotSource {
 
     @Override
     public String mkSnapshot(VerifierCtx ctx, RunResult res) {
-        return switch (type) {
+        return switch (capture) {
             case ALL -> res.output();
             case STDOUT -> res.stdout();
             case STDERR -> res.stderr();

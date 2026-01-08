@@ -9,6 +9,11 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
+/// Represents the various snapshot sources available in enum form.
+///
+/// Useful, as `enum`s come with parsing, ordering, and dispatching on static methods for free.
+///
+/// @see SnapshotSource
 @RequiredArgsConstructor
 public enum SnapshotSources {
     OUTPUT(OutputSnapshotSource::new, OutputSnapshotSource::supportedParams),
