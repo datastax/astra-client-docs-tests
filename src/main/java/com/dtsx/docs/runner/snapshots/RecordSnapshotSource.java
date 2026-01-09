@@ -51,7 +51,7 @@ public sealed abstract class RecordSnapshotSource extends SnapshotSource {
         }
     }
 
-    public abstract Stream<Map<String, Object>> streamRecords(VerifierCtx ctx);
+    protected abstract Stream<Map<String, Object>> streamRecords(VerifierCtx ctx);
 
     @Override
     public String mkSnapshot(VerifierCtx ctx, RunResult res) {

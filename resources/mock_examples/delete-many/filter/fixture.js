@@ -1,4 +1,4 @@
-import { collection } from "../_fixtures/basic-collection";
+import { collection } from "../../_fixtures/basic-collection";
 
 export async function Reset() {
   await collection.deleteMany({ i_dont_exist_for_sure: { $exists: false } });

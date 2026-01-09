@@ -16,6 +16,7 @@ import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Spec;
 
 import java.util.concurrent.Callable;
+import java.util.regex.Pattern;
 
 import static com.dtsx.docs.lib.ColorUtils.ACCENT_COLOR;
 

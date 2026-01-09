@@ -29,15 +29,11 @@ public class TestVerifier {
         new $DateScrubber()
     ));
 
-    static {
-        FileApprover.tracker.addAllowedDuplicates(_ -> true);
-    }
-
     private final VerifierCtx ctx;
 
     public TestOutcome verify(ClientLanguage language, TestRoot testRoot, Supplier<RunResult> result) {
         if (ctx.verifyMode() == DRY_RUN) {
-            return TestOutcome.Passed.INSTANCE;
+            return TestOutcome.DryPassed.INSTANCE;
         }
         return verifySnapshot(language, testRoot, mkSnapshot(testRoot, result.get()));
     }
@@ -70,7 +66,7 @@ public class TestVerifier {
             .forFile().withNamer(namer)
             .withScrubber(SCRUBBER)
             .withReporter((_, _) -> true)
-            .and(ctx.verifyMode().applyOptions(namer.getApprovedFile(".txt").toPath()));
+            .and(ctx.verifyMode().applyOptions(ctx, namer.getApprovedFile(".txt").toPath()));
     }
 
     private ExampleResultNamer mkNamer(ClientLanguage language, TestRoot testRoot) {

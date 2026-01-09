@@ -1,7 +1,7 @@
 package com.dtsx.docs.runner.snapshots;
 
-import com.dtsx.docs.runner.snapshots.RecordSnapshotSource.DocumentsSnapshotSource;
-import com.dtsx.docs.runner.snapshots.RecordSnapshotSource.RowsSnapshotSource;
+import com.dtsx.docs.runner.snapshots.OutputSnapshotSource.*;
+import com.dtsx.docs.runner.snapshots.RecordSnapshotSource.*;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
@@ -16,7 +16,9 @@ import java.util.function.Supplier;
 /// @see SnapshotSource
 @RequiredArgsConstructor
 public enum SnapshotSources {
-    OUTPUT(OutputSnapshotSource::new, OutputSnapshotSource::supportedParams),
+    STDOUT(StdoutSnapshotSource::new, StdoutSnapshotSource::supportedParams),
+
+    STDERR(StderrSnapshotSource::new, StderrSnapshotSource::supportedParams),
 
     DOCUMENTS(DocumentsSnapshotSource::new, DocumentsSnapshotSource::supportedParams),
 

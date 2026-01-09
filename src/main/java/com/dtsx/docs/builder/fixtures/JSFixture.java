@@ -7,13 +7,14 @@ import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.runner.TestRunException;
-import com.dtsx.docs.runner.verifier.VerifyMode;
 import lombok.EqualsAndHashCode;
 import lombok.val;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Consumer;
+
+import static com.dtsx.docs.runner.verifier.VerifyMode.DRY_RUN;
 
 /// Represents a JavaScript fixture file used to set up, reset, and tear down database state for testing, with being JavaScript used for ease of scripting.
 ///
@@ -63,9 +64,9 @@ public sealed abstract class JSFixture permits NoopFixture, JSFixtureImpl {
     @EqualsAndHashCode.Include
     public abstract String fixtureName();
 
-    protected abstract void setup(ExternalProgram tsx);
-    protected abstract void reset(ExternalProgram tsx);
-    protected abstract void teardown(ExternalProgram tsx);
+    protected abstract void setup(ExternalProgram tsx, Path nodePath);
+    protected abstract void reset(ExternalProgram tsx, Path nodePath);
+    protected abstract void teardown(ExternalProgram tsx, Path nodePath);
 
     /// Creates a [JSFixture] for the given path.
     ///
@@ -78,10 +79,7 @@ public sealed abstract class JSFixture permits NoopFixture, JSFixtureImpl {
         if (!Files.exists(path)) {
             return NoopFixture.INSTANCE;
         }
-
-        return (ctx.verifyMode() != VerifyMode.DRY_RUN)
-            ? new JSFixtureImpl(ctx, path)
-            : new NoopFixture(path.getFileName().toString());
+        return new JSFixtureImpl(ctx, path, ctx.verifyMode() == DRY_RUN);
     }
 
     /// Executes a consumer for each item in an iterable, resetting the fixture state before each iteration.
@@ -104,15 +102,15 @@ public sealed abstract class JSFixture permits NoopFixture, JSFixtureImpl {
     /// @param tsx the TypeScript executor program
     /// @param ts the iterable of items to process
     /// @param consumer the consumer to execute for each item
-    public <T> void useResetting(ExternalProgram tsx, Iterable<T> ts, Consumer<T> consumer) {
-        setup(tsx);
+    public <T> void useResetting(ExternalProgram tsx, Path nodePath, Iterable<T> ts, Consumer<T> consumer) {
+        setup(tsx, nodePath);
         try {
             for (val item : ts) {
-                reset(tsx);
+                reset(tsx, nodePath);
                 consumer.accept(item);
             }
         } finally {
-            teardown(tsx);
+            teardown(tsx, nodePath);
         }
     }
 
@@ -123,7 +121,7 @@ public sealed abstract class JSFixture permits NoopFixture, JSFixtureImpl {
     /// @throws TestRunException if npm install fails
     public static void installDependencies(VerifierCtx ctx, Path execEnvRoot) {
         val res = CliLogger.loading("Installing JS fixture dependencies...", (_) -> {
-            return ExternalPrograms.npm(ctx).run(execEnvRoot, "install");
+            return ExternalPrograms.npm(ctx).run(execEnvRoot, "install", "@datastax/astra-db-ts");
         });
 
         if (res.exitCode() != 0) {

@@ -81,15 +81,15 @@ public class VerifierArgs {
 
     @Option(
         names = { "-C", "--command-override" },
-        description = "Override commands for external programs (e.g., `-Ctsx='npx tsx' -Cbash=/usr/bin/bash`).",
+        description = "Override commands for external programs (e.g., `-Ctsx='npx -y tsx' -Cbash=/usr/bin/bash`).",
         paramLabel = "PROGRAM=COMMAND"
     )
     public Map<ExternalProgramType, String> $commandOverrides = Map.of();
 
     @Option(
         names = { "-m", "--verify-mode" },
-        description = "Verification mode to use (normal, verify_only, dry_run).",
-        defaultValue = "${VERIFY_MODE:-normal}",
+        description = "Verification mode to use (default, normal, verify_only, dry_run).",
+        defaultValue = "${VERIFY_MODE:-default}",
         paramLabel = "MODE"
     )
     public VerifyMode $verifyMode;

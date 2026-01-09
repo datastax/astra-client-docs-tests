@@ -3,11 +3,11 @@ package com.dtsx.docs.runner;
 import com.dtsx.docs.builder.TestRoot;
 import com.dtsx.docs.builder.fixtures.JSFixture;
 import com.dtsx.docs.runner.drivers.ClientLanguage;
-import picocli.CommandLine.Help.Ansi.Style;
 
-import java.util.*;
-
-import static com.dtsx.docs.lib.ColorUtils.color;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class TestResults {
     private final Map<JSFixture, List<TestRootResults>> results = new HashMap<>();
@@ -21,43 +21,23 @@ public class TestResults {
     }
 
     public sealed interface TestOutcome {
-        String status();
-
-        enum Passed implements TestOutcome {
-            INSTANCE;
-
-            @Override
-            public String status() {
-                return color(Style.fg_green, "(PASSED)");
-            }
+        default boolean passed() {
+            return this instanceof Passed || this instanceof DryPassed;
         }
 
-        record Failed(Error error) implements TestOutcome {
-            @Override
-            public String status() {
-                return color(Style.fg_red, "(FAILED)");
-            }
-        }
-
-        record Errored(Exception error) implements TestOutcome {
-            @Override
-            public String status() {
-                return color(Style.fg_yellow, "(ERRORED)");
-            }
-        }
+        enum Passed implements TestOutcome { INSTANCE }
+        enum DryPassed implements TestOutcome { INSTANCE }
+        record Failed(Error error) implements TestOutcome {}
+        record Errored(Exception error) implements TestOutcome {}
     }
 
     public record TestRootResults(TestRoot testRoot, Map<ClientLanguage, TestOutcome> outcomes) {
-        public boolean approved(ClientLanguage language) {
-            return outcomes.get(language) instanceof TestOutcome.Passed;
+        public int passedCount() {
+            return (int) outcomes.values().stream().filter(TestOutcome::passed).count();
         }
 
-        public int approvedCount() {
-            return (int) outcomes.keySet().stream().filter(this::approved).count();
-        }
-
-        public boolean allApproved() {
-            return approvedCount() == outcomes.size();
+        public boolean allPassed() {
+            return passedCount() == outcomes.size();
         }
     }
 
@@ -66,14 +46,14 @@ public class TestResults {
     }
 
     public int passedTests() {
-        return results.values().stream().flatMap(List::stream).mapToInt(TestRootResults::approvedCount).sum();
+        return results.values().stream().flatMap(List::stream).mapToInt(TestRootResults::passedCount).sum();
     }
 
     public int failedTests() {
         return totalTests() - passedTests();
     }
 
-    public boolean allApproved() {
+    public boolean allPassed() {
         return failedTests() == 0;
     }
 }

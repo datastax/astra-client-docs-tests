@@ -1,6 +1,6 @@
 import { collection } from "../_fixtures/basic-collection";
 
-export async function Reset() {
+export async function Setup() {
   await collection.deleteMany({ i_dont_exist_for_sure: { $exists: false } });
 
   await collection.insertMany([

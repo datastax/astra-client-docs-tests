@@ -115,6 +115,7 @@ public class ExecutionEnvironment {
     /// @see ExecutionEnvironment
     @RequiredArgsConstructor
     public static class ExecutionEnvironments implements AutoCloseable {
+        private final Path rootDir;
         private final Map<ClientLanguage, ExecutionEnvironment> map;
 
         /// Gets the execution environment for a specific language.
@@ -123,6 +124,13 @@ public class ExecutionEnvironment {
         /// @return the execution environment for that language
         public ExecutionEnvironment get(ClientLanguage language) {
             return map.get(language);
+        }
+
+        /// Returns the absolute path to the `node_modules` directory within the execution environment.
+        ///
+        /// @return the `node_modules` path
+        public Path nodePath() {
+            return rootDir.resolve("node_modules").toAbsolutePath();
         }
 
         /// Cleans up all execution environments if ran with the `--clean` flag.
@@ -202,7 +210,7 @@ public class ExecutionEnvironment {
                 (driver) -> mkExecEnv(ctx, rootDir, driver)
             ));
 
-            return new ExecutionEnvironments(execEnvs);
+            return new ExecutionEnvironments(rootDir, execEnvs);
         }
 
         private static ExecutionEnvironment mkExecEnv(VerifierCtx ctx, Path rootDir, ClientDriver driver) {

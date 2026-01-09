@@ -3,6 +3,7 @@ package com.dtsx.docs.config;
 import com.datastax.astra.client.DataAPIDestination;
 import lombok.val;
 
+/// Allows for abstraction over Astra vs HCD connections.
 public record ConnectionInfo(String token, String endpoint, DataAPIDestination destination) {
     public static ConnectionInfo parse(String token, String endpoint) {
         val dest =

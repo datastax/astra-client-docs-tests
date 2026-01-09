@@ -13,27 +13,15 @@ public class ExampleResultNamer implements ApprovalNamer {
     @Getter
     private final String exampleName;
     private final String fileName;
-    private final ClientLanguage language;
-    private final String additionalInformation;
     private final VerifierCtx ctx;
 
     public ExampleResultNamer(VerifierCtx ctx, ClientLanguage language, TestRoot testRoot) {
-        this.exampleName = testRoot.path().getFileName().toString().split("\\.")[0];
+        this.exampleName = testRoot.rootName(ctx);
 
         this.fileName = (!testRoot.shareSnapshots())
             ? language.name().toLowerCase()
             : "shared";
 
-        this.language = language;
-        this.additionalInformation = "";
-        this.ctx = ctx;
-    }
-
-    private ExampleResultNamer(VerifierCtx ctx, String exampleName, String fileName, ClientLanguage language, String additionalInformation) {
-        this.exampleName = exampleName;
-        this.fileName = fileName;
-        this.language = language;
-        this.additionalInformation = additionalInformation;
         this.ctx = ctx;
     }
 
@@ -59,11 +47,11 @@ public class ExampleResultNamer implements ApprovalNamer {
 
     @Override
     public ApprovalNamer addAdditionalInformation(String additionalInformation) {
-        return new ExampleResultNamer(this.ctx, this.exampleName, this.fileName, this.language, additionalInformation);
+        return this; // we can just ignore this
     }
 
     @Override
     public String getAdditionalInformation() {
-        return additionalInformation;
+        return ""; // we can just ignore this
     }
 }

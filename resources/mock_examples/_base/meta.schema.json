@@ -27,12 +27,20 @@
         "sources": {
           "type": "object",
           "properties": {
-            "output": {
+            "stdout": {
               "type": ["object", "null"],
               "properties": {
-                "capture": {
-                  "type": "string",
-                  "enum": ["add", "stdout", "stderr"]
+                "matches": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "stderr": {
+              "type": ["object", "null"],
+              "properties": {
+                "matches": {
+                  "type": "string"
                 }
               },
               "additionalProperties": false
@@ -55,7 +63,8 @@
               },
               "additionalProperties": false
             }
-          }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": false

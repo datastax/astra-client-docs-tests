@@ -1,10 +1,9 @@
-$schema: "../_fixtures/meta.schema.json"
-skip: true
+$schema: "../../_base/meta.schema.json"
 fixtures:
   base: basic-collection.js
 snapshots:
   share: true
   sources:
-    output:
-      capture: stderr
+    stderr:
+      matches: ^$
     documents:

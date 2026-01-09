@@ -4,8 +4,18 @@ import com.dtsx.docs.builder.fixtures.JSFixture;
 import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.runner.TestResults;
 import com.dtsx.docs.runner.TestResults.TestRootResults;
-import lombok.val;
 
+/// Reporter that shows all test results, both passed and failed.
+///
+/// Output format:
+/// ```
+/// 1) basic-collection.js
+///   - ✓ dates (typescript,python,java)
+///   - ✗ find-many
+///     - ✓ example.ts
+///     - ✗ example.py
+///     - ✓ example.java
+/// ```
 public class AllTestsReporter extends TestReporter {
     public AllTestsReporter(VerifierCtx ctx) {
         super(ctx);

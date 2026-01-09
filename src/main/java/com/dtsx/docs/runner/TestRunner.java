@@ -2,7 +2,6 @@ package com.dtsx.docs.runner;
 
 import com.dtsx.docs.builder.TestPlan;
 import com.dtsx.docs.builder.TestRoot;
-import com.dtsx.docs.builder.fixtures.JSFixture;
 import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms;
@@ -49,7 +48,7 @@ public class TestRunner {
         plan.forEachBaseFixture((baseFixture, testRoots) -> {
             ctx.reporter().printBaseFixtureHeading(baseFixture, history);
 
-            baseFixture.useResetting(tsx, testRoots, (testRoot) -> {
+            baseFixture.useResetting(tsx, execEnvs.nodePath(), testRoots, (testRoot) -> {
                 val result = runTestsInRoot(testRoot, execEnvs);
                 ctx.reporter().printTestRootResults(baseFixture, result, history);
                 history.add(baseFixture, result);
@@ -58,13 +57,13 @@ public class TestRunner {
 
         ctx.reporter().printSummary(history);
 
-        return history.allApproved();
+        return history.allPassed();
     }
 
     private TestRootResults runTestsInRoot(TestRoot testRoot, ExecutionEnvironments execEnvs) {
         val outcomes = new HashMap<ClientLanguage, TestOutcome>();
 
-        testRoot.testFixture().useResetting(tsx, testRoot.filesToTest().entrySet(), (e) -> {
+        testRoot.testFixture().useResetting(tsx, execEnvs.nodePath(), testRoot.filesToTest().entrySet(), (e) -> {
             val language = e.getKey();
             val exampleFile = e.getValue();
 

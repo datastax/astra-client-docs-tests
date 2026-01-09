@@ -47,7 +47,6 @@ public record TestRoot(
     /// examples/
     ///   dates/                    -> "dates"
     ///   delete-many/with-filter/  -> "delete-many/with-filter"
-    /// }
     /// ```
     ///
     /// @param ctx the verifier context containing the examples folder path
@@ -63,7 +62,6 @@ public record TestRoot(
     /// dates/
     ///   example.ts                       -> "example.ts"
     ///   java/src/main/java/Example.java  -> "java/src/main/java/Example.java"
-    /// }
     /// ```
     ///
     /// @param lang the client language for which to get the example file path

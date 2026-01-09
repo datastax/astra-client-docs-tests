@@ -4,21 +4,25 @@ import com.dtsx.docs.builder.MetaYml;
 import com.dtsx.docs.builder.TestPlanException;
 import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
+import lombok.val;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
-/// Snapshot source that captures program output (stdout, stderr, or both).
+/// Base class for snapshot sources that capture process output (stdout or stderr).
 ///
-/// The `capture` parameter determines what output to capture:
-///   - `all` - captures both stdout and stderr sequenced together (default)
-///   - `stdout` - captures only stdout
-///   - `stderr` - captures only stderr
+/// Implemented by [StdoutSnapshotSource] and [StderrSnapshotSource].
+///
+/// Supports an optional `matches` parameter to verify that the captured output matches a given regex pattern to allow
+/// for more flexible verification beyond basic scrubbing of ids/timestamps, rather than capturing the entire output.
 ///
 /// Example configuration:
 /// ```
-/// output:
-///   capture: stderr
+/// stdout:                 <- captures whole stdout
+/// stderr:
+///  matches: ".*ERROR.*"   <- just checks if stderr contains the word "ERROR"
 /// ```
 ///
 /// @apiNote It's often a good idea to just capture `stderr` to ensure there's no warnings or errors, and leave the
@@ -26,37 +30,63 @@ import java.util.Map;
 ///
 /// @see SnapshotSources
 /// @see MetaYml
-public class OutputSnapshotSource extends SnapshotSource {
-    private enum Capture {
-        ALL,
-        STDOUT,
-        STDERR
-    }
-
-    private Capture capture = Capture.ALL;
+public sealed abstract class OutputSnapshotSource extends SnapshotSource {
+    protected @Nullable Pattern pattern;
 
     public OutputSnapshotSource(Map<String, Object> params, SnapshotSources enumRep) {
         super(enumRep);
 
-        if (params.get("capture") != null) {
-            try {
-                this.capture = Capture.valueOf(params.get("capture").toString().toUpperCase());
-            } catch (IllegalArgumentException e) {
-                throw new TestPlanException("Unexpected value for snapshot source output capture: " + params.get("capture") + " (expected one of 'all', 'stdout', 'stderr')");
+        if (params.get("matches") != null) {
+            if (params.get("matches") instanceof String matchesStr) {
+                this.pattern = Pattern.compile(matchesStr, Pattern.DOTALL);
+            } else {
+                throw new TestPlanException("The 'matches' parameter must be a String");
             }
         }
     }
 
+    protected abstract String getCapturedOutput(RunResult res);
+
     @Override
     public String mkSnapshot(VerifierCtx ctx, RunResult res) {
-        return switch (capture) {
-            case ALL -> res.output();
-            case STDOUT -> res.stdout();
-            case STDERR -> res.stderr();
-        };
+        val output = getCapturedOutput(res).trim();
+
+        if (pattern != null) {
+            if (pattern.matcher(output).matches()) {
+                return "Matches '" + pattern.pattern() + "'";
+            } else {
+                return "Failed to match '" + pattern.pattern() + "':\n\n" + output;
+            }
+        }
+
+        return output;
     }
 
     public static List<String> supportedParams() {
-        return List.of("capture");
+        return List.of("matches");
+    }
+
+    /// Implementation of [OutputSnapshotSource] that captures stdout
+    public static final class StdoutSnapshotSource extends OutputSnapshotSource {
+        public StdoutSnapshotSource(Map<String, Object> params, SnapshotSources enumRep) {
+            super(params, enumRep);
+        }
+
+        @Override
+        protected String getCapturedOutput(RunResult res) {
+            return res.stdout();
+        }
+    }
+
+    /// Implementation of [OutputSnapshotSource] that captures stderr
+    public static final class StderrSnapshotSource extends OutputSnapshotSource {
+        public StderrSnapshotSource(Map<String, Object> params, SnapshotSources enumRep) {
+            super(params, enumRep);
+        }
+
+        @Override
+        protected String getCapturedOutput(RunResult res) {
+            return res.stderr();
+        }
     }
 }
