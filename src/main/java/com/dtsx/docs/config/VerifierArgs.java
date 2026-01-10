@@ -80,6 +80,13 @@ public class VerifierArgs {
     public boolean $clean;
 
     @Option(
+        names = { "-b", "--bail" },
+        description = "Whether to stop execution upon the first test failure.",
+        defaultValue = "${BAIL:-false}"
+    )
+    public boolean $bail;
+
+    @Option(
         names = { "-C", "--command-override" },
         description = "Override commands for external programs (e.g., `-Ctsx='npx -y tsx' -Cbash=/usr/bin/bash`).",
         paramLabel = "PROGRAM=COMMAND"

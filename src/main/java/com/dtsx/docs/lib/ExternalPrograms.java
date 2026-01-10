@@ -185,17 +185,17 @@ public class ExternalPrograms {
 
                 val outputLines = Collections.synchronizedList(new ArrayList<OutputLine>());
 
-                try (val executor = Executors.newVirtualThreadPerTaskExecutor()) {
-                    executor.submit(
-                        mkStreamReader(process.getInputStream(), outputLines, StdoutLine::new)
-                    );
-                    executor.submit(
-                        mkStreamReader(process.getErrorStream(), outputLines, StderrLine::new)
-                    );
-                    return new RunResult(process.waitFor(), outputLines);
-                }
+                val stdoutReaderThread = Thread.startVirtualThread(mkStreamReader(process.getInputStream(), outputLines, StdoutLine::new));
+                val stderrReaderThread = Thread.startVirtualThread(mkStreamReader(process.getErrorStream(), outputLines, StderrLine::new));
 
+                val exitCode = process.waitFor();
+
+                stdoutReaderThread.join();
+                stderrReaderThread.join();
+
+                return new RunResult(exitCode, outputLines);
             } catch (IOException | InterruptedException e) {
+                CliLogger.exception(e);
                 Thread.currentThread().interrupt();
                 return new RunResult(-1, List.of(new StderrLine(e.toString())));
             }
@@ -210,6 +210,7 @@ public class ExternalPrograms {
                 val exitCode = process.waitFor();
                 return exitCode == 0;
             } catch (IOException | InterruptedException e) {
+                CliLogger.exception(e);
                 Thread.currentThread().interrupt();
                 return false;
             }

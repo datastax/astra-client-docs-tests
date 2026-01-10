@@ -16,7 +16,7 @@ public class ExampleResultNamer implements ApprovalNamer {
     private final VerifierCtx ctx;
 
     public ExampleResultNamer(VerifierCtx ctx, ClientLanguage language, TestRoot testRoot) {
-        this.exampleName = testRoot.rootName(ctx);
+        this.exampleName = testRoot.rootName();
 
         this.fileName = (!testRoot.shareSnapshots())
             ? language.name().toLowerCase()

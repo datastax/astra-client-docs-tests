@@ -38,6 +38,9 @@ public class TestRunner {
         return new TestRunner(ctx, plan).runAllTests();
     }
 
+    // Don't love using exceptions for control flow, but eh, keeps it simple here
+    private static class BailException extends RuntimeException {}
+
     private boolean runAllTests() {
         @Cleanup val execEnvs = ExecutionEnvironment.setup(ctx, drivers.values());
 
@@ -45,19 +48,27 @@ public class TestRunner {
 
         ctx.reporter().printHeader(plan);
 
-        plan.forEachBaseFixture((baseFixture, testRoots) -> {
-            ctx.reporter().printBaseFixtureHeading(baseFixture, history);
+        try {
+            plan.forEachBaseFixture((baseFixture, testRoots) -> {
+                ctx.reporter().printBaseFixtureHeading(baseFixture, history);
 
-            baseFixture.useResetting(tsx, execEnvs.nodePath(), testRoots, (testRoot) -> {
-                val result = runTestsInRoot(testRoot, execEnvs);
-                ctx.reporter().printTestRootResults(baseFixture, result, history);
-                history.add(baseFixture, result);
+                baseFixture.useResetting(tsx, execEnvs.nodePath(), testRoots, (testRoot) -> {
+                    val result = runTestsInRoot(testRoot, execEnvs);
+                    ctx.reporter().printTestRootResults(baseFixture, result, history);
+                    history.add(baseFixture, result);
+
+                    if (ctx.bail() && !result.allPassed()) {
+                        throw new BailException();
+                    }
+                });
             });
-        });
 
-        ctx.reporter().printSummary(history);
-
-        return history.allPassed();
+            return history.allPassed();
+        } catch (BailException e) {
+            return false;
+        } finally {
+            ctx.reporter().printSummary(plan, history);
+        }
     }
 
     private TestRootResults runTestsInRoot(TestRoot testRoot, ExecutionEnvironments execEnvs) {

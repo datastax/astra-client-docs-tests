@@ -25,6 +25,16 @@ import java.util.regex.Pattern;
 ///  matches: ".*ERROR.*"   <- just checks if stderr contains the word "ERROR"
 /// ```
 ///
+/// If `matches` is specified, the actual output won't be stored in the snapshot. Instead, the snapshot will indicate
+/// whether the output matched the pattern or not. If it didn't match, the full output will
+/// be included in the snapshot for debugging purposes.
+///
+/// For example:
+/// ```
+/// ---stderr---
+/// Matches '.*ERROR.*'
+/// ```
+///
 /// @apiNote It's often a good idea to just capture `stderr` to ensure there's no warnings or errors, and leave the
 /// actual verification to other snapshot sources (e.g. [RecordSnapshotSource])
 ///

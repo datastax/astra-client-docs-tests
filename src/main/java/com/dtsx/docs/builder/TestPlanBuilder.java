@@ -149,6 +149,7 @@ public class TestPlanBuilder {
         val shareSnapshots = meta.snapshots().share().orElse(true);
 
         val testMetadata = new TestRoot(
+            ctx,
             testRoot,
             filesToTest,
             testFixture,

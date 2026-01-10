@@ -143,6 +143,7 @@ public class ExecutionEnvironment {
     @SneakyThrows
     private void cleanIfNeeded() {
         if (ctx.clean()) {
+            CliLogger.debug("Cleaning up execution environments");
             PathUtils.deleteDirectory(execEnvPath);
         }
     }
@@ -225,6 +226,7 @@ public class ExecutionEnvironment {
 
                 try {
                     if (!Files.exists(destExecEnv)) {
+                        CliLogger.debug("Setting up %s execution environment from template".formatted(languageName));
                         Files.createDirectories(destExecEnv);
                         PathUtils.copyDirectory(srcExecEnv, destExecEnv);
                     }

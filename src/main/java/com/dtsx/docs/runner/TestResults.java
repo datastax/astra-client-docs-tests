@@ -4,10 +4,8 @@ import com.dtsx.docs.builder.TestRoot;
 import com.dtsx.docs.builder.fixtures.JSFixture;
 import com.dtsx.docs.runner.drivers.ClientLanguage;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.nio.file.Path;
+import java.util.*;
 
 public class TestResults {
     private final Map<JSFixture, List<TestRootResults>> results = new HashMap<>();
@@ -21,13 +19,17 @@ public class TestResults {
     }
 
     public sealed interface TestOutcome {
+        default String name() {
+            return this.getClass().getSimpleName();
+        }
+
         default boolean passed() {
             return this instanceof Passed || this instanceof DryPassed;
         }
 
         enum Passed implements TestOutcome { INSTANCE }
         enum DryPassed implements TestOutcome { INSTANCE }
-        record Failed(Error error) implements TestOutcome {}
+        record Failed(Optional<Path> expected) implements TestOutcome {}
         record Errored(Exception error) implements TestOutcome {}
     }
 

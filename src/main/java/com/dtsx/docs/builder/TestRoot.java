@@ -4,6 +4,7 @@ import com.dtsx.docs.builder.fixtures.JSFixture;
 import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.runner.drivers.ClientLanguage;
 import com.dtsx.docs.runner.snapshots.SnapshotSource;
+import lombok.Getter;
 
 import java.nio.file.Path;
 import java.util.TreeMap;
@@ -33,14 +34,27 @@ import java.util.TreeSet;
 /// Each test root contains different client variants of the same example that share the same fixture and snapshot configuration, with test files called `example.<ext>`.
 ///
 /// @see MetaYml
-public record TestRoot(
-    Path path,
-    TreeMap<ClientLanguage, Path> filesToTest,
-    JSFixture testFixture,
-    TreeSet<SnapshotSource> snapshotters,
-    boolean shareSnapshots
-) {
-    /// Returns the name of this test root relative to the examples folder.
+@Getter
+public class TestRoot {
+    /// The path to this test root.
+    private final Path path;
+
+    /// The different `example.<ext>` files to test within this test root, keyed by client language.
+    private final TreeMap<ClientLanguage, Path> filesToTest;
+
+    ///  The test-specific fixture to use for this test root.
+    private final JSFixture testFixture;
+
+    /// The set of snapshot sources configured for this test root.
+    private final TreeSet<SnapshotSource> snapshotSources;
+
+    /// Whether snapshots are shared across all client languages within this test root.
+    ///
+    /// If true, a snapshot created by one client language can be used to verify the output of another
+    ///  client language within the same test root for stronger consistency and reduced effort.
+    private final boolean shareSnapshots;
+
+    /// The name of this test root relative to the examples folder.
     ///
     /// Example:
     /// ```
@@ -48,11 +62,15 @@ public record TestRoot(
     ///   dates/                    -> "dates"
     ///   delete-many/with-filter/  -> "delete-many/with-filter"
     /// ```
-    ///
-    /// @param ctx the verifier context containing the examples folder path
-    /// @return the relative name of this test root
-    public String rootName(VerifierCtx ctx) {
-        return ctx.examplesFolder().relativize(path).toString();
+    private final String rootName;
+
+    public TestRoot(VerifierCtx ctx, Path path, TreeMap<ClientLanguage, Path> filesToTes, JSFixture testFixture, TreeSet<SnapshotSource> snapshotSources, boolean shareSnapshots) {
+        this.path = path;
+        this.filesToTest = filesToTes;
+        this.testFixture = testFixture;
+        this.snapshotSources = snapshotSources;
+        this.shareSnapshots = shareSnapshots;
+        this.rootName = ctx.examplesFolder().relativize(path).toString();
     }
 
     /// Returns the relative path of the example file for the specified client language.

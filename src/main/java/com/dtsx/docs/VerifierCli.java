@@ -39,7 +39,11 @@ public class VerifierCli implements Callable<Integer> {
                 .parameters(ACCENT_COLOR)
                 .optionParams(Style.italic)
                 .build()
-            );
+            )
+            .setExecutionExceptionHandler((ex, _, _) -> {
+                CliLogger.exception(ex);
+                throw ex;
+            });
 
         val exitCode = cli.execute(args);
         System.exit(exitCode);

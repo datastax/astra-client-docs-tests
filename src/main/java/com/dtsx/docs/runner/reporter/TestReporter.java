@@ -12,7 +12,6 @@ import com.dtsx.docs.runner.TestResults.TestOutcome.Errored;
 import com.dtsx.docs.runner.TestResults.TestOutcome.Failed;
 import com.dtsx.docs.runner.TestResults.TestOutcome.Passed;
 import com.dtsx.docs.runner.TestResults.TestRootResults;
-import com.dtsx.docs.runner.verifier.VerifyMode;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import picocli.CommandLine.Help.Ansi.Style;
@@ -77,7 +76,7 @@ public abstract class TestReporter {
     /// ```
     public abstract void printTestRootResults(JSFixture baseFixture, TestRootResults result, TestResults history);
 
-    /// Prints the final summary after all tests complete (total, passed, failed counts)
+    /// Prints the final summary after all tests complete (total, passed, failed, potentially bailed counts)
     ///
     /// Example:
     /// ```
@@ -86,11 +85,17 @@ public abstract class TestReporter {
     /// - Passed tests: 120
     /// - Failed tests: 3
     /// ```
-    public void printSummary(TestResults history) {
+    public void printSummary(TestPlan plan, TestResults history) {
+        val skippedTests = plan.totalTests() - history.totalTests();
+
         CliLogger.println("\n@|bold Test Summary:|@");
-        CliLogger.println("@!-!@ Total tests: " + history.totalTests());
+        CliLogger.println("@!-!@ Total tests: " + plan.totalTests());
         CliLogger.println("@!-!@ Passed tests: " + history.passedTests());
         CliLogger.println("@!-!@ Failed tests: " + history.failedTests());
+
+        if (skippedTests > 0) {
+            CliLogger.println("@!-!@ Bailed tests: " + skippedTests);
+        }
     }
 
     /// Parses a reporter name and returns the corresponding reporter instance.
@@ -149,7 +154,7 @@ public abstract class TestReporter {
             sb
                 .append(outcomeSymbol(resultSample))
                 .append(" ")
-                .append(results.testRoot().rootName(ctx))
+                .append(results.testRoot().rootName())
                 .append(Style.faint.on())
                 .append(" (")
                 .append(results.testRoot().filesToTest().keySet().stream().map(l -> l.name().toLowerCase()).collect(joining(",")))
@@ -158,7 +163,7 @@ public abstract class TestReporter {
         } else {
             sb
                 .append("@|red ✗|@ ")
-                .append(results.testRoot().rootName(ctx));
+                .append(results.testRoot().rootName());
 
             for (val entry : results.outcomes().entrySet()) {
                 val language = entry.getKey();
