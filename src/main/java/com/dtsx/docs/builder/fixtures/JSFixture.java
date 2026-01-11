@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Consumer;
 
+import com.dtsx.docs.runner.PlaceholderResolver;
 import static com.dtsx.docs.runner.verifier.VerifyMode.DRY_RUN;
 
 /// Represents a JavaScript fixture file used to set up, reset, and tear down database state for testing, with being JavaScript used for ease of scripting.
@@ -61,12 +62,33 @@ import static com.dtsx.docs.runner.verifier.VerifyMode.DRY_RUN;
 /// @see TestRoot
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public sealed abstract class JSFixture permits NoopFixture, JSFixtureImpl {
+    /// The name of the fixture, derived from its file name (if present)
+    ///
+    /// Equality is based on this name so that test roots using the same fixture can be grouped together.
     @EqualsAndHashCode.Include
     public abstract String fixtureName();
 
-    protected abstract void setup(ExternalProgram tsx, Path nodePath);
-    protected abstract void reset(ExternalProgram tsx, Path nodePath);
-    protected abstract void teardown(ExternalProgram tsx, Path nodePath);
+    /// Returns "metadata" about this fixture, such as names of collections, tables, keyspaces, etc. it creates/works with.
+    ///
+    /// Expects metadata of the following format to be returned from the fixture file:
+    /// ```javascript
+    /// export function Meta() {
+    ///   return {
+    ///     CollectionName?: '...',  // defaults to `null`
+    ///     TableName?: '...',       // defaults to `null`
+    ///     KeyspaceName?: '...',    // defaults to 'default_keyspace'
+    ///   };
+    /// }
+    /// ```
+    ///
+    /// The output will be used in {@link PlaceholderResolver} to replace placeholders in code snippets.
+    ///
+    /// @see PlaceholderResolver
+    public abstract FixtureMetadata meta(ExternalProgram tsx, Path nodePath);
+
+    protected abstract void setup(ExternalProgram tsx, Path nodePath, FixtureMetadata md);
+    protected abstract void reset(ExternalProgram tsx, Path nodePath, FixtureMetadata md);
+    protected abstract void teardown(ExternalProgram tsx, Path nodePath, FixtureMetadata md);
 
     /// Creates a [JSFixture] for the given path.
     ///
@@ -102,15 +124,15 @@ public sealed abstract class JSFixture permits NoopFixture, JSFixtureImpl {
     /// @param tsx the TypeScript executor program
     /// @param ts the iterable of items to process
     /// @param consumer the consumer to execute for each item
-    public <T> void useResetting(ExternalProgram tsx, Path nodePath, Iterable<T> ts, Consumer<T> consumer) {
-        setup(tsx, nodePath);
+    public <T> void useResetting(ExternalProgram tsx, Path nodePath, FixtureMetadata md, Iterable<T> ts, Consumer<T> consumer) {
+        setup(tsx, nodePath, md);
         try {
             for (val item : ts) {
-                reset(tsx, nodePath);
+                reset(tsx, nodePath, md);
                 consumer.accept(item);
             }
         } finally {
-            teardown(tsx, nodePath);
+            teardown(tsx, nodePath, md);
         }
     }
 

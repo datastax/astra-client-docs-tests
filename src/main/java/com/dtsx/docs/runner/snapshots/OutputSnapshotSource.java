@@ -2,6 +2,7 @@ package com.dtsx.docs.runner.snapshots;
 
 import com.dtsx.docs.builder.MetaYml;
 import com.dtsx.docs.builder.TestPlanException;
+import com.dtsx.docs.builder.fixtures.FixtureMetadata;
 import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import lombok.val;
@@ -58,7 +59,7 @@ public sealed abstract class OutputSnapshotSource extends SnapshotSource {
     protected abstract String getCapturedOutput(RunResult res);
 
     @Override
-    public String mkSnapshot(VerifierCtx ctx, RunResult res) {
+    public String mkSnapshot(VerifierCtx ctx, RunResult res, FixtureMetadata md) {
         val output = getCapturedOutput(res).trim();
 
         if (pattern != null) {

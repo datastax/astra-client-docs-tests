@@ -1,5 +1,6 @@
 package com.dtsx.docs.runner.snapshots;
 
+import com.dtsx.docs.builder.fixtures.FixtureMetadata;
 import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import com.dtsx.docs.runner.verifier.TestVerifier;
@@ -18,7 +19,7 @@ public abstract class SnapshotSource implements Comparable<SnapshotSource> {
     /// Any header/footer or delimiting information is added by the caller.
     ///
     /// @see TestVerifier
-    public abstract String mkSnapshot(VerifierCtx ctx, RunResult res);
+    public abstract String mkSnapshot(VerifierCtx ctx, RunResult res, FixtureMetadata md);
 
     public String name() {
         return enumRep.name();

@@ -1,7 +1,6 @@
 package com.dtsx.docs.lib;
 
 import com.dtsx.docs.config.VerifierCtx;
-import com.dtsx.docs.runner.SourceCodeReplacer;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.apache.commons.lang3.ArrayUtils;
@@ -16,7 +15,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -231,8 +229,6 @@ public class ExternalPrograms {
             if (dir != null) {
                 pb.directory(dir.toFile());
             }
-
-            pb.environment().putAll(SourceCodeReplacer.mkEnvVars(ctx));
 
             if (envVars != null) {
                 pb.environment().putAll(envVars);

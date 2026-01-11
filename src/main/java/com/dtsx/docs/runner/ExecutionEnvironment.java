@@ -1,5 +1,6 @@
 package com.dtsx.docs.runner;
 
+import com.dtsx.docs.builder.fixtures.FixtureMetadata;
 import com.dtsx.docs.builder.fixtures.JSFixture;
 import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.lib.CliLogger;
@@ -85,8 +86,8 @@ public class ExecutionEnvironment {
     /// @param sourceFile the original test file to copy
     /// @param test the test to run with the copied file
     /// @return the result of the test execution
-    public <T> T withTestFileCopied(ClientDriver driver, Path sourceFile, Supplier<T> test) {
-        val testFile = setupFileForTesting(driver, sourceFile);
+    public <T> T withTestFileCopied(ClientDriver driver, Path sourceFile, FixtureMetadata md, Supplier<T> test) {
+        val testFile = setupFileForTesting(driver, sourceFile, md);
         try {
             return test.get();
         } finally {
@@ -149,9 +150,9 @@ public class ExecutionEnvironment {
     }
 
     @SneakyThrows
-    private Path setupFileForTesting(ClientDriver driver, Path sourceFile) {
+    private Path setupFileForTesting(ClientDriver driver, Path sourceFile, FixtureMetadata md) {
         var content = Files.readString(sourceFile);
-        content = SourceCodeReplacer.replacePlaceholders(content, ctx);
+        content = PlaceholderResolver.replacePlaceholders(ctx, md, content);
         content = driver.preprocessScript(ctx, content);
 
         Files.writeString(testFileCopyPath, content);

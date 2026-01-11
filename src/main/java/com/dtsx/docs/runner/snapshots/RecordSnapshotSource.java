@@ -5,16 +5,19 @@ import com.datastax.astra.client.core.query.Filter;
 import com.datastax.astra.client.tables.definition.rows.Row;
 import com.dtsx.docs.builder.MetaYml;
 import com.dtsx.docs.builder.TestPlanException;
+import com.dtsx.docs.builder.fixtures.FixtureMetadata;
 import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.lib.DataAPIUtils;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import com.dtsx.docs.lib.JacksonUtils;
 import com.dtsx.docs.runner.verifier.TestVerifier;
+import lombok.val;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 /// Base class for snapshot sources that deterministically captures database records (documents or rows).
@@ -51,12 +54,17 @@ public sealed abstract class RecordSnapshotSource extends SnapshotSource {
         }
     }
 
-    protected abstract Stream<Map<String, Object>> streamRecords(VerifierCtx ctx);
+    protected abstract Optional<String> extractSchemaObjectName(FixtureMetadata md);
+    protected abstract Stream<Map<String, Object>> streamRecords(VerifierCtx ctx, String name);
 
     @Override
-    public String mkSnapshot(VerifierCtx ctx, RunResult res) {
+    public String mkSnapshot(VerifierCtx ctx, RunResult res, FixtureMetadata md) {
+        // error should never be thrown since it would've been caught earlier in PlaceholderResolver.resolvePlaceholders
+        // since the snapshot shouldn't be depending on a collection/table that the example file doesn't explicitly use anyway
+        val schemaObjName = extractSchemaObjectName(md).orElseThrow(() -> new TestPlanException("Could not determine schema object name from fixture metadata"));
+
         return JacksonUtils.prettyPrintJson(
-            mkJsonDeterministic(streamRecords(ctx).toList())
+            mkJsonDeterministic(streamRecords(ctx, schemaObjName).toList())
         );
     }
 
@@ -71,8 +79,13 @@ public sealed abstract class RecordSnapshotSource extends SnapshotSource {
         }
 
         @Override
-        public Stream<Map<String, Object>> streamRecords(VerifierCtx ctx) {
-            return DataAPIUtils.getCollection(ctx.connectionInfo()).find(filter).stream().map(Document::getDocumentMap);
+        protected Optional<String> extractSchemaObjectName(FixtureMetadata md) {
+            return md.collectionName();
+        }
+
+        @Override
+        public Stream<Map<String, Object>> streamRecords(VerifierCtx ctx, String name) {
+            return DataAPIUtils.getCollection(ctx.connectionInfo(), name).find(filter).stream().map(Document::getDocumentMap);
         }
     }
 
@@ -83,8 +96,13 @@ public sealed abstract class RecordSnapshotSource extends SnapshotSource {
         }
 
         @Override
-        public Stream<Map<String, Object>> streamRecords(VerifierCtx ctx) {
-            return DataAPIUtils.getTable(ctx.connectionInfo()).find(filter).stream().map(Row::getColumnMap);
+        protected Optional<String> extractSchemaObjectName(FixtureMetadata md) {
+            return md.tableName();
+        }
+
+        @Override
+        public Stream<Map<String, Object>> streamRecords(VerifierCtx ctx, String name) {
+            return DataAPIUtils.getTable(ctx.connectionInfo(), name).find(filter).stream().map(Row::getColumnMap);
         }
     }
 

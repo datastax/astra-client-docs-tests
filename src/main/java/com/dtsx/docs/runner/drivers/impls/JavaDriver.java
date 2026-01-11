@@ -13,6 +13,7 @@ import lombok.val;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 public class JavaDriver extends ClientDriver {
@@ -51,7 +52,7 @@ public class JavaDriver extends ClientDriver {
     }
 
     @Override
-    public RunResult execute(VerifierCtx ctx, ExecutionEnvironment execEnv) {
-        return ExternalPrograms.custom(ctx).run(execEnv.envDir(), "./gradlew", "run", "--quiet");
+    public RunResult execute(VerifierCtx ctx, ExecutionEnvironment execEnv, Map<String, String> envVars) {
+        return ExternalPrograms.custom(ctx).run(execEnv.envDir(), envVars, "./gradlew", "run", "--quiet");
     }
 }

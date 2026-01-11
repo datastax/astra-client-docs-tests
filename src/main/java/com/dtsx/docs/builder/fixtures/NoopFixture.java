@@ -16,17 +16,22 @@ public final class NoopFixture extends JSFixture {
     }
 
     @Override
-    public void setup(ExternalProgram tsx, Path nodePath) {
+    public FixtureMetadata meta(ExternalProgram tsx, Path nodePath) {
+        return FixtureMetadata.EMPTY;
+    }
+
+    @Override
+    protected void setup(ExternalProgram tsx, Path nodePath, FixtureMetadata md) {
         // noop
     }
 
     @Override
-    public void reset(ExternalProgram tsx, Path nodePath) {
+    protected void reset(ExternalProgram tsx, Path nodePath, FixtureMetadata md) {
         // noop
     }
 
     @Override
-    public void teardown(ExternalProgram tsx, Path nodePath) {
+    protected void teardown(ExternalProgram tsx, Path nodePath, FixtureMetadata md) {
         // noop
     }
 }

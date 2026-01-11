@@ -1,6 +1,7 @@
 package com.dtsx.docs.runner.verifier;
 
 import com.dtsx.docs.builder.TestRoot;
+import com.dtsx.docs.builder.fixtures.FixtureMetadata;
 import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
@@ -67,23 +68,23 @@ public class TestVerifier {
 
     private final VerifierCtx ctx;
 
-    public TestOutcome verify(ClientLanguage language, TestRoot testRoot, Supplier<RunResult> result) {
+    public TestOutcome verify(ClientLanguage language, TestRoot testRoot, FixtureMetadata md, Supplier<RunResult> result) {
         if (ctx.verifyMode() == DRY_RUN) {
             return TestOutcome.DryPassed.INSTANCE;
         }
 
-        val snapshot = mkSnapshot(testRoot, result.get());
+        val snapshot = mkSnapshot(testRoot, md, result.get());
         val outcome = verifySnapshot(language, testRoot, snapshot);
 
         CliLogger.result(testRoot, outcome, snapshot);
         return outcome;
     }
 
-    private String mkSnapshot(TestRoot testRoot, RunResult result) {
+    private String mkSnapshot(TestRoot testRoot, FixtureMetadata md, RunResult result) {
         val sb = new StringBuilder();
 
         for (val source : testRoot.snapshotSources()) {
-            val snapshot = source.mkSnapshot(ctx, result);
+            val snapshot = source.mkSnapshot(ctx, result, md);
             sb.append("---").append(source.name().toLowerCase()).append("---\n");
             sb.append(snapshot).append("\n");
         }

@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 ///  A pluggable driver for setting up and running clients of different languages.
@@ -82,5 +83,5 @@ public abstract class ClientDriver {
     /// @param ctx the verifier context
     /// @param execEnv the execution environment containing the test script
     /// @return the execution result with exit code and output
-    public abstract RunResult execute(VerifierCtx ctx, ExecutionEnvironment execEnv);
+    public abstract RunResult execute(VerifierCtx ctx, ExecutionEnvironment execEnv, Map<String, String> envVars);
 }

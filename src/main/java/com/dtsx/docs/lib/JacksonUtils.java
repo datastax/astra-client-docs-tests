@@ -26,21 +26,28 @@ public class JacksonUtils {
         }
     }
 
-    private static final JsonMapper PRETTY_JSON;
+    private static final JsonMapper JSON;
 
     static {
         val pp = new DefaultPrettyPrinter()
             .withObjectIndenter(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE)
             .withArrayIndenter(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE);
 
-        PRETTY_JSON = JsonMapper.builder()
+        JSON = JsonMapper.builder()
+            .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS, true)
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
             .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true)
             .defaultPrettyPrinter(pp)
             .build();
     }
 
     @SneakyThrows
+    public static <T> T parseJson(String string, Class<T> clazz) {
+        return JSON.readValue(string, clazz);
+    }
+
+    @SneakyThrows
     public static String prettyPrintJson(Object obj) {
-        return PRETTY_JSON.writerWithDefaultPrettyPrinter().writeValueAsString(obj);
+        return JSON.writerWithDefaultPrettyPrinter().writeValueAsString(obj);
     }
 }

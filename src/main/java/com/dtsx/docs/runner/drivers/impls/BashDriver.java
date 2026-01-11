@@ -10,6 +10,7 @@ import com.dtsx.docs.runner.drivers.ClientLanguage;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 public class BashDriver extends ClientDriver {
@@ -38,7 +39,7 @@ public class BashDriver extends ClientDriver {
     }
 
     @Override
-    public RunResult execute(VerifierCtx ctx, ExecutionEnvironment execEnv) {
-        return ExternalPrograms.bash(ctx).run(execEnv.envDir(), execEnv.scriptPath().toString());
+    public RunResult execute(VerifierCtx ctx, ExecutionEnvironment execEnv, Map<String, String> envVars) {
+        return ExternalPrograms.bash(ctx).run(execEnv.envDir(), envVars, execEnv.scriptPath().toString());
     }
 }
