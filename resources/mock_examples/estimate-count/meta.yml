@@ -5,6 +5,6 @@ snapshots:
   share: true
   sources:
     stdout:
-      matches: ^(?:0|\{"status":\{"count":0}})$
+      matches: ^(?:\d+|\{"status":\{"count":\d+}})$ # Not deterministic so just any number will do
     stderr:
       matches: ^$

@@ -101,7 +101,7 @@ public class TestRunner {
         }
 
         private TestOutcome runSpecificTest(ClientDriver driver, Path exampleFile, ExecutionEnvironment execEnv) {
-            val displayPath = testRoot.path().getParent().relativize(exampleFile).toString();
+            val displayPath = testRoot.rootName() + "/" + testRoot.relativeExampleFilePath(driver.language());
 
             return execEnv.withTestFileCopied(driver, exampleFile, md, () -> {
                 return CliLogger.loading("Testing @!%s!@".formatted(displayPath), (_) -> {

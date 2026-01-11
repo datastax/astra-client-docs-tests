@@ -8,9 +8,7 @@ import com.dtsx.docs.runner.ExecutionEnvironment;
 import com.dtsx.docs.runner.TestRunException;
 import com.dtsx.docs.runner.drivers.ClientDriver;
 import com.dtsx.docs.runner.drivers.ClientLanguage;
-import lombok.val;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
