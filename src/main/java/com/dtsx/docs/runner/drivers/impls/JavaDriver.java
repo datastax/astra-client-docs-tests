@@ -33,15 +33,11 @@ public class JavaDriver extends ClientDriver {
 
     @Override
     public Path setupExecutionEnvironment(VerifierCtx ctx, ExecutionEnvironment execEnv) {
-       try {
-           val buildGradle = Files.readString(execEnv.envDir().resolve("build.gradle"));
-           val updatedBuildGradle = buildGradle.replace("${CLIENT_ARTIFACT}", artifact);
-           Files.writeString(execEnv.envDir().resolve("build.gradle"), updatedBuildGradle);
-       } catch (Exception e) {
-           throw new TestRunException("Failed to update build.gradle with client version", e);
-       }
+        replaceArtifactPlaceholder(execEnv, "build.gradle");
 
-        ExternalPrograms.custom(ctx).run(execEnv.envDir(), "./gradlew", "build");
+        if (!ExternalPrograms.custom(ctx).run(execEnv.envDir(), "./gradlew", "build").ok()) {
+            throw new TestRunException("Failed to build Java client");
+        }
 
         return execEnv.envDir().resolve("src/main/java/Example.java");
     }

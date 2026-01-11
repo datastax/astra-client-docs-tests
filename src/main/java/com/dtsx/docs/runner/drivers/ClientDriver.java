@@ -4,9 +4,12 @@ import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import com.dtsx.docs.runner.ExecutionEnvironment;
+import com.dtsx.docs.runner.TestRunException;
 import com.dtsx.docs.runner.drivers.impls.*;
 import lombok.AllArgsConstructor;
+import lombok.val;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +41,7 @@ public abstract class ClientDriver {
     /// - TypeScript: npm package name or path to a tarball
     /// - Java: Maven artifact coordinates
     /// - etc.
-    protected final String artifact;
+    private final String artifact;
 
     /// Returns the language this driver handles.
     ///
@@ -84,4 +87,23 @@ public abstract class ClientDriver {
     /// @param execEnv the execution environment containing the test script
     /// @return the execution result with exit code and output
     public abstract RunResult execute(VerifierCtx ctx, ExecutionEnvironment execEnv, Map<String, String> envVars);
+
+    protected void replaceArtifactPlaceholder(ExecutionEnvironment execEnv, String file) {
+        val path = execEnv.envDir().resolve(file);
+
+        try {
+            val content = Files.readString(path);
+            val updatedContent = content.replace("${CLIENT_ARTIFACT}", artifact());
+            Files.writeString(path, updatedContent);
+        } catch (Exception e) {
+            throw new TestRunException("Failed to update build.gradle with client version", e);
+        }
+    }
+
+    protected String artifact() {
+        if (artifact == null) {
+            throw new TestRunException("Attempted to access artifact for driver that does not use one: " + language() + ". Did *someone* forget to set a default artifact in ClientLanguage?");
+        }
+        return artifact;
+    }
 }

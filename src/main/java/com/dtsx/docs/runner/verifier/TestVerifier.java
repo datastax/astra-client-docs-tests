@@ -92,6 +92,7 @@ public class TestVerifier {
         return sb.deleteCharAt(sb.length() - 1).toString();
     }
 
+    // TODO cache approved test file contents' hashes + client artifacts so we don't re-verify unchanged tests?
     private TestOutcome verifySnapshot(ClientLanguage language, TestRoot testRoot, String snapshot) {
         val namer = mkNamer(language, testRoot);
         val options = mkApprovalOptions(namer);

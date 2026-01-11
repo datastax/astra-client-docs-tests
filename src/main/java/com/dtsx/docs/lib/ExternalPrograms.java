@@ -11,10 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -125,6 +122,11 @@ public class ExternalPrograms {
         /// Returns both stdout and stderr interleaved in the order they were produced.
         public String output() {
             return buildOutput(_ -> true);
+        }
+
+        /// Returns true if the exit code is 0.
+        public boolean ok() {
+            return exitCode == 0;
         }
 
         private String buildOutput(Predicate<OutputLine> filter) {

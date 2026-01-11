@@ -17,7 +17,7 @@ import java.util.function.Function;
 @RequiredArgsConstructor
 public enum ClientLanguage {
     JAVA(".java", "com.datastax.astra:astra-db-java:+", JavaDriver::new),
-    PYTHON(".py", null, PythonDriver::new),
+    PYTHON(".py", "astrapy", PythonDriver::new),
     TYPESCRIPT(".ts", "@datastax/astra-db-ts", TypeScriptDriver::new),
     CSHARP(".cs", null, CSharpDriver::new),
     BASH(".sh", null, BashDriver::new),

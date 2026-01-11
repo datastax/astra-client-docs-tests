@@ -1,0 +1,3 @@
+setuptools
+wheel
+${CLIENT_ARTIFACT}
