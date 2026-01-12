@@ -155,7 +155,7 @@ public class ExecutionEnvironment {
         content = PlaceholderResolver.replacePlaceholders(ctx, md, content);
         content = driver.preprocessScript(ctx, content);
 
-        Files.createDirectories(execEnvPath.getParent());
+        Files.createDirectories(testFileCopyPath.getParent());
         Files.writeString(testFileCopyPath, content);
         return testFileCopyPath;
     }

@@ -1,4 +1,4 @@
-$schema: "../../_base/meta.schema.json"
+$schema: "../_base/meta.schema.json"
 fixtures:
   base: basic-collection.js
 snapshots:
