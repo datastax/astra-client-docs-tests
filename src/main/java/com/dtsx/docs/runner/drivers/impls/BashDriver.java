@@ -40,6 +40,6 @@ public class BashDriver extends ClientDriver {
 
     @Override
     public RunResult execute(VerifierCtx ctx, ExecutionEnvironment execEnv, Map<String, String> envVars) {
-        return ExternalPrograms.bash(ctx).run(execEnv.envDir(), envVars, execEnv.scriptPath().toString());
+        return ExternalPrograms.bash(ctx).run(execEnv.envDir(), envVars, execEnv.scriptPath());
     }
 }

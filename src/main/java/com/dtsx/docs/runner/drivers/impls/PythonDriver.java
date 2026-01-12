@@ -55,6 +55,6 @@ public class PythonDriver extends ClientDriver {
 
     @Override
     public RunResult execute(VerifierCtx ctx, ExecutionEnvironment execEnv, Map<String, String> envVars) {
-        return ExternalPrograms.custom(ctx).run(execEnv.envDir(), envVars, ".venv/bin/python", "main.py");
+        return ExternalPrograms.custom(ctx).run(execEnv.envDir(), envVars, ".venv/bin/python", execEnv.scriptPath());
     }
 }

@@ -105,8 +105,8 @@ public class ExecutionEnvironment {
     /// Returns the absolute path to the copied test script file.
     ///
     /// @return the test script path
-    public Path scriptPath() {
-        return testFileCopyPath.toAbsolutePath();
+    public String scriptPath() {
+        return testFileCopyPath.toAbsolutePath().toString();
     }
 
     /// A collection of execution environments, one for each client language.
@@ -155,6 +155,7 @@ public class ExecutionEnvironment {
         content = PlaceholderResolver.replacePlaceholders(ctx, md, content);
         content = driver.preprocessScript(ctx, content);
 
+        Files.createDirectories(execEnvPath.getParent());
         Files.writeString(testFileCopyPath, content);
         return testFileCopyPath;
     }
