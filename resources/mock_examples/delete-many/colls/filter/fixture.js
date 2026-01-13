@@ -1,9 +1,9 @@
-import { collection } from "../../../_fixtures/basic-collection";
+import { basicCollection } from "../../../_fixtures/basic-collection";
 
 export async function Reset() {
-  await collection.deleteMany({ i_dont_exist_for_sure: { $exists: false } });
+  await basicCollection.truncate();
 
-  await collection.insertMany([
+  await basicCollection.insertMany([
     {
       is_checked_out: false,
       number_of_pages: 150, // will be deleted

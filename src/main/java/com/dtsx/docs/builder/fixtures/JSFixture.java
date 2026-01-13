@@ -88,7 +88,6 @@ public sealed abstract class JSFixture implements Comparable<JSFixture> permits 
     /// @see PlaceholderResolver
     public abstract FixtureMetadata meta(ExternalProgram tsx);
 
-    // TODO don't know where else to put this but how can we delete all rows in a table without a truncate (like we do for collections)?
     protected abstract void setup(ExternalProgram tsx, FixtureMetadata md);
     protected abstract void reset(ExternalProgram tsx, FixtureMetadata md);
     protected abstract void teardown(ExternalProgram tsx, FixtureMetadata md);

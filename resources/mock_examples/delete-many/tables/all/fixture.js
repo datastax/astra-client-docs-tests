@@ -1,7 +1,7 @@
-import { table } from "../../../_fixtures/basic-table";
+import { basicTable } from "../../../_fixtures/basic-table";
 
 export async function Reset() {
-  await table.insertMany([
+  await basicTable.insertMany([
     {
       id: 'a',
     },

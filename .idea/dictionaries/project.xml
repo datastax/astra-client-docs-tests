@@ -5,6 +5,7 @@
       <w>errorln</w>
       <w>keyspaces</w>
       <w>pipefail</w>
+      <w>pkeys</w>
       <w>resetter</w>
     </words>
   </dictionary>

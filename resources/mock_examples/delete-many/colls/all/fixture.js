@@ -1,7 +1,7 @@
-import { collection } from "../../../_fixtures/basic-collection";
+import { basicCollection } from "../../../_fixtures/basic-collection";
 
 export async function Reset() {
-  await collection.insertMany([
+  await basicCollection.insertMany([
     {
       a: 3
     },

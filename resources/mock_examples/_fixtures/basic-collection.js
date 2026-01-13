@@ -1,6 +1,10 @@
 import * as $ from '../_base/prelude';
 
-export const collection = $.db.collection(Meta().CollectionName);
+export const basicCollection = $.db.collection(Meta().CollectionName);
+
+basicCollection.truncate = async function () {
+  await $.truncate(this);
+}
 
 export function Meta() {
   return {
@@ -9,9 +13,9 @@ export function Meta() {
 }
 
 export async function Setup() {
-  await $.db.createCollection(collection.name);
+  await $.db.createCollection(basicCollection.name);
 }
 
 export async function Teardown() {
-  await collection.drop();
+  await basicCollection.drop();
 }

@@ -1,15 +1,19 @@
 import * as $ from '../_base/prelude';
 
-export const table = $.db.table(Meta().TableName);
+export const basicTable = $.db.table(Meta().TableName);
+
+basicTable.truncate = async function () {
+  await $.truncate(this, 'id');
+}
 
 export function Meta() {
   return {
-    TableName: 'basic_collection',
+    TableName: 'basic_table',
   };
 }
 
 export async function Setup() {
-  await $.db.createTable(table.name, {
+  await $.db.createTable(basicTable.name, {
     definition: {
       columns: {
         id: 'text',
@@ -22,5 +26,5 @@ export async function Setup() {
 }
 
 export async function Teardown() {
-  await table.drop();
+  await basicTable.drop();
 }
