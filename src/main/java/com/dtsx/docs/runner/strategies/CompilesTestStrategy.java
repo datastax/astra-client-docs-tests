@@ -10,11 +10,14 @@ import com.dtsx.docs.runner.PlaceholderResolver;
 import com.dtsx.docs.runner.TestResults.TestOutcome;
 import com.dtsx.docs.runner.TestResults.TestRootResults;
 import com.dtsx.docs.runner.drivers.ClientLanguage;
+import com.dtsx.docs.runner.snapshots.verifier.VerifyMode;
 import lombok.val;
 
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.dtsx.docs.runner.snapshots.verifier.VerifyMode.DRY_RUN;
 
 public final class CompilesTestStrategy extends TestStrategy {
     public CompilesTestStrategy(VerifierCtx ctx) {
@@ -29,8 +32,12 @@ public final class CompilesTestStrategy extends TestStrategy {
             val driver = ctx.drivers().get(lang);
             val execEnv = execEnvs.forLanguage(lang);
 
-            // TODO: should this be affected by dry running? (i.e. return early w/ DryPassed)
             for (val path : paths) {
+                if (ctx.verifyMode() == DRY_RUN) {
+                    outcomes.computeIfAbsent(lang, _ -> new HashMap<>()).put(path, TestOutcome.DryPassed.INSTANCE);
+                    continue;
+                }
+
                 execEnv.withTestFileCopied(driver, path, md, () -> {
                     val displayPath = testRoot.displayPath(path);
 
