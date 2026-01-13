@@ -52,12 +52,9 @@ public class VerifierCli implements Callable<Integer> {
     @Override
     public Integer call() {
         val ctx = $args.toCtx(spec);
+        CliLogger.initialize(ctx);
 
-        try {
-            val ok = TestRunner.runTests(ctx, TestPlanBuilder.buildPlan(ctx));
-            return (ok) ? 0 : 1;
-        } finally {
-            CliLogger.dumpLogsToFile(ctx);
-        }
+        val ok = TestRunner.runTests(ctx, TestPlanBuilder.buildPlan(ctx));
+        return (ok) ? 0 : 1;
     }
 }

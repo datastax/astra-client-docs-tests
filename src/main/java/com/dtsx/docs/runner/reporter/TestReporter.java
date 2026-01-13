@@ -18,8 +18,7 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.function.Function;
 
-import static com.dtsx.docs.lib.ColorUtils.color;
-import static com.dtsx.docs.lib.ColorUtils.highlight;
+import static com.dtsx.docs.lib.ColorUtils.*;
 import static com.dtsx.docs.runner.snapshots.verifier.VerifyMode.DRY_RUN;
 import static java.util.stream.Collectors.joining;
 
@@ -49,7 +48,7 @@ public abstract class TestReporter {
             ? "Dry-running"
             : "Running";
 
-        CliLogger.println("@|bold " + prefix + " @!" + plan.totalTests() + "!@ tests...|@");
+        CliLogger.println(false, "@|bold " + prefix + " @!" + plan.totalTests() + "!@ tests...|@");
     }
 
     /// Prints the heading for a base fixture group.
@@ -88,14 +87,18 @@ public abstract class TestReporter {
     public void printSummary(TestPlan plan, TestResults history) {
         val skippedTests = plan.totalTests() - history.totalTests();
 
-        CliLogger.println("\n@|bold Test Summary:|@");
-        CliLogger.println("@!-!@ Total tests: " + plan.totalTests());
-        CliLogger.println("@!-!@ Passed tests: " + history.passedTests());
-        CliLogger.println("@!-!@ Failed tests: " + history.failedTests());
+        CliLogger.println(true, "\n@|bold Test Summary:|@");
+        CliLogger.println(true, "@!-!@ Total tests: " + plan.totalTests());
+        CliLogger.println(true, "@!-!@ Passed tests: " + history.passedTests());
+        CliLogger.println(true, "@!-!@ Failed tests: " + history.failedTests());
 
         if (skippedTests > 0) {
-            CliLogger.println("@!-!@ Bailed tests: " + skippedTests);
+            CliLogger.println(true, "@!-!@ Bailed tests: " + skippedTests);
         }
+        
+        CliLogger.println(false);
+        CliLogger.println(false, "@|bold View logs:|@");
+        CliLogger.println(false, "@!$!@ open " + CliLogger.logFilePath(ctx));
     }
 
     /// Parses a reporter name and returns the corresponding reporter instance.
@@ -128,7 +131,7 @@ public abstract class TestReporter {
     /// 1) basic-collection.js
     /// ```
     protected void printFixtureHeading(int index, JSFixture baseFixture) {
-        CliLogger.println("\n@|bold @!" + index + ") " + baseFixture.fixtureName() + "!@|@");
+        CliLogger.println(false, "\n@|bold @!" + index + ") " + baseFixture.fixtureName() + "!@|@");
     }
 
     /// Helper to print test root results with status indicators.
@@ -155,6 +158,7 @@ public abstract class TestReporter {
             .count() == 1;
 
         CliLogger.println(
+            false,
             (allResultsTheSame)
                 ? mkShorthandReport(results, sb)
                 : mkDetailedReport(results, sb)

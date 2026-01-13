@@ -5,8 +5,10 @@ import picocli.CommandLine.Help.Ansi;
 import picocli.CommandLine.Help.Ansi.IStyle;
 import picocli.CommandLine.Help.Ansi.Style;
 
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static java.util.regex.Matcher.quoteReplacement;
 import static picocli.CommandLine.Help.Ansi.IStyle.CSI;
 
 public class ColorUtils {
@@ -30,7 +32,7 @@ public class ColorUtils {
     }
 
     public static String format(String str) {
-        str = HIGHLIGHT_PATTERN.matcher(str).replaceAll((match) -> highlight(match.group(1)));
+        str = HIGHLIGHT_PATTERN.matcher(str).replaceAll((match) -> quoteReplacement(highlight(match.group(1))));
         str = Ansi.AUTO.text(str).toString();
         return str;
     }
