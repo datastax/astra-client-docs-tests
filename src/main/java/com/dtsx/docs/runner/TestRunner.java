@@ -3,23 +3,25 @@ package com.dtsx.docs.runner;
 import com.dtsx.docs.builder.TestPlan;
 import com.dtsx.docs.builder.TestRoot;
 import com.dtsx.docs.builder.fixtures.FixtureMetadata;
+import com.dtsx.docs.builder.fixtures.JSFixture.FixtureResetter;
 import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.runner.ExecutionEnvironment.ExecutionEnvironments;
+import com.dtsx.docs.runner.TestResults.PathsAndOutcome;
 import com.dtsx.docs.runner.TestResults.TestOutcome;
 import com.dtsx.docs.runner.TestResults.TestRootResults;
 import com.dtsx.docs.runner.drivers.ClientDriver;
 import com.dtsx.docs.runner.drivers.ClientLanguage;
 import com.dtsx.docs.runner.verifier.TestVerifier;
-import lombok.Cleanup;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class TestRunner {
     private final VerifierCtx ctx;
@@ -44,7 +46,7 @@ public class TestRunner {
     private static class BailException extends RuntimeException {}
 
     private boolean runAllTests() {
-        @Cleanup val execEnvs = ExecutionEnvironment.setup(ctx, drivers.values());
+        val execEnvs = ExecutionEnvironment.setup(ctx, drivers.values());
 
         val history = new TestResults();
 
@@ -57,7 +59,7 @@ public class TestRunner {
 
                 ctx.reporter().printBaseFixtureHeading(baseFixture, history);
 
-                baseFixture.useResetting(tsx, execEnvs.nodePath(), md, testRoots, (testRoot) -> {
+                baseFixture.useResetting(tsx, execEnvs.nodePath(), md, testRoots, (testRoot, _) -> {
                     val result = new TestRootRunner(testRoot, execEnvs, md, envVars).runTestsInRoot();
 
                     ctx.reporter().printTestRootResults(baseFixture, result, history);
@@ -85,27 +87,31 @@ public class TestRunner {
         private final Map<String, String> envVars;
 
         public TestRootResults runTestsInRoot() {
-            val outcomes = new HashMap<ClientLanguage, TestOutcome>();
+            val outcomes = new HashMap<ClientLanguage, PathsAndOutcome>();
 
             val testFiles = testRoot.filesToTest().entrySet();
 
-            testRoot.testFixture().useResetting(tsx, execEnvs.nodePath(), md, testFiles, (e) -> {
+            testRoot.testFixture().useResetting(tsx, execEnvs.nodePath(), md, testFiles, (e, resetter) -> {
                 val language = e.getKey();
-                val exampleFile = e.getValue();
+                val filesForLang = e.getValue();
 
-                val result = runSpecificTest(drivers.get(language), exampleFile, execEnvs.get(language));
-                outcomes.put(language, result);
+                val result = runTestsForLanguage(resetter, drivers.get(language), filesForLang, execEnvs.get(language));
+                outcomes.put(language, new PathsAndOutcome(filesForLang, result));
             });
 
             return new TestRootResults(testRoot, outcomes);
         }
 
-        private TestOutcome runSpecificTest(ClientDriver driver, Path exampleFile, ExecutionEnvironment execEnv) {
-            val displayPath = testRoot.rootName() + "/" + testRoot.relativeExampleFilePath(driver.language());
+        private TestOutcome runTestsForLanguage(FixtureResetter resetter, ClientDriver driver, Set<Path> filesForLang, ExecutionEnvironment execEnv) {
+            return verifier.verify(driver.language(), testRoot, md, filesForLang, (path) -> {
+                resetter.reset();
 
-            return execEnv.withTestFileCopied(driver, exampleFile, md, () -> {
-                return CliLogger.loading("Testing @!%s!@".formatted(displayPath), (_) -> {
-                    return verifier.verify(driver.language(), testRoot, md, () -> driver.execute(ctx, execEnv, envVars));
+                return execEnv.withTestFileCopied(driver, path, md, () -> {
+                    val displayPath = testRoot.rootName() + "/" + testRoot.relativeExampleFilePath(path);
+
+                    return CliLogger.loading("Verifying @!%s!@".formatted(displayPath), (_) -> {
+                        return driver.execute(ctx, execEnv, envVars);
+                    });
                 });
             });
         }

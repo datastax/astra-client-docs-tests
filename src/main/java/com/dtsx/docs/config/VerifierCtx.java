@@ -127,8 +127,8 @@ public class VerifierCtx {
 
         this.examplesFolder = resolveExampleFolder(cmd, args);
         this.snapshotsFolder = ArgUtils.requirePath(cmd, args.$snapshotsFolder, "snapshots folder", "-sf", "SNAPSHOTS_FOLDER");
-        this.tmpFolder = Path.of("./.docs_tests_temp");
-        this.execEnvTemplatesFolder = Path.of("./resources/environments/");
+        this.tmpFolder = Path.of(".docs_tests_temp");
+        this.execEnvTemplatesFolder = Path.of("resources/environments/");
 
         this.drivers = mkDrivers(cmd, args);
         this.reporter = TestReporter.parse(this, args.$reporter);

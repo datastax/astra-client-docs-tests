@@ -29,26 +29,33 @@ public class TestResults {
 
         enum Passed implements TestOutcome { INSTANCE }
         enum DryPassed implements TestOutcome { INSTANCE }
+        enum Mismatch implements TestOutcome { INSTANCE }
         record Failed(Optional<Path> expected) implements TestOutcome {}
         record Errored(Exception error) implements TestOutcome {}
     }
 
-    public record TestRootResults(TestRoot testRoot, Map<ClientLanguage, TestOutcome> outcomes) {
-        public int passedCount() {
-            return (int) outcomes.values().stream().filter(TestOutcome::passed).count();
+    public record PathsAndOutcome(Set<Path> paths, TestOutcome outcome) {}
+
+    public record TestRootResults(TestRoot testRoot, Map<ClientLanguage, PathsAndOutcome> outcomes) {
+        public int passedTests() {
+            return outcomes.values().stream().mapToInt(po -> po.outcome().passed() ? po.paths.size() : 0).sum();
+        }
+
+        public int totalTests() {
+            return outcomes.values().stream().mapToInt(po -> po.paths().size()).sum();
         }
 
         public boolean allPassed() {
-            return passedCount() == outcomes.size();
+            return passedTests() == totalTests();
         }
     }
 
     public int totalTests() {
-        return results.values().stream().flatMap(List::stream).mapToInt(rs -> rs.outcomes().size()).sum();
+        return results.values().stream().flatMap(List::stream).mapToInt(TestRootResults::totalTests).sum();
     }
 
     public int passedTests() {
-        return results.values().stream().flatMap(List::stream).mapToInt(TestRootResults::passedCount).sum();
+        return results.values().stream().flatMap(List::stream).mapToInt(TestRootResults::passedTests).sum();
     }
 
     public int failedTests() {

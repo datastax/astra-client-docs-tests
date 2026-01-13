@@ -191,8 +191,8 @@ public class TestPlanBuilder {
     /// @param ctx the verifier context containing language configuration
     /// @return map of client languages to their example file paths
     /// @throws TestPlanException if traversal fails
-    private static TreeMap<ClientLanguage, Path> findFilesToTestInRoot(Path root, VerifierCtx ctx) {
-        val ret = new TreeMap<ClientLanguage, Path>();
+    private static TreeMap<ClientLanguage, Set<Path>> findFilesToTestInRoot(Path root, VerifierCtx ctx) {
+        val ret = new TreeMap<ClientLanguage, Set<Path>>();
 
         try (val children = Files.walk(root).skip(1)) {
             children.forEach((child) -> {
@@ -200,11 +200,11 @@ public class TestPlanBuilder {
                     return;
                 }
 
-                val fileName = child.getFileName().toString().toLowerCase();
+                val fileName = child.getFileName().toString();
 
                 for (val lang : ctx.languages()) {
-                    if (fileName.equals("example" + lang.extension()) && ctx.filter().test(child)) {
-                        ret.put(lang, child);
+                    if (fileName.endsWith(lang.extension()) && ctx.filter().test(child)) {
+                        ret.computeIfAbsent(lang, _ -> new HashSet<>()).add(child);
                         return;
                     }
                 }

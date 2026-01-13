@@ -12,7 +12,7 @@ import lombok.val;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 import com.dtsx.docs.runner.PlaceholderResolver;
 import static com.dtsx.docs.runner.verifier.VerifyMode.DRY_RUN;
@@ -124,16 +124,20 @@ public sealed abstract class JSFixture permits NoopFixture, JSFixtureImpl {
     /// @param tsx the TypeScript executor program
     /// @param ts the iterable of items to process
     /// @param consumer the consumer to execute for each item
-    public <T> void useResetting(ExternalProgram tsx, Path nodePath, FixtureMetadata md, Iterable<T> ts, Consumer<T> consumer) {
+    public <T> void useResetting(ExternalProgram tsx, Path nodePath, FixtureMetadata md, Iterable<T> ts, BiConsumer<T, FixtureResetter> consumer) {
         setup(tsx, nodePath, md);
         try {
             for (val item : ts) {
                 reset(tsx, nodePath, md);
-                consumer.accept(item);
+                consumer.accept(item, () -> reset(tsx, nodePath, md));
             }
         } finally {
             teardown(tsx, nodePath, md);
         }
+    }
+
+    public interface FixtureResetter {
+        void reset();
     }
 
     /// Executes `npm install` in the {@linkplain com.dtsx.docs.runner.ExecutionEnvironment root execution environment folder}

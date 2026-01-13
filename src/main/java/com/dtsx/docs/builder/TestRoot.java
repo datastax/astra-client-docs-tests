@@ -2,11 +2,13 @@ package com.dtsx.docs.builder;
 
 import com.dtsx.docs.builder.fixtures.JSFixture;
 import com.dtsx.docs.config.VerifierCtx;
+import com.dtsx.docs.runner.TestRunException;
 import com.dtsx.docs.runner.drivers.ClientLanguage;
 import com.dtsx.docs.runner.snapshots.SnapshotSource;
 import lombok.Getter;
 
 import java.nio.file.Path;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -40,7 +42,7 @@ public class TestRoot {
     private final Path path;
 
     /// The different `example.<ext>` files to test within this test root, keyed by client language.
-    private final TreeMap<ClientLanguage, Path> filesToTest;
+    private final TreeMap<ClientLanguage, Set<Path>> filesToTest;
 
     ///  The test-specific fixture to use for this test root.
     private final JSFixture testFixture;
@@ -64,16 +66,16 @@ public class TestRoot {
     /// ```
     private final String rootName;
 
-    public TestRoot(VerifierCtx ctx, Path path, TreeMap<ClientLanguage, Path> filesToTes, JSFixture testFixture, TreeSet<SnapshotSource> snapshotSources, boolean shareSnapshots) {
+    public TestRoot(VerifierCtx ctx, Path path, TreeMap<ClientLanguage, Set<Path>> filesToTest, JSFixture testFixture, TreeSet<SnapshotSource> snapshotSources, boolean shareSnapshots) {
         this.path = path;
-        this.filesToTest = filesToTes;
+        this.filesToTest = filesToTest;
         this.testFixture = testFixture;
         this.snapshotSources = snapshotSources;
         this.shareSnapshots = shareSnapshots;
         this.rootName = ctx.examplesFolder().relativize(path).toString();
     }
 
-    /// Returns the relative path of the example file for the specified client language.
+    /// Returns the relative path of the example file for the specified file to test from this test root.
     ///
     /// Example:
     /// ```
@@ -82,9 +84,12 @@ public class TestRoot {
     ///   java/src/main/java/Example.java  -> "java/src/main/java/Example.java"
     /// ```
     ///
-    /// @param lang the client language for which to get the example file path
+    /// @param fileToTest the path to the example file to test
     /// @return the relative path from this test root to the example file
-    public String relativeExampleFilePath(ClientLanguage lang) {
-        return path.relativize(filesToTest.get(lang)).toString();
+    public String relativeExampleFilePath(Path fileToTest) {
+        if (!fileToTest.startsWith(this.path)) {
+            throw new TestRunException("File to test is not within the test root path"); // sanity check; should never be thrown
+        }
+        return path.relativize(fileToTest).toString();
     }
 }

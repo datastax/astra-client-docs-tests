@@ -5,9 +5,8 @@ import com.dtsx.docs.builder.fixtures.FixtureMetadata;
 import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
-import com.dtsx.docs.runner.ExampleResultNamer;
-import com.dtsx.docs.runner.TestResults.TestOutcome;
 import com.dtsx.docs.runner.TestResults;
+import com.dtsx.docs.runner.TestResults.TestOutcome;
 import com.dtsx.docs.runner.TestRunner;
 import com.dtsx.docs.runner.drivers.ClientLanguage;
 import lombok.RequiredArgsConstructor;
@@ -20,9 +19,9 @@ import org.approvaltests.scrubbers.MultiScrubber;
 import org.approvaltests.scrubbers.RegExScrubber;
 
 import java.nio.file.Files;
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Supplier;
+import java.nio.file.Path;
+import java.util.*;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 
 import static com.dtsx.docs.runner.verifier.VerifyMode.DRY_RUN;
@@ -68,12 +67,24 @@ public class TestVerifier {
 
     private final VerifierCtx ctx;
 
-    public TestOutcome verify(ClientLanguage language, TestRoot testRoot, FixtureMetadata md, Supplier<RunResult> result) {
+    public TestOutcome verify(ClientLanguage language, TestRoot testRoot, FixtureMetadata md, Set<Path> filesForLang, Function<Path, RunResult> result) {
         if (ctx.verifyMode() == DRY_RUN) {
             return TestOutcome.DryPassed.INSTANCE;
         }
 
-        val snapshot = mkSnapshot(testRoot, md, result.get());
+        val snapshots = new HashMap<String, Set<Path>>();
+
+        for (val filePath : filesForLang) {
+            val runResult = result.apply(filePath);
+            val fileSnapshot = mkSnapshot(testRoot, md,  runResult);
+            snapshots.computeIfAbsent(fileSnapshot, _ -> new HashSet<>()).add(filePath);
+        }
+
+        if (snapshots.size() > 1) {
+            return TestOutcome.Mismatch.Mismatch.Mismatch.Mismatch.Mismatch.Mismatch.Mismatch.Mismatch.Mismatch.Mismatch.Mismatch.INSTANCE;
+        }
+
+        val snapshot = snapshots.keySet().iterator().next();
         val outcome = verifySnapshot(language, testRoot, snapshot);
 
         CliLogger.result(testRoot, outcome, snapshot);
@@ -89,7 +100,8 @@ public class TestVerifier {
             sb.append(snapshot).append("\n");
         }
 
-        return sb.deleteCharAt(sb.length() - 1).toString();
+        val snapshot = sb.deleteCharAt(sb.length() - 1).toString().trim();
+        return SCRUBBER.scrub(snapshot);
     }
 
     // TODO cache approved test file contents' hashes + client artifacts so we don't re-verify unchanged tests?
@@ -111,7 +123,6 @@ public class TestVerifier {
     private Options mkApprovalOptions(ExampleResultNamer namer) {
         return new Options()
             .forFile().withNamer(namer)
-            .withScrubber(SCRUBBER)
             .withReporter((_, _) -> true)
             .and(ctx.verifyMode().applyOptions(ctx, namer.getApprovedFile(".txt").toPath()));
     }

@@ -115,7 +115,7 @@ public class ExecutionEnvironment {
     ///
     /// @see ExecutionEnvironment
     @RequiredArgsConstructor
-    public static class ExecutionEnvironments implements AutoCloseable {
+    public static class ExecutionEnvironments {
         private final Path rootDir;
         private final Map<ClientLanguage, ExecutionEnvironment> map;
 
@@ -132,20 +132,6 @@ public class ExecutionEnvironment {
         /// @return the `node_modules` path
         public Path nodePath() {
             return rootDir.resolve("node_modules").toAbsolutePath();
-        }
-
-        /// Cleans up all execution environments if ran with the `--clean` flag.
-        @Override
-        public void close() {
-            map.forEach((_, env) -> env.cleanIfNeeded());
-        }
-    }
-
-    @SneakyThrows
-    private void cleanIfNeeded() {
-        if (ctx.clean()) {
-            CliLogger.debug("Cleaning up execution environments");
-            PathUtils.deleteDirectory(execEnvPath);
         }
     }
 
@@ -224,7 +210,7 @@ public class ExecutionEnvironment {
                 val destExecEnv = rootDir.resolve(driver.language().name().toLowerCase());
 
                 val execEnv = new ExecutionEnvironment(ctx, destExecEnv, null);
-                execEnv.cleanIfNeeded();
+                cleanIfNeeded(ctx, destExecEnv);
 
                 try {
                     if (!Files.exists(destExecEnv)) {
@@ -240,6 +226,14 @@ public class ExecutionEnvironment {
 
                 return execEnv.withTestFileCopyPath(testFileCopyPath);
             });
+        }
+
+        @SneakyThrows
+        private static void cleanIfNeeded(VerifierCtx ctx, Path execEnv) {
+            if (ctx.clean()) {
+                CliLogger.debug("Cleaning up execution environments");
+                PathUtils.deleteDirectory(execEnv);
+            }
         }
     }
 }

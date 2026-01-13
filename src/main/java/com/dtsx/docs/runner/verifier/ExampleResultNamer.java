@@ -1,4 +1,4 @@
-package com.dtsx.docs.runner;
+package com.dtsx.docs.runner.verifier;
 
 import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.builder.TestRoot;

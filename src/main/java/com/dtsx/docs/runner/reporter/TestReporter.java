@@ -7,10 +7,7 @@ import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.runner.TestResults;
 import com.dtsx.docs.runner.TestResults.TestOutcome;
-import com.dtsx.docs.runner.TestResults.TestOutcome.DryPassed;
-import com.dtsx.docs.runner.TestResults.TestOutcome.Errored;
-import com.dtsx.docs.runner.TestResults.TestOutcome.Failed;
-import com.dtsx.docs.runner.TestResults.TestOutcome.Passed;
+import com.dtsx.docs.runner.TestResults.TestOutcome.*;
 import com.dtsx.docs.runner.TestResults.TestRootResults;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -149,15 +146,26 @@ public abstract class TestReporter {
         val sb = new StringBuilder(highlight("  - " ));
 
         if (results.allPassed()) {
-            val resultSample = results.outcomes().values().stream().findFirst().orElseThrow();
+            val outcomeSample = results.outcomes().values().stream().findFirst().orElseThrow().outcome();
+
+            val languages = results.outcomes().entrySet().stream()
+                .map((e) -> {
+                    val lang = e.getKey().name().toLowerCase();
+                    val count = e.getValue().paths().size();
+
+                    return (count > 1)
+                        ? count + "×" + lang
+                        : lang;
+                })
+                .collect(joining(","));
 
             sb
-                .append(outcomeSymbol(resultSample))
+                .append(outputPrefix(outcomeSample))
                 .append(" ")
                 .append(results.testRoot().rootName())
                 .append(Style.faint.on())
                 .append(" (")
-                .append(results.testRoot().filesToTest().keySet().stream().map(l -> l.name().toLowerCase()).collect(joining(",")))
+                .append(languages)
                 .append(")")
                 .append(Style.faint.off());
         } else {
@@ -166,25 +174,27 @@ public abstract class TestReporter {
                 .append(results.testRoot().rootName());
 
             for (val entry : results.outcomes().entrySet()) {
-                val language = entry.getKey();
-                val outcome = entry.getValue();
+                val outcome = entry.getValue().outcome();
 
-                sb.append(highlight("\n    - "))
-                    .append(outcomeSymbol(outcome))
-                    .append(" ")
-                    .append(color(Style.faint, results.testRoot().filesToTest().get(language).toString()));
+                entry.getValue().paths().forEach((path) -> {
+                    sb.append(highlight("\n    - "))
+                        .append(outputPrefix(outcome))
+                        .append(" ")
+                        .append(color(Style.faint, path.toString()));
+                });
             }
         }
 
         CliLogger.println(sb.toString());
     }
 
-    private String outcomeSymbol(TestOutcome outcome) {
+    private String outputPrefix(TestOutcome outcome) {
         return switch (outcome) {
-            case Passed _ -> color(Style.fg_green, "✓");
-            case DryPassed _ -> color(ACCENT_COLOR, "?");
-            case Failed _ -> color(Style.fg_red, "✗");
-            case Errored _ -> color(Style.fg_yellow, "!");
+            case Passed _ -> "@|green ✓|@";
+            case DryPassed _ -> "@!?!@";
+            case Failed _ -> "@|red ✗|@";
+            case Mismatch _ -> "@|red M|@";
+            case Errored _ -> "@|yellow !|@";
         };
     }
 }
