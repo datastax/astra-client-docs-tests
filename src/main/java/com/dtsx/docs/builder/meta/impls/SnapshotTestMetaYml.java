@@ -2,7 +2,10 @@ package com.dtsx.docs.builder.meta.impls;
 
 import com.dtsx.docs.builder.TestPlanException;
 import com.dtsx.docs.builder.fixtures.JSFixture;
+import com.dtsx.docs.builder.fixtures.JSFixtureImpl;
+import com.dtsx.docs.builder.fixtures.NoopFixture;
 import com.dtsx.docs.builder.meta.reps.SnapshotTestMetaYmlRep;
+import com.dtsx.docs.builder.meta.reps.SnapshotTestMetaYmlRep.FixturesConfig;
 import com.dtsx.docs.builder.meta.reps.SnapshotTestMetaYmlRep.SnapshotsConfig;
 import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.runner.snapshots.sources.SnapshotSource;
@@ -14,10 +17,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.TreeSet;
 
 import static com.dtsx.docs.lib.Constants.DEFAULT_TEST_FIXTURE;
 import static com.dtsx.docs.lib.Constants.FIXTURES_DIR;
+import static com.dtsx.docs.runner.snapshots.verifier.VerifyMode.DRY_RUN;
 
 @Getter
 public final class SnapshotTestMetaYml implements BaseMetaYml {
@@ -27,7 +32,7 @@ public final class SnapshotTestMetaYml implements BaseMetaYml {
     private final boolean shareSnapshots;
 
     public SnapshotTestMetaYml(VerifierCtx ctx, Path testRoot, SnapshotTestMetaYmlRep meta) {
-        this.baseFixture = resolveBaseFixture(ctx, meta.fixtures().base());
+        this.baseFixture = resolveBaseFixture(ctx, meta.fixtures().flatMap(FixturesConfig::base));
         this.testFixture = resolveTestFixture(ctx, testRoot);
         this.snapshotSources = buildSnapshotTypes(meta.snapshots());
         this.shareSnapshots = meta.snapshots().share().orElse(true);
@@ -43,19 +48,23 @@ public final class SnapshotTestMetaYml implements BaseMetaYml {
     /// ```
     ///
     /// @param ctx the verifier context
-    /// @param fixtureName the fixture file name from meta.yml
+    /// @param fixtureName the optional name of the base fixture file
     /// @return the resolved [JSFixture]
     /// @throws TestPlanException if the fixture doesn't exist
     ///
     /// @see JSFixture
-    private static JSFixture resolveBaseFixture(VerifierCtx ctx, String fixtureName) {
-        val path = ctx.examplesFolder().resolve(FIXTURES_DIR).resolve(fixtureName);
-
-        if (!Files.exists(path)) {
-            throw new TestPlanException("Base fixture '" + fixtureName + "' does not exist in '" + FIXTURES_DIR + "'");
+    private static JSFixture resolveBaseFixture(VerifierCtx ctx, Optional<String> fixtureName) {
+        if (fixtureName.isEmpty()) {
+            return NoopFixture.SNAPSHOT_TESTS_INSTANCE;
         }
 
-        return JSFixture.mkForSnapshotTests(ctx, path);
+        val path = ctx.examplesFolder().resolve(FIXTURES_DIR).resolve(fixtureName.get());
+
+        if (!Files.exists(path)) {
+            throw new TestPlanException("Base fixture '" + fixtureName.get() + "' does not exist in '" + FIXTURES_DIR + "'");
+        }
+
+        return mkJsFixtureImpl(ctx, path);
     }
 
     /// Resolves a test-specific fixture from the test root directory.
@@ -80,7 +89,16 @@ public final class SnapshotTestMetaYml implements BaseMetaYml {
     /// @see JSFixture
     private static JSFixture resolveTestFixture(VerifierCtx ctx, Path testRoot) {
         val path = testRoot.resolve(DEFAULT_TEST_FIXTURE);
-        return JSFixture.mkForSnapshotTests(ctx, path);
+
+        if (!Files.exists(path)) {
+            return NoopFixture.SNAPSHOT_TESTS_INSTANCE;
+        }
+
+        return mkJsFixtureImpl(ctx, path);
+    }
+
+    private static JSFixture mkJsFixtureImpl(VerifierCtx ctx, Path path) {
+        return new JSFixtureImpl(ctx, path, ctx.verifyMode() == DRY_RUN);
     }
 
     /// Builds snapshot sources from the snapshots configuration.

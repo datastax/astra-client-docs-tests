@@ -11,11 +11,11 @@ import static com.dtsx.docs.builder.meta.reps.BaseMetaYmlRep.TestType.SNAPSHOT;
 public record SnapshotTestMetaYmlRep(
     @NonNull String $schema,
     @NonNull TestBlock test,
-    @NonNull FixturesConfig fixtures, // TODO this should be optional for snapshot tests w/out a base fixture
+    @NonNull Optional<FixturesConfig> fixtures,
     @NonNull SnapshotsConfig snapshots
 ) implements BaseMetaYmlRep {
     public record FixturesConfig(
-        @NonNull String base
+        @NonNull Optional<String> base
     ) {}
 
     public record SnapshotsConfig(

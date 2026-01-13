@@ -4,8 +4,6 @@ import com.dtsx.docs.builder.TestRoot;
 import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.lib.LoadingSpinner.LoadingSpinnerControls;
 import com.dtsx.docs.runner.TestResults.TestOutcome;
-import com.dtsx.docs.runner.TestResults.TestOutcome.FailedToCompile;
-import com.dtsx.docs.runner.TestResults.TestOutcome.FailedToVerify;
 import com.dtsx.docs.runner.drivers.ClientLanguage;
 import lombok.Cleanup;
 import lombok.NonNull;
@@ -121,7 +119,7 @@ public class CliLogger {
     /// Prefixed with `[FAILED]` in the log file for failed tests.
     public static void result(TestRoot testRoot, ClientLanguage language, TestOutcome testOutcome, String extra) {
         if (testOutcome.passed()) {
-            return; // TODO this method should probably be part of the TestStrategies instead? I don't love how and where they're used.
+            return;
         }
 
         accumulated.add("[FAILED] " + testRoot.rootName() + " (" + language + ") => " + testOutcome.name());

@@ -1,23 +1,19 @@
 package com.dtsx.docs.builder.fixtures;
 
-import com.dtsx.docs.builder.meta.reps.SnapshotTestMetaYmlRep;
 import com.dtsx.docs.builder.TestRoot;
+import com.dtsx.docs.builder.meta.reps.SnapshotTestMetaYmlRep;
 import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
+import com.dtsx.docs.runner.PlaceholderResolver;
 import com.dtsx.docs.runner.TestRunException;
 import lombok.EqualsAndHashCode;
 import lombok.val;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.function.BiConsumer;
-
-import com.dtsx.docs.runner.PlaceholderResolver;
 import org.jetbrains.annotations.NotNull;
 
-import static com.dtsx.docs.runner.snapshots.verifier.VerifyMode.DRY_RUN;
+import java.nio.file.Path;
+import java.util.function.BiConsumer;
 
 /// Represents a JavaScript fixture file used to set up, reset, and tear down database state for testing, with being JavaScript used for ease of scripting.
 ///
@@ -91,20 +87,6 @@ public sealed abstract class JSFixture implements Comparable<JSFixture> permits 
     protected abstract void setup(ExternalProgram tsx, FixtureMetadata md);
     protected abstract void reset(ExternalProgram tsx, FixtureMetadata md);
     protected abstract void teardown(ExternalProgram tsx, FixtureMetadata md);
-
-    /// Creates a [JSFixture] for the given path.
-    ///
-    /// If the path does not exist, or if in dry-run mode, a [NoopFixture] is returned.
-    ///
-    /// @param ctx  The verifier context.
-    /// @param path The path to the JS fixture file.
-    /// @return A [JSFixture] instance.
-    public static JSFixture mkForSnapshotTests(VerifierCtx ctx, Path path) {
-        if (!Files.exists(path)) {
-            return NoopFixture.SNAPSHOT_TESTS_INSTANCE;
-        }
-        return new JSFixtureImpl(ctx, path, ctx.verifyMode() == DRY_RUN);
-    }
 
     /// Executes a consumer for each item in an iterable, resetting the fixture state before each iteration.
     ///
