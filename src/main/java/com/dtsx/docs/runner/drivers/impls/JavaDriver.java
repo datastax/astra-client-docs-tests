@@ -8,11 +8,13 @@ import com.dtsx.docs.runner.ExecutionEnvironment;
 import com.dtsx.docs.runner.TestRunException;
 import com.dtsx.docs.runner.drivers.ClientDriver;
 import com.dtsx.docs.runner.drivers.ClientLanguage;
+import lombok.val;
 
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 public class JavaDriver extends ClientDriver {
     public JavaDriver(String artifact) {
@@ -33,8 +35,9 @@ public class JavaDriver extends ClientDriver {
     public Path setupExecutionEnvironment(VerifierCtx ctx, ExecutionEnvironment execEnv) {
         replaceArtifactPlaceholder(execEnv, "build.gradle");
 
-        if (ExternalPrograms.custom(ctx).run(execEnv.envDir(), "./gradlew", "build").notOk()) {
-            throw new TestRunException("Failed to build Java client");
+        val build = ExternalPrograms.custom(ctx).run(execEnv.envDir(), "./gradlew", "build");
+        if (build.notOk()) {
+            throw new TestRunException("Failed to build Java client:\n" + build.output());
         }
 
         return execEnv.envDir().resolve("src/main/java/Example.java");
@@ -42,7 +45,9 @@ public class JavaDriver extends ClientDriver {
 
     @Override
     public String preprocessScript(VerifierCtx ignoredCtx, String content) {
-        return content;
+        return Pattern.compile("^public\\s+class\\s+\\w+", Pattern.MULTILINE)
+            .matcher(content)
+            .replaceFirst("public class Example");
     }
 
     @Override

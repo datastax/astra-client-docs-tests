@@ -103,7 +103,7 @@ public abstract class ClientDriver {
             val updatedContent = content.replace("${CLIENT_ARTIFACT}", artifact());
             Files.writeString(path, updatedContent);
         } catch (Exception e) {
-            throw new TestRunException("Failed to update build.gradle with client version", e);
+            throw new TestRunException("Failed to update " + file + " with client version", e);
         }
     }
 

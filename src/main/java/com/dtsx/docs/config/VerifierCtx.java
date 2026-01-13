@@ -202,7 +202,7 @@ public class VerifierCtx {
 
     private ClientLanguage parseClientLanguage(CommandLine cmd, String langStr) {
         try {
-            return ClientLanguage.valueOf(langStr);
+            return ClientLanguage.valueOf(langStr.toUpperCase());
         } catch (IllegalArgumentException ex) {
             throw new ParameterException(cmd, "Invalid client language: " + langStr + ". Expected one of: " + String.join(", ", ClientLanguage.names()));
         }

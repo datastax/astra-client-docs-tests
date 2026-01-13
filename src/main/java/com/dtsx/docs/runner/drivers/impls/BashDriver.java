@@ -30,7 +30,7 @@ public class BashDriver extends ClientDriver {
 
     @Override
     public Path setupExecutionEnvironment(VerifierCtx ctx, ExecutionEnvironment execEnv) {
-        return execEnv.envDir().resolve("main.sh");
+        return execEnv.envDir().resolve("example.sh");
     }
 
     @Override

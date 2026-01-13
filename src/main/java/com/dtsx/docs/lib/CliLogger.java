@@ -69,6 +69,12 @@ public class CliLogger {
             Files.createDirectories(logFile.getParent());
             deleteOldLogs(logsDir(ctx));
         } catch (Exception _) {}
+
+        CliLogger.println(false, "@|bold Starting verifier in @!" + ctx.verifyMode().displayName(ctx) + "!@ mode.|@");
+        CliLogger.println(false);
+        CliLogger.println(false, "@|bold View logs:|@");
+        CliLogger.println(false, "@!$!@ open " + CliLogger.logFilePath(ctx));
+        CliLogger.println(false);
     }
 
     /// Enables or disables the loading spinner.

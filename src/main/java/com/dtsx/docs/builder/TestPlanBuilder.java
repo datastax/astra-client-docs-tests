@@ -59,8 +59,8 @@ public class TestPlanBuilder {
         return CliLogger.loading("Building test plan...", (_) -> {
             val testRoots = findTestRoots(ctx.examplesFolder());
 
-            CliLogger.println(true, "@|faint Building test plan...|@");
-            CliLogger.println(true, "@|faint -> Found " + testRoots.size() + " test roots|@");
+            CliLogger.println(true, "@|bold Building test plan...|@");
+            CliLogger.println(true, "@!->!@ Found " + testRoots.size() + " test roots");
 
             val builder = new Builder();
 
@@ -70,7 +70,7 @@ public class TestPlanBuilder {
 
             val plan = builder.build();
 
-            CliLogger.println(true, "@|faint -> Found " + plan.totalTests() + " example files to test|@");
+            CliLogger.println(true, "@!->!@ Found " + plan.totalTests() + " files to test");
             CliLogger.println(true);
 
             return plan;

@@ -59,6 +59,13 @@ public class ExternalPrograms {
         return get(JAVA, ctx);
     }
 
+    /// Returns a dotnet executor (default: `dotnet`).
+    ///
+    /// Used to run C# example scripts.
+    public static ExternalProgram dotnet(VerifierCtx ctx) {
+        return get(DOTNET, ctx);
+    }
+
     /// Returns a custom executor with no default command.
     ///
     /// Useful for calling definitely-available scripts (such as `./.gradlew`)
@@ -79,7 +86,8 @@ public class ExternalPrograms {
         NPM("npm"),
         BASH("bash"),
         PYTHON("python3"),
-        JAVA("java");
+        JAVA("java"),
+        DOTNET("dotnet");
 
         private final String defaultCommand;
 

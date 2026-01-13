@@ -53,12 +53,7 @@ public enum VerifyMode {
     /// @return a function that configures ApprovalTests options
     /// @throws TestRunException if mode is invalid for the configuration
     public Function1<Options, Options> applyOptions(VerifierCtx ctx, Path approvedFile) {
-        return switch (this) {
-            case DEFAULT -> {
-                yield (ctx.languages().size() > 1)
-                    ? VERIFY_ONLY.applyOptions(ctx, approvedFile)
-                    : NORMAL.applyOptions(ctx, approvedFile);
-            }
+        return switch (actual(ctx)) {
             case NORMAL -> {
                 if (ctx.languages().size() > 1) {
                     throw new TestRunException("NORMAL verification mode is only supported for single-language test runs. This should've been caught during VerifierCtx initialization.");
@@ -82,6 +77,20 @@ public enum VerifyMode {
             case COMPILE_ONLY -> {
                 throw new TestRunException("COMPILE_ONLY mode should not apply verification options; it should've used a different test strategy.");
             }
+            case DEFAULT -> {
+                throw new TestRunException("DEFAULT mode should have been resolved to a concrete mode before applying verification options.");
+            }
         };
+    }
+
+    public String displayName(VerifierCtx ctx) {
+        return actual(ctx).name().toLowerCase().replace("_", " ");
+    }
+
+    private VerifyMode actual(VerifierCtx ctx) {
+        if (this == DEFAULT) {
+            return (ctx.languages().size() > 1) ? VERIFY_ONLY : NORMAL;
+        }
+        return this;
     }
 }

@@ -1,0 +1,58 @@
+---stderr---
+Failed to match '^$':
+
+/Users/me/work/astra-client-docs-tests/.docs_tests_temp/execution_environments/java/src/main/java/Main.java:6: error: class Example is public, should be declared in a file named Example.java
+public class Example {
+       ^
+1 error
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':compileJava'.
+> Compilation failed; see the compiler output below.
+  /Users/me/work/astra-client-docs-tests/.docs_tests_temp/execution_environments/java/src/main/java/Main.java:6: error: class Example is public, should be declared in a file named Example.java
+  public class Example {
+         ^
+  1 error
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+> Run with --scan to generate a Build Scan (powered by Develocity).
+
+BUILD FAILED in 424ms
+---documents---
+[
+  {
+    "_id" : "guid_1",
+    "b" : [
+      "c"
+    ]
+  },
+  {
+    "_id" : "guid_2",
+    "b" : [
+      "c"
+    ]
+  },
+  {
+    "_id" : "guid_3",
+    "d" : {
+      "e" : 5
+    }
+  },
+  {
+    "_id" : "guid_4",
+    "d" : {
+      "e" : 5
+    }
+  },
+  {
+    "_id" : "guid_5",
+    "a" : 3
+  },
+  {
+    "_id" : "guid_6",
+    "a" : 3
+  }
+]

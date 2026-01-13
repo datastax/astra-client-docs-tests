@@ -38,7 +38,7 @@ public class TypeScriptDriver extends ClientDriver {
             throw new TestRunException("Failed to setup TypeScript environment: " + res.output());
         }
 
-        return execEnv.envDir().resolve("main.ts");
+        return execEnv.envDir().resolve("example.ts");
     }
 
     @Override

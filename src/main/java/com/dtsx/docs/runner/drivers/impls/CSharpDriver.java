@@ -1,16 +1,20 @@
 package com.dtsx.docs.runner.drivers.impls;
 
 import com.dtsx.docs.config.VerifierCtx;
+import com.dtsx.docs.lib.ExternalPrograms;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import com.dtsx.docs.runner.ExecutionEnvironment;
+import com.dtsx.docs.runner.TestRunException;
 import com.dtsx.docs.runner.drivers.ClientDriver;
 import com.dtsx.docs.runner.drivers.ClientLanguage;
+import lombok.val;
 
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 public class CSharpDriver extends ClientDriver {
     public CSharpDriver(String artifact) {
@@ -19,31 +23,42 @@ public class CSharpDriver extends ClientDriver {
 
     @Override
     public ClientLanguage language() {
-        return null;
+        return ClientLanguage.CSHARP;
     }
 
     @Override
     public List<Function<VerifierCtx, ExternalProgram>> requiredPrograms() {
-        return List.of();
+        return List.of(ExternalPrograms::dotnet);
     }
 
     @Override
     public Path setupExecutionEnvironment(VerifierCtx ctx, ExecutionEnvironment execEnv) {
-        return null;
+        replaceArtifactPlaceholder(execEnv, "Example.csproj");
+
+        val dotnet = ExternalPrograms.dotnet(ctx);
+
+        val restore = dotnet.run(execEnv.envDir(), "restore");
+        if (restore.notOk()) {
+            throw new TestRunException("Failed to restore C# dependencies:\n" + restore.output());
+        }
+
+        return execEnv.envDir().resolve("Example.cs");
     }
 
     @Override
     public String preprocessScript(VerifierCtx ignoredCtx, String content) {
-        return "";
+        return Pattern.compile("^public\\s+class\\s+\\w+", Pattern.MULTILINE)
+            .matcher(content)
+            .replaceFirst("public class Example");
     }
 
     @Override
     public RunResult compileScript(VerifierCtx ctx, ExecutionEnvironment execEnv) {
-        return null;
+        return ExternalPrograms.dotnet(ctx).run(execEnv.envDir(), "build");
     }
 
     @Override
     public RunResult executeScript(VerifierCtx ctx, ExecutionEnvironment execEnv, Map<String, String> envVars) {
-        return null;
+        return ExternalPrograms.dotnet(ctx).run(execEnv.envDir(), envVars, "run");
     }
 }

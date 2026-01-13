@@ -15,5 +15,5 @@
     "isolatedModules": true,
     "lib": ["es2020", "dom"],
   },
-  "include": ["main.ts"],
+  "include": ["example.ts"],
 }

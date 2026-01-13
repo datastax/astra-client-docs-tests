@@ -33,19 +33,19 @@ public class PythonDriver extends ClientDriver {
     public Path setupExecutionEnvironment(VerifierCtx ctx, ExecutionEnvironment execEnv) {
         val python = ExternalPrograms.python(ctx);
 
-        if (python.run(execEnv.envDir(), "-m", "venv", ".venv").notOk()) {
-            throw new RuntimeException("Failed to create Python virtual environment");
+        val mkVenv = python.run(execEnv.envDir(), "-m", "venv", ".venv");
+        if (mkVenv.notOk()) {
+            throw new RuntimeException("Failed to create Python virtual environment:\n" + mkVenv.output());
         }
 
         replaceArtifactPlaceholder(execEnv, "requirements.txt");
 
-        val cmd = ExternalPrograms.custom(ctx);
-
-        if (cmd.run(execEnv.envDir(), ".venv/bin/pip", "install", "-U", "-r", "requirements.txt", artifact()).notOk()) {
-            throw new RuntimeException("Failed to upgrade pip in Python virtual environment");
+        val install = ExternalPrograms.custom(ctx).run(execEnv.envDir(), ".venv/bin/pip", "install", "-U", "-r", "requirements.txt", artifact());
+        if (install.notOk()) {
+            throw new RuntimeException("Failed to install Python dependencies:\n" + install.output());
         }
 
-        return execEnv.envDir().resolve("main.py");
+        return execEnv.envDir().resolve("example.py");
     }
 
     @Override
@@ -55,7 +55,7 @@ public class PythonDriver extends ClientDriver {
 
     @Override
     public RunResult compileScript(VerifierCtx ctx, ExecutionEnvironment execEnv) {
-        return ExternalPrograms.custom(ctx).run(execEnv.envDir(), "./.venv/bin/python", "-m", "py_compile", "main.py");
+        return ExternalPrograms.custom(ctx).run(execEnv.envDir(), "./.venv/bin/python", "-m", "py_compile", "example.py");
     }
 
     @Override

@@ -95,10 +95,6 @@ public abstract class TestReporter {
         if (skippedTests > 0) {
             CliLogger.println(true, "@!-!@ Bailed tests: " + skippedTests);
         }
-        
-        CliLogger.println(false);
-        CliLogger.println(false, "@|bold View logs:|@");
-        CliLogger.println(false, "@!$!@ open " + CliLogger.logFilePath(ctx));
     }
 
     /// Parses a reporter name and returns the corresponding reporter instance.
