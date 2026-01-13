@@ -19,7 +19,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 import static com.dtsx.docs.lib.ColorUtils.*;
-import static com.dtsx.docs.runner.snapshots.verifier.VerifyMode.DRY_RUN;
+import static com.dtsx.docs.runner.VerifyMode.DRY_RUN;
 import static java.util.stream.Collectors.joining;
 
 /// The base class for test reporters that format/print test execution results.

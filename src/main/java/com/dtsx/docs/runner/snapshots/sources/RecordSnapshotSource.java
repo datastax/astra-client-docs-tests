@@ -10,7 +10,7 @@ import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.lib.DataAPIUtils;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import com.dtsx.docs.lib.JacksonUtils;
-import com.dtsx.docs.runner.snapshots.verifier.TestVerifier;
+import com.dtsx.docs.runner.snapshots.verifier.SnapshotVerifier;
 import lombok.val;
 import org.jetbrains.annotations.Nullable;
 
@@ -133,7 +133,7 @@ public sealed abstract class RecordSnapshotSource extends SnapshotSource {
                     .sum();
             }
             case String str -> {
-                if (!TestVerifier.SCRUBBER.scrub(str).equals(str)) {
+                if (!SnapshotVerifier.SCRUBBER.scrub(str).equals(str)) {
                     yield 0;
                 }
                 yield str.hashCode();

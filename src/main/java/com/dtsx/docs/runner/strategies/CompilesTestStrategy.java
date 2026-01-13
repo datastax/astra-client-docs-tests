@@ -10,14 +10,13 @@ import com.dtsx.docs.runner.PlaceholderResolver;
 import com.dtsx.docs.runner.TestResults.TestOutcome;
 import com.dtsx.docs.runner.TestResults.TestRootResults;
 import com.dtsx.docs.runner.drivers.ClientLanguage;
-import com.dtsx.docs.runner.snapshots.verifier.VerifyMode;
 import lombok.val;
 
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.dtsx.docs.runner.snapshots.verifier.VerifyMode.DRY_RUN;
+import static com.dtsx.docs.runner.VerifyMode.DRY_RUN;
 
 public final class CompilesTestStrategy extends TestStrategy {
     public CompilesTestStrategy(VerifierCtx ctx) {

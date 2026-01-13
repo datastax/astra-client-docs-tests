@@ -3,7 +3,7 @@ package com.dtsx.docs.config;
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgramType;
 import com.dtsx.docs.runner.drivers.ClientLanguage;
-import com.dtsx.docs.runner.snapshots.verifier.VerifyMode;
+import com.dtsx.docs.runner.VerifyMode;
 import lombok.ToString;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;

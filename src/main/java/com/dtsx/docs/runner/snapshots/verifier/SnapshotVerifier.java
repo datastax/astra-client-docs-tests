@@ -9,6 +9,7 @@ import com.dtsx.docs.runner.TestResults;
 import com.dtsx.docs.runner.TestResults.TestOutcome;
 import com.dtsx.docs.runner.TestResults.TestOutcome.FailedToVerify;
 import com.dtsx.docs.runner.TestRunner;
+import com.dtsx.docs.runner.VerifyMode;
 import com.dtsx.docs.runner.drivers.ClientLanguage;
 import com.dtsx.docs.runner.snapshots.sources.SnapshotSource;
 import com.dtsx.docs.runner.snapshots.sources.SnapshotSources;
@@ -27,7 +28,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
-import static com.dtsx.docs.runner.snapshots.verifier.VerifyMode.DRY_RUN;
+import static com.dtsx.docs.runner.VerifyMode.DRY_RUN;
 
 /// Verifies test outputs against snapshots using ApprovalTests.
 ///
@@ -39,7 +40,7 @@ import static com.dtsx.docs.runner.snapshots.verifier.VerifyMode.DRY_RUN;
 /// 1. Checks if it's a dry run; if so, returns {@linkplain TestOutcome.DryPassed a faux result} immediately.
 /// 2. Creates the snapshot string based on the {@linkplain SnapshotSources snapshot sources} defined in the test root.
 /// 3. Creates the options for ApprovalTests.
-///    - This includes the {@link ExampleResultNamer} and {@link TestVerifier#SCRUBBER SCRUBBER}
+///    - This includes the {@link ExampleResultNamer} and {@link SnapshotVerifier#SCRUBBER SCRUBBER}
 ///    - This also applies any additional options based on the {@link VerifyMode}
 /// 4. Uses ApprovalTests to verify the snapshot against the stored snapshot file.
 /// 5. Returns the appropriate {@link TestOutcome TestOutcome} based on whether the verification passed or not.
@@ -57,7 +58,7 @@ import static com.dtsx.docs.runner.snapshots.verifier.VerifyMode.DRY_RUN;
 /// @see VerifyMode
 /// @see TestResults
 @RequiredArgsConstructor
-public class TestVerifier {
+public class SnapshotVerifier {
     /// Scrubber to clean dynamic data from snapshots before verification, replacing them with incrementing placeholders.
     ///
     /// Currently, includes:

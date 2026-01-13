@@ -16,7 +16,7 @@ import com.dtsx.docs.runner.TestResults.TestRootResults;
 import com.dtsx.docs.runner.drivers.ClientDriver;
 import com.dtsx.docs.runner.drivers.ClientLanguage;
 import com.dtsx.docs.runner.snapshots.sources.SnapshotSource;
-import com.dtsx.docs.runner.snapshots.verifier.TestVerifier;
+import com.dtsx.docs.runner.snapshots.verifier.SnapshotVerifier;
 import lombok.Getter;
 import lombok.val;
 
@@ -60,7 +60,7 @@ public final class SnapshotTestStrategy extends TestStrategy {
         private final ExecutionEnvironments execEnvs;
         private final FixtureMetadata md;
         private final Map<String, String> envVars;
-        private final TestVerifier verifier;
+        private final SnapshotVerifier verifier;
 
         public Runner(ExternalProgram tsx, TestRoot testRoot, ExecutionEnvironments execEnvs, FixtureMetadata md) {
             this.tsx = tsx;
@@ -68,7 +68,7 @@ public final class SnapshotTestStrategy extends TestStrategy {
             this.execEnvs = execEnvs;
             this.md = md;
             this.envVars = PlaceholderResolver.mkEnvVars(ctx, md);
-            this.verifier = new TestVerifier(ctx, snapshotSources, shareSnapshots);
+            this.verifier = new SnapshotVerifier(ctx, snapshotSources, shareSnapshots);
         }
 
         public TestRootResults runTestsInRoot() {

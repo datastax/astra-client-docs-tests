@@ -1,7 +1,6 @@
-package com.dtsx.docs.runner.snapshots.verifier;
+package com.dtsx.docs.runner;
 
 import com.dtsx.docs.config.VerifierCtx;
-import com.dtsx.docs.runner.TestRunException;
 import org.approvaltests.core.Options;
 import org.approvaltests.inline.InlineOptions;
 import org.lambda.functions.Function1;
@@ -38,8 +37,12 @@ public enum VerifyMode {
     /// Useful for debugging test discovery and planning.
     ///
     /// This also stops {@linkplain com.dtsx.docs.builder.fixtures.JSFixture fixtures} from running, but still sets up the {@linkplain com.dtsx.docs.runner.ExecutionEnvironment execution environment}.
-    DRY_RUN; // TODO this very arguably should not be a verify mode, especially with the new "test strategies" bifurcation
-             // and/or need a sort of --verify-mode COMPILE_ONLY or similar (but should that be a verify mode or no though??)
+    DRY_RUN,
+
+    /// Forces tests to use {@link com.dtsx.docs.runner.strategies.CompilesTestStrategy CompilesTestStrategy}.
+    ///
+    /// Dependent on the invariant that all snapshot tests can be run as compilation tests.
+    COMPILE_ONLY;
 
     private static final InlineOptions INLINE_OPTIONS = InlineOptions.showCode(false);
 
@@ -75,6 +78,9 @@ public enum VerifyMode {
             };
             case DRY_RUN -> {
                 throw new TestRunException("DRY_RUN mode should not apply verification options; it should've skipped verification entirely.");
+            }
+            case COMPILE_ONLY -> {
+                throw new TestRunException("COMPILE_ONLY mode should not apply verification options; it should've used a different test strategy.");
             }
         };
     }

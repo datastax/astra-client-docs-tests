@@ -22,7 +22,7 @@ import java.util.TreeSet;
 
 import static com.dtsx.docs.lib.Constants.DEFAULT_TEST_FIXTURE;
 import static com.dtsx.docs.lib.Constants.FIXTURES_DIR;
-import static com.dtsx.docs.runner.snapshots.verifier.VerifyMode.DRY_RUN;
+import static com.dtsx.docs.runner.VerifyMode.DRY_RUN;
 
 @Getter
 public final class SnapshotTestMetaYml implements BaseMetaYml {

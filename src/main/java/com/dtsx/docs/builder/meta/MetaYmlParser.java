@@ -16,6 +16,8 @@ import tools.jackson.core.JacksonException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static com.dtsx.docs.runner.VerifyMode.COMPILE_ONLY;
+
 public class MetaYmlParser {
     public static @Nullable BaseMetaYml parseMetaYml(VerifierCtx ctx, Path ymlFile) {
         val rep = parseRep(ymlFile);
@@ -28,6 +30,10 @@ public class MetaYmlParser {
 
         if (rep.test().skip().orElse(false)) {
             return null;
+        }
+
+        if (ctx.verifyMode() == COMPILE_ONLY) {
+            return new CompilesTestMetaYml(); // Dependent on the invariant that all snapshot tests can be run as compilation tests
         }
 
         return switch (rep) {
