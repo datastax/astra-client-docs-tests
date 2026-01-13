@@ -46,8 +46,8 @@ public class JavaDriver extends ClientDriver {
     }
 
     @Override
-    public RunResult compileScript(VerifierCtx ctx, ExecutionEnvironment execEnv, Map<String, String> envVars) {
-        return ExternalPrograms.custom(ctx).run(execEnv.envDir(), envVars, "./gradlew", "build");
+    public RunResult compileScript(VerifierCtx ctx, ExecutionEnvironment execEnv) {
+        return ExternalPrograms.custom(ctx).run(execEnv.envDir(), "./gradlew", "build");
     }
 
     @Override

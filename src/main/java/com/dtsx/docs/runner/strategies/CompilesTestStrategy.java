@@ -19,12 +19,18 @@ import java.util.Map;
 import static com.dtsx.docs.runner.VerifyMode.DRY_RUN;
 
 public final class CompilesTestStrategy extends TestStrategy {
+    private static final FixtureMetadata FAKE_FIXTURE_MD = new FixtureMetadata(
+        "compiles_test_collection",
+        "compiles_test_table",
+        "compiles_test_keyspace"
+    );
+
     public CompilesTestStrategy(VerifierCtx ctx) {
         super(ctx);
     }
 
     @Override
-    public TestRootResults runTestsInRoot(ExternalProgram tsx, TestRoot testRoot, ExecutionEnvironments execEnvs, FixtureMetadata md) {
+    public TestRootResults runTestsInRoot(ExternalProgram tsx, TestRoot testRoot, ExecutionEnvironments execEnvs, FixtureMetadata ignored) {
         val outcomes = new HashMap<ClientLanguage, Map<Path, TestOutcome>>();
 
         testRoot.filesToTest().forEach((lang, paths) -> {
@@ -37,11 +43,11 @@ public final class CompilesTestStrategy extends TestStrategy {
                     continue;
                 }
 
-                execEnv.withTestFileCopied(driver, path, md, () -> {
+                execEnv.withTestFileCopied(driver, path, FAKE_FIXTURE_MD, () -> {
                     val displayPath = testRoot.displayPath(path);
 
                     val res = CliLogger.loading("Compiling @!%s!@".formatted(displayPath), (_) -> {
-                        return driver.compileScript(ctx, execEnv, mkEnv());
+                        return driver.compileScript(ctx, execEnv);
                     });
 
                     val outcome = (res.notOk())
@@ -55,13 +61,5 @@ public final class CompilesTestStrategy extends TestStrategy {
         });
 
         return new TestRootResults(testRoot, outcomes);
-    }
-
-    private Map<String, String> mkEnv() {
-        return PlaceholderResolver.mkEnvVars(ctx, new FixtureMetadata(
-            "compiles_test_collection",
-            "compiles_test_table",
-            "compiles_test_keyspace"
-        ));
     }
 }

@@ -86,7 +86,7 @@ public abstract class ClientDriver {
     /// @param ctx the verifier context
     /// @param execEnv the execution environment containing the test script
     /// @return the execution result with exit code and output
-    public abstract RunResult compileScript(VerifierCtx ctx, ExecutionEnvironment execEnv, Map<String, String> envVars);
+    public abstract RunResult compileScript(VerifierCtx ctx, ExecutionEnvironment execEnv);
 
     /// Executes the test script and returns the result.
     ///

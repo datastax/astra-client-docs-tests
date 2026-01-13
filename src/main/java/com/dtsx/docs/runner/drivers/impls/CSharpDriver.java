@@ -38,7 +38,7 @@ public class CSharpDriver extends ClientDriver {
     }
 
     @Override
-    public RunResult compileScript(VerifierCtx ctx, ExecutionEnvironment execEnv, Map<String, String> envVars) {
+    public RunResult compileScript(VerifierCtx ctx, ExecutionEnvironment execEnv) {
         return null;
     }
 

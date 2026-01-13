@@ -170,11 +170,21 @@ public class VerifierCtx {
     }
 
     private Map<ClientLanguage, ClientDriver> mkDrivers(CommandLine cmd, VerifierArgs args) {
+        if (args.$drivers == null || args.$drivers.isEmpty()) {
+            throw new ParameterException(cmd, "Must provide at least one client driver (or 'all') to run tests against. Use `-h` for help instead.");
+        }
+
         ArgUtils.requireParameter(cmd, args.$drivers.stream().findFirst(), "client driver", 1, "CLIENT_DRIVER");
 
         val driversMap = new HashMap<ClientLanguage, ClientDriver>();
 
-        for (val lang : args.$drivers) {
+        if (args.$drivers.stream().allMatch("all"::equalsIgnoreCase)) {
+            args.$drivers = ClientLanguage.names();
+        }
+
+        for (val langStr : args.$drivers) {
+            val lang = parseClientLanguage(cmd, langStr);
+
             val usesArtifact = lang.defaultArtifact() != null;
 
             val envVarName = lang.name().toUpperCase() + "_ARTIFACT";
@@ -188,6 +198,14 @@ public class VerifierCtx {
         }
 
         return driversMap;
+    }
+
+    private ClientLanguage parseClientLanguage(CommandLine cmd, String langStr) {
+        try {
+            return ClientLanguage.valueOf(langStr);
+        } catch (IllegalArgumentException ex) {
+            throw new ParameterException(cmd, "Invalid client language: " + langStr + ". Expected one of: " + String.join(", ", ClientLanguage.names()));
+        }
     }
 
     private VerifyMode resolveVerifyMode(CommandLine cmd, VerifierArgs args, Set<ClientLanguage> languages) {

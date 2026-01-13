@@ -47,8 +47,8 @@ public class TypeScriptDriver extends ClientDriver {
     }
 
     @Override
-    public RunResult compileScript(VerifierCtx ctx, ExecutionEnvironment execEnv, Map<String, String> envVars) {
-        return ExternalPrograms.npm(ctx).run(execEnv.envDir(), envVars, "run", "typecheck");
+    public RunResult compileScript(VerifierCtx ctx, ExecutionEnvironment execEnv) {
+        return ExternalPrograms.npm(ctx).run(execEnv.envDir(), "run", "typecheck");
     }
 
     @Override

@@ -23,7 +23,7 @@ public class VerifierArgs {
         paramLabel = "DRIVER",
         split = ","
     )
-    public List<ClientLanguage> $drivers;
+    public List<String> $drivers;
 
     @Option(
         names = { "-A", "--client-artifact" },

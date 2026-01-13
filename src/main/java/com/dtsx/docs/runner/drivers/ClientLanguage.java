@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.Function;
 
 /// Represents the various client languages available in enum form.
@@ -18,11 +20,15 @@ public enum ClientLanguage {
     JAVA(".java", "com.datastax.astra:astra-db-java:+", JavaDriver::new),
     PYTHON(".py", "astrapy", PythonDriver::new),
     TYPESCRIPT(".ts", "@datastax/astra-db-ts", TypeScriptDriver::new),
-    CSHARP(".cs", null, CSharpDriver::new),
-    BASH(".sh", null, BashDriver::new),
-    GO(".go", null, GoDriver::new);
+//    CSHARP(".cs", null, CSharpDriver::new),
+//    GO(".go", null, GoDriver::new),
+    BASH(".sh", null, BashDriver::new);
 
     private final String extension;
     private final @Nullable String defaultArtifact;
     private final Function<String, ClientDriver> mkDriver;
+
+    public static List<String> names() {
+        return Arrays.stream(ClientLanguage.values()).map(Enum::name).toList();
+    }
 }
