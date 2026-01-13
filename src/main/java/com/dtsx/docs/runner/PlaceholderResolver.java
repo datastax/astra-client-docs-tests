@@ -15,9 +15,10 @@ public class PlaceholderResolver {
     private static final Map<String, BiFunction<VerifierCtx, FixtureMetadata, Optional<String>>> PLACEHOLDERS = Map.of(
         "APPLICATION_TOKEN", (ctx, _) -> Optional.of(ctx.connectionInfo().token()),
         "API_ENDPOINT", (ctx, _) -> Optional.of(ctx.connectionInfo().endpoint()),
-        "KEYSPACE_NAME", (_, md) -> Optional.of( md.keyspaceName()),
+        "KEYSPACE_NAME", (_, md) -> Optional.of(md.keyspaceName()),
         "TABLE_NAME", (_, md) -> md.tableName(),
-        "COLLECTION_NAME", (_, md) -> md.collectionName()
+        "COLLECTION_NAME", (_, md) -> md.collectionName(),
+        "DATABASE_NAME", (_, _) -> Optional.of("whatever_db_name") // can be actually implemented later if needed
     );
 
     private static final Pattern PLACEHOLDER = Pattern.compile("\\*\\*(\\w+)\\*\\*");
@@ -28,6 +29,11 @@ public class PlaceholderResolver {
 
         while (m.find()) {
             val key = m.group(1);
+
+            if (!PLACEHOLDERS.containsKey(key)) {
+                throw new TestRunException("Unknown placeholder: **" + key + "**");
+            }
+
             val value = PLACEHOLDERS.get(key).apply(ctx, md).orElseThrow(() -> new TestRunException("Missing value for placeholder: **" + key + "**"));
 
             m.appendReplacement(out, Matcher.quoteReplacement(value));

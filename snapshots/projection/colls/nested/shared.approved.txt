@@ -1,0 +1,4 @@
+---stdout---
+Matches '^$'
+---stderr---
+Matches '^$'

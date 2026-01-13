@@ -1,0 +1,11 @@
+$schema: "../../../_base/meta.schema.json"
+test:
+  type: snapshot
+fixtures:
+  base: basic-table.js
+snapshots:
+  share: true
+  sources:
+    stderr:
+      matches: ^$
+    rows:

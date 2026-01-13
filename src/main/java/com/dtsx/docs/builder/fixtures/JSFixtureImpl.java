@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.val;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 
@@ -27,10 +26,10 @@ public final class JSFixtureImpl extends JSFixture {
     }
 
     @Override
-    public FixtureMetadata meta(ExternalProgram tsx, Path nodePath) {
+    public FixtureMetadata meta(ExternalProgram tsx) {
         // don't actually have fixture metadata here, but we can just pass the empty value
         // since it shouldn't be used outside of actual fixture functions
-        val output = tryCallJsFunction(tsx, nodePath, FixtureMetadata.EMPTY, "Meta").stdout().trim();
+        val output = tryCallJsFunction(tsx, FixtureMetadata.EMPTY, "Meta").stdout().trim();
 
         if (output.equals("undefined")) {
             return FixtureMetadata.EMPTY;
@@ -44,36 +43,31 @@ public final class JSFixtureImpl extends JSFixture {
     }
 
     @Override
-    protected void setup(ExternalProgram tsx, Path nodePath, FixtureMetadata md) {
+    protected void setup(ExternalProgram tsx, FixtureMetadata md) {
         if (!dryRun) {
-            tryCallJsFunction(tsx, nodePath, md, "Setup");
+            tryCallJsFunction(tsx, md, "Setup");
         }
     }
 
     @Override
-    protected void reset(ExternalProgram tsx, Path nodePath, FixtureMetadata md) {
+    protected void reset(ExternalProgram tsx, FixtureMetadata md) {
         if (!dryRun) {
-            tryCallJsFunction(tsx, nodePath, md, "Reset");
+            tryCallJsFunction(tsx, md, "Reset");
         }
     }
 
     @Override
-    protected void teardown(ExternalProgram tsx, Path nodePath, FixtureMetadata md) {
+    protected void teardown(ExternalProgram tsx, FixtureMetadata md) {
         if (!dryRun) {
-            tryCallJsFunction(tsx, nodePath, md, "Teardown");
+            tryCallJsFunction(tsx, md, "Teardown");
         }
     }
 
     @SneakyThrows
-    private RunResult tryCallJsFunction(ExternalProgram tsx, Path nodePath, FixtureMetadata md, String function) {
+    private RunResult tryCallJsFunction(ExternalProgram tsx, FixtureMetadata md, String function) {
         val displayPath = ctx.examplesFolder().relativize(path);
 
-        if (!nodePath.endsWith("node_modules") || !Files.exists(nodePath)) {
-            throw new TestRunException("Invalid dependencies directory '" + nodePath + "'"); // should never be thrown, but just in case
-        }
-
         val envVars = new HashMap<>(PlaceholderResolver.mkEnvVars(ctx, md));
-        envVars.put("NODE_PATH", nodePath.toString());
 
         // Calls the function if it exists
         val res = CliLogger.loading("Calling @!%s!@ in @!%s!@".formatted(function, displayPath), (_) -> {

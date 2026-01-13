@@ -1,0 +1,19 @@
+// adapted from astra-db-ts's tsconfig
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "module": "nodenext",
+    "noEmitOnError": true,
+    "baseUrl": ".",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "useDefineForClassFields": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "importHelpers": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "lib": ["es2020", "dom"],
+  },
+  "include": ["main.ts"],
+}

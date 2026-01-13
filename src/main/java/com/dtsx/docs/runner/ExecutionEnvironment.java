@@ -116,22 +116,14 @@ public class ExecutionEnvironment {
     /// @see ExecutionEnvironment
     @RequiredArgsConstructor
     public static class ExecutionEnvironments {
-        private final Path rootDir;
         private final Map<ClientLanguage, ExecutionEnvironment> map;
 
         /// Gets the execution environment for a specific language.
         ///
-        /// @param language the client language
+        /// @param lang the client language
         /// @return the execution environment for that language
-        public ExecutionEnvironment get(ClientLanguage language) {
-            return map.get(language);
-        }
-
-        /// Returns the absolute path to the `node_modules` directory within the execution environment.
-        ///
-        /// @return the `node_modules` path
-        public Path nodePath() {
-            return rootDir.resolve("node_modules").toAbsolutePath();
+        public ExecutionEnvironment forLanguage(ClientLanguage lang) {
+            return map.get(lang);
         }
     }
 
@@ -164,7 +156,7 @@ public class ExecutionEnvironment {
     private static class Builder {
         private static ExecutionEnvironments setup(VerifierCtx ctx, Collection<ClientDriver> drivers) {
             val rootDir = mkRootFolder(ctx);
-            installJsDependencies(ctx, rootDir);
+            JSFixture.installDependencies(ctx);
             return mkExecEnvs(ctx, drivers, rootDir);
         }
 
@@ -179,27 +171,13 @@ public class ExecutionEnvironment {
             }
         }
 
-        private static void installJsDependencies(VerifierCtx ctx, Path execEnvRoot) {
-            try {
-                val packageJson = execEnvRoot.resolve("package.json");
-
-                if (!Files.exists(packageJson)) {
-                    Files.writeString(packageJson, "{}");
-                }
-
-                JSFixture.installDependencies(ctx, execEnvRoot);
-            } catch (Exception e) {
-                throw new TestRunException("Failed to setup JS dependencies", e);
-            }
-        }
-
         private static ExecutionEnvironments mkExecEnvs(VerifierCtx ctx, Collection<ClientDriver> drivers, Path rootDir) {
             val execEnvs = drivers.stream().collect(Collectors.toMap(
                 ClientDriver::language,
                 (driver) -> mkExecEnv(ctx, rootDir, driver)
             ));
 
-            return new ExecutionEnvironments(rootDir, execEnvs);
+            return new ExecutionEnvironments(execEnvs);
         }
 
         private static ExecutionEnvironment mkExecEnv(VerifierCtx ctx, Path rootDir, ClientDriver driver) {
@@ -232,7 +210,10 @@ public class ExecutionEnvironment {
         private static void cleanIfNeeded(VerifierCtx ctx, Path execEnv) {
             if (ctx.clean()) {
                 CliLogger.debug("Cleaning up execution environments");
-                PathUtils.deleteDirectory(execEnv);
+
+                if (Files.exists(execEnv)) {
+                    PathUtils.deleteDirectory(execEnv);
+                }
             }
         }
     }

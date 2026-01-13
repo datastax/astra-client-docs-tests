@@ -1,7 +1,6 @@
 package com.dtsx.docs.runner.drivers;
 
 import com.dtsx.docs.runner.drivers.impls.*;
-import com.dtsx.docs.runner.snapshots.SnapshotSource;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.Nullable;

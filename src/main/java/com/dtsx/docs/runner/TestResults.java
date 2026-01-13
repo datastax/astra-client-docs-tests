@@ -2,10 +2,14 @@ package com.dtsx.docs.runner;
 
 import com.dtsx.docs.builder.TestRoot;
 import com.dtsx.docs.builder.fixtures.JSFixture;
+import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.runner.drivers.ClientLanguage;
+import lombok.val;
 
 import java.nio.file.Path;
 import java.util.*;
+
+import static com.dtsx.docs.lib.CliLogger.captureStackTrace;
 
 public class TestResults {
     private final Map<JSFixture, List<TestRootResults>> results = new HashMap<>();
@@ -29,20 +33,63 @@ public class TestResults {
 
         enum Passed implements TestOutcome { INSTANCE }
         enum DryPassed implements TestOutcome { INSTANCE }
-        enum Mismatch implements TestOutcome { INSTANCE }
-        record Failed(Optional<Path> expected) implements TestOutcome {}
-        record Errored(Exception error) implements TestOutcome {}
+
+        enum Mismatch implements TestOutcome {
+            INSTANCE;
+
+            public Mismatch alsoLog(TestRoot testRoot, ClientLanguage language, Map<String, Set<Path>> differingSnapshots) {
+                val extra = new StringBuilder("Differing snapshots found for the following files:\n");
+
+                for (val entry : differingSnapshots.entrySet()) {
+                    extra.append("Snapshot:\n").append(entry.getKey()).append("\nFiles:\n");
+
+                    for (val path : entry.getValue()) {
+                        extra.append(" - ").append(path).append("\n");
+                    }
+                }
+
+                CliLogger.result(testRoot, language, this, extra.toString());
+                return this;
+            }
+        }
+
+        record FailedToVerify(Optional<Path> expected) implements TestOutcome {
+            public FailedToVerify alsoLog(TestRoot testRoot, ClientLanguage language, String actualSnapshot) {
+                val prefix = expected
+                    .map((path) -> "Expected snapshot file: " + path)
+                    .orElse("No approved snapshot file found.");
+
+                val extra = prefix + "\nActual snapshot:\n" + actualSnapshot;
+
+                CliLogger.result(testRoot, language, this, extra);
+                return this;
+            }
+        }
+
+        record FailedToCompile(String message) implements TestOutcome {
+            public FailedToCompile alsoLog(TestRoot testRoot, ClientLanguage language, String output) {
+                CliLogger.result(testRoot, language, this, "Compilation output:\n" + output);
+                return this;
+            }
+        }
+
+        record Errored(Exception error) implements TestOutcome {  // TODO consider actually using this somewhere
+            public Errored alsoLog(TestRoot testRoot, ClientLanguage language) {
+                CliLogger.result(testRoot, language, this, captureStackTrace(error));
+                return this;
+            }
+        }
     }
 
-    public record PathsAndOutcome(Set<Path> paths, TestOutcome outcome) {}
-
-    public record TestRootResults(TestRoot testRoot, Map<ClientLanguage, PathsAndOutcome> outcomes) {
+    public record TestRootResults(TestRoot testRoot, Map<ClientLanguage, Map<Path, TestOutcome>> outcomes) {
         public int passedTests() {
-            return outcomes.values().stream().mapToInt(po -> po.outcome().passed() ? po.paths.size() : 0).sum();
+            return outcomes.values().stream().mapToInt(langMap ->
+                (int) langMap.values().stream().filter(TestOutcome::passed).count()
+            ).sum();
         }
 
         public int totalTests() {
-            return outcomes.values().stream().mapToInt(po -> po.paths().size()).sum();
+            return outcomes.values().stream().mapToInt(Map::size).sum();
         }
 
         public boolean allPassed() {

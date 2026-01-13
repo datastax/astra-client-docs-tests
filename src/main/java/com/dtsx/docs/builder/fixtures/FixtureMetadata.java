@@ -12,11 +12,17 @@ public class FixtureMetadata {
     public static final FixtureMetadata EMPTY = new FixtureMetadata();
 
     @JsonProperty("CollectionName")
-    public final Optional<String> collectionName = Optional.empty();
+    private Optional<String> collectionName = Optional.empty();
 
     @JsonProperty("TableName")
-    public final Optional<String> tableName = Optional.empty();
+    private Optional<String> tableName = Optional.empty();
 
     @JsonProperty("KeyspaceName")
-    private final String keyspaceName = "default_keyspace";
+    private String keyspaceName = "default_keyspace";
+
+    public FixtureMetadata(String collectionName, String tableName, String keyspaceName) {
+        this.collectionName = Optional.of(collectionName);
+        this.tableName = Optional.of(tableName);
+        this.keyspaceName = keyspaceName;
+    }
 }

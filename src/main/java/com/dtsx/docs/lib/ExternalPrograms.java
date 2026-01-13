@@ -125,8 +125,8 @@ public class ExternalPrograms {
         }
 
         /// Returns true if the exit code is 0.
-        public boolean ok() {
-            return exitCode == 0;
+        public boolean notOk() {
+            return exitCode != 0;
         }
 
         private String buildOutput(Predicate<OutputLine> filter) {

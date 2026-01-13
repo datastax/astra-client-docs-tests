@@ -1,0 +1,12 @@
+$schema: "../../../_base/meta.schema.json"
+test:
+  type: snapshot
+fixtures:
+  base: basic-collection.js
+snapshots:
+  share: true
+  sources:
+    stderr:
+      matches: ^$
+    stdout:
+      matches: ^$

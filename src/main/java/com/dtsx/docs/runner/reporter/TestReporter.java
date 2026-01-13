@@ -11,13 +11,16 @@ import com.dtsx.docs.runner.TestResults.TestOutcome.*;
 import com.dtsx.docs.runner.TestResults.TestRootResults;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.apache.commons.lang3.tuple.Pair;
 import picocli.CommandLine.Help.Ansi.Style;
 
+import java.util.Comparator;
 import java.util.Map;
 import java.util.function.Function;
 
-import static com.dtsx.docs.lib.ColorUtils.*;
-import static com.dtsx.docs.runner.verifier.VerifyMode.DRY_RUN;
+import static com.dtsx.docs.lib.ColorUtils.color;
+import static com.dtsx.docs.lib.ColorUtils.highlight;
+import static com.dtsx.docs.runner.snapshots.verifier.VerifyMode.DRY_RUN;
 import static java.util.stream.Collectors.joining;
 
 /// The base class for test reporters that format/print test execution results.
@@ -143,56 +146,78 @@ public abstract class TestReporter {
     ///   ! ./path/to/example.java
     /// ```
     protected void printTestRootResults(TestRootResults results) {
-        val sb = new StringBuilder(highlight("  - " ));
+        val sb = new StringBuilder("  "); // this is not a weird face I promise
 
-        if (results.allPassed()) {
-            val outcomeSample = results.outcomes().values().stream().findFirst().orElseThrow().outcome();
+        val allResultsTheSame = results.outcomes().values().stream()
+            .flatMap(m -> m.values().stream())
+            .map(Object::getClass)
+            .distinct()
+            .count() == 1;
 
-            val languages = results.outcomes().entrySet().stream()
-                .map((e) -> {
-                    val lang = e.getKey().name().toLowerCase();
-                    val count = e.getValue().paths().size();
+        CliLogger.println(
+            (allResultsTheSame)
+                ? mkShorthandReport(results, sb)
+                : mkDetailedReport(results, sb)
+        );
+    }
 
-                    return (count > 1)
-                        ? count + "×" + lang
-                        : lang;
-                })
-                .collect(joining(","));
+    private String mkShorthandReport(TestRootResults results, StringBuilder sb) {
+        val outcome = results.outcomes().values().stream().findFirst().flatMap(r -> r.values().stream().findFirst()).orElseThrow();
 
-            sb
-                .append(outputPrefix(outcomeSample))
-                .append(" ")
-                .append(results.testRoot().rootName())
-                .append(Style.faint.on())
-                .append(" (")
-                .append(languages)
-                .append(")")
-                .append(Style.faint.off());
-        } else {
-            sb
-                .append("@|red ✗|@ ")
-                .append(results.testRoot().rootName());
+        val languages = results.outcomes().entrySet().stream()
+            .map((e) -> {
+                return Pair.of(
+                    e.getKey().name().toLowerCase(), // language name
+                    e.getValue().size() // file count for that language
+                );
+            })
+            .sorted(Comparator.<Pair<String, Integer>>comparingInt(Pair::getRight).reversed())
+            .map((p) -> {
+                return (p.getRight() > 1)
+                    ? p.getRight() + "×" + p.getLeft()
+                    : p.getLeft();
+            })
+            .collect(joining(","));
 
-            for (val entry : results.outcomes().entrySet()) {
-                val outcome = entry.getValue().outcome();
+        return sb
+            .append(outputPrefix(outcome))
+            .append(" ")
+            .append(results.testRoot().rootName())
+            .append(Style.faint.on())
+            .append(" (")
+            .append(languages)
+            .append(")")
+            .append(Style.faint.off())
+            .toString();
+    }
 
-                entry.getValue().paths().forEach((path) -> {
-                    sb.append(highlight("\n    - "))
-                        .append(outputPrefix(outcome))
-                        .append(" ")
-                        .append(color(Style.faint, path.toString()));
-                });
-            }
-        }
+    private String mkDetailedReport(TestRootResults results, StringBuilder sb) {
+        val shorthandSymbol = results.allPassed()
+            ? "@|green ✓|@"
+            : "@|red ✗|@";
 
-        CliLogger.println(sb.toString());
+        sb
+            .append(shorthandSymbol)
+            .append(" ")
+            .append(results.testRoot().rootName());
+
+        results.outcomes().forEach((_, outcomes) -> {
+            outcomes.forEach((path, outcome) -> {
+                sb.append(highlight("\n    "))
+                    .append(outputPrefix(outcome))
+                    .append(" ")
+                    .append(color(Style.faint, results.testRoot().displayPath(path)));
+            });
+        });
+
+        return sb.toString();
     }
 
     private String outputPrefix(TestOutcome outcome) {
         return switch (outcome) {
             case Passed _ -> "@|green ✓|@";
             case DryPassed _ -> "@!?!@";
-            case Failed _ -> "@|red ✗|@";
+            case FailedToVerify _, FailedToCompile _ -> "@|red ✗|@";
             case Mismatch _ -> "@|red M|@";
             case Errored _ -> "@|yellow !|@";
         };

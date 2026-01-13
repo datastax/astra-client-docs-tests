@@ -1,6 +1,6 @@
 package com.dtsx.docs.builder.fixtures;
 
-import com.dtsx.docs.builder.MetaYml;
+import com.dtsx.docs.builder.meta.reps.SnapshotTestMetaYmlRep;
 import com.dtsx.docs.builder.TestRoot;
 import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.lib.CliLogger;
@@ -15,7 +15,9 @@ import java.nio.file.Path;
 import java.util.function.BiConsumer;
 
 import com.dtsx.docs.runner.PlaceholderResolver;
-import static com.dtsx.docs.runner.verifier.VerifyMode.DRY_RUN;
+import org.jetbrains.annotations.NotNull;
+
+import static com.dtsx.docs.runner.snapshots.verifier.VerifyMode.DRY_RUN;
 
 /// Represents a JavaScript fixture file used to set up, reset, and tear down database state for testing, with being JavaScript used for ease of scripting.
 ///
@@ -40,7 +42,7 @@ import static com.dtsx.docs.runner.verifier.VerifyMode.DRY_RUN;
 /// 1. The "base" fixture
 ///    - This fixture sets up major resources to be reused between a group of tests, such as a collection or keyspace.
 ///    - Defined in the `_fixtures/` directory of the examples folder.
-///    - Referenced in {@link com.dtsx.docs.builder.MetaYml meta.yml} under `fixtures.base`.
+///    - Referenced in {@link SnapshotTestMetaYmlRep meta.yml} under `fixtures.base`.
 /// 2. The "per-test" fixture
 ///    - This fixture sets up and resets data that is specific to each test, such as rows in a collection.
 ///    - Defined in the {@link com.dtsx.docs.builder.TestRoot test root directory} of each example.
@@ -58,10 +60,10 @@ import static com.dtsx.docs.runner.verifier.VerifyMode.DRY_RUN;
 ///     meta.yml
 /// ```
 ///
-/// @see MetaYml
+/// @see SnapshotTestMetaYmlRep
 /// @see TestRoot
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public sealed abstract class JSFixture permits NoopFixture, JSFixtureImpl {
+public sealed abstract class JSFixture implements Comparable<JSFixture> permits NoopFixture, JSFixtureImpl  {
     /// The name of the fixture, derived from its file name (if present)
     ///
     /// Equality is based on this name so that test roots using the same fixture can be grouped together.
@@ -84,11 +86,12 @@ public sealed abstract class JSFixture permits NoopFixture, JSFixtureImpl {
     /// The output will be used in {@link PlaceholderResolver} to replace placeholders in code snippets.
     ///
     /// @see PlaceholderResolver
-    public abstract FixtureMetadata meta(ExternalProgram tsx, Path nodePath);
+    public abstract FixtureMetadata meta(ExternalProgram tsx);
 
-    protected abstract void setup(ExternalProgram tsx, Path nodePath, FixtureMetadata md);
-    protected abstract void reset(ExternalProgram tsx, Path nodePath, FixtureMetadata md);
-    protected abstract void teardown(ExternalProgram tsx, Path nodePath, FixtureMetadata md);
+    // TODO don't know where else to put this but how can we delete all rows in a table without a truncate (like we do for collections)?
+    protected abstract void setup(ExternalProgram tsx, FixtureMetadata md);
+    protected abstract void reset(ExternalProgram tsx, FixtureMetadata md);
+    protected abstract void teardown(ExternalProgram tsx, FixtureMetadata md);
 
     /// Creates a [JSFixture] for the given path.
     ///
@@ -97,9 +100,9 @@ public sealed abstract class JSFixture permits NoopFixture, JSFixtureImpl {
     /// @param ctx  The verifier context.
     /// @param path The path to the JS fixture file.
     /// @return A [JSFixture] instance.
-    public static JSFixture mkFor(VerifierCtx ctx, Path path) {
+    public static JSFixture mkForSnapshotTests(VerifierCtx ctx, Path path) {
         if (!Files.exists(path)) {
-            return NoopFixture.INSTANCE;
+            return NoopFixture.SNAPSHOT_TESTS_INSTANCE;
         }
         return new JSFixtureImpl(ctx, path, ctx.verifyMode() == DRY_RUN);
     }
@@ -124,15 +127,15 @@ public sealed abstract class JSFixture permits NoopFixture, JSFixtureImpl {
     /// @param tsx the TypeScript executor program
     /// @param ts the iterable of items to process
     /// @param consumer the consumer to execute for each item
-    public <T> void useResetting(ExternalProgram tsx, Path nodePath, FixtureMetadata md, Iterable<T> ts, BiConsumer<T, FixtureResetter> consumer) {
-        setup(tsx, nodePath, md);
+    public <T> void useResetting(ExternalProgram tsx, FixtureMetadata md, Iterable<T> ts, BiConsumer<T, FixtureResetter> consumer) {
+        setup(tsx, md);
         try {
             for (val item : ts) {
-                reset(tsx, nodePath, md);
-                consumer.accept(item, () -> reset(tsx, nodePath, md));
+                reset(tsx, md);
+                consumer.accept(item, () -> reset(tsx, md));
             }
         } finally {
-            teardown(tsx, nodePath, md);
+            teardown(tsx, md);
         }
     }
 
@@ -145,15 +148,39 @@ public sealed abstract class JSFixture permits NoopFixture, JSFixtureImpl {
     ///
     /// @param ctx the verifier context containing the examples directory path and execution environment path
     /// @throws TestRunException if npm install fails
-    public static void installDependencies(VerifierCtx ctx, Path execEnvRoot) {
-        CliLogger.debug("Installing JSFixture dependencies in " + execEnvRoot);
+    public static void installDependencies(VerifierCtx ctx) {
+        CliLogger.debug("Installing JSFixture dependencies in " + Path.of(".").toAbsolutePath());
 
         val res = CliLogger.loading("Installing JS fixture dependencies...", (_) -> {
-            return ExternalPrograms.npm(ctx).run(execEnvRoot, "install", "@datastax/astra-db-ts");
+            return ExternalPrograms.npm(ctx).run("ci", "--prefer-offline"); // TODO use NPM_CONFIG_CACHE in CI
         });
 
         if (res.exitCode() != 0) {
             throw new TestRunException("Failed to install JS fixture dependencies: " + res.output());
         }
+    }
+
+    @Override
+    public int compareTo(@NotNull JSFixture o) {
+        val p1 = priority(this);
+        val p2 = priority(o);
+
+        if (p1 != p2) {
+            return Integer.compare(p1, p2);
+        }
+
+        return this.fixtureName().compareTo(o.fixtureName());
+    }
+
+    // TODO:
+    // potentially smarter sorting based on meta() so that fixtures creating heavy resources can be run first (or last??)
+    // this would need meta() to be cached through so we aren't re-running JS to get the same metadata multiple times
+    // but this might require meta() to be a static cache though in case two different but equal JSFixture instances
+    // are created and compared???? can that happen??? Or should JSFixtures themselves be cached and only able to be created
+    // through an opaque factory that returns existing instances if they already exist for a given path??? my head hurts.
+    private static int priority(JSFixture f) {
+        if (f == NoopFixture.COMPILATION_TESTS_INSTANCE) return 0;
+        if (f == NoopFixture.SNAPSHOT_TESTS_INSTANCE) return 1;
+        return 2;
     }
 }

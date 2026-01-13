@@ -4,34 +4,35 @@ import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 
-import java.nio.file.Path;
-
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public final class NoopFixture extends JSFixture {
-    public static final NoopFixture INSTANCE = new NoopFixture();
+    public static final NoopFixture SNAPSHOT_TESTS_INSTANCE = new NoopFixture("no base fixture");
+    public static final NoopFixture COMPILATION_TESTS_INSTANCE = new NoopFixture("compilation tests");
+
+    private final String name;
 
     @Override
     public String fixtureName() {
-        return "<noop>";
+        return name;
     }
 
     @Override
-    public FixtureMetadata meta(ExternalProgram tsx, Path nodePath) {
+    public FixtureMetadata meta(ExternalProgram tsx) {
         return FixtureMetadata.EMPTY;
     }
 
     @Override
-    protected void setup(ExternalProgram tsx, Path nodePath, FixtureMetadata md) {
+    protected void setup(ExternalProgram tsx, FixtureMetadata md) {
         // noop
     }
 
     @Override
-    protected void reset(ExternalProgram tsx, Path nodePath, FixtureMetadata md) {
+    protected void reset(ExternalProgram tsx, FixtureMetadata md) {
         // noop
     }
 
     @Override
-    protected void teardown(ExternalProgram tsx, Path nodePath, FixtureMetadata md) {
+    protected void teardown(ExternalProgram tsx, FixtureMetadata md) {
         // noop
     }
 }

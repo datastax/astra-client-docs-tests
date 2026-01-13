@@ -86,7 +86,14 @@ public abstract class ClientDriver {
     /// @param ctx the verifier context
     /// @param execEnv the execution environment containing the test script
     /// @return the execution result with exit code and output
-    public abstract RunResult execute(VerifierCtx ctx, ExecutionEnvironment execEnv, Map<String, String> envVars);
+    public abstract RunResult compileScript(VerifierCtx ctx, ExecutionEnvironment execEnv, Map<String, String> envVars);
+
+    /// Executes the test script and returns the result.
+    ///
+    /// @param ctx the verifier context
+    /// @param execEnv the execution environment containing the test script
+    /// @return the execution result with exit code and output
+    public abstract RunResult executeScript(VerifierCtx ctx, ExecutionEnvironment execEnv, Map<String, String> envVars);
 
     protected void replaceArtifactPlaceholder(ExecutionEnvironment execEnv, String file) {
         val path = execEnv.envDir().resolve(file);

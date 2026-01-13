@@ -1,16 +1,17 @@
 package com.dtsx.docs.builder;
 
-import com.dtsx.docs.builder.fixtures.JSFixture;
+import com.dtsx.docs.builder.meta.reps.SnapshotTestMetaYmlRep;
+import com.dtsx.docs.runner.strategies.CompilesTestStrategy;
+import com.dtsx.docs.runner.strategies.SnapshotTestStrategy;
+import com.dtsx.docs.runner.strategies.TestStrategy;
 import com.dtsx.docs.config.VerifierCtx;
 import com.dtsx.docs.runner.TestRunException;
 import com.dtsx.docs.runner.drivers.ClientLanguage;
-import com.dtsx.docs.runner.snapshots.SnapshotSource;
 import lombok.Getter;
 
 import java.nio.file.Path;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 /// Represents a test root containing test files for different client languages, represented by a `meta.yml` file.
 ///
@@ -35,7 +36,7 @@ import java.util.TreeSet;
 ///
 /// Each test root contains different client variants of the same example that share the same fixture and snapshot configuration, with test files called `example.<ext>`.
 ///
-/// @see MetaYml
+/// @see SnapshotTestMetaYmlRep
 @Getter
 public class TestRoot {
     /// The path to this test root.
@@ -44,17 +45,11 @@ public class TestRoot {
     /// The different `example.<ext>` files to test within this test root, keyed by client language.
     private final TreeMap<ClientLanguage, Set<Path>> filesToTest;
 
-    ///  The test-specific fixture to use for this test root.
-    private final JSFixture testFixture;
-
-    /// The set of snapshot sources configured for this test root.
-    private final TreeSet<SnapshotSource> snapshotSources;
-
-    /// Whether snapshots are shared across all client languages within this test root.
+    /// The test strategy to use for this test root.
     ///
-    /// If true, a snapshot created by one client language can be used to verify the output of another
-    ///  client language within the same test root for stronger consistency and reduced effort.
-    private final boolean shareSnapshots;
+    /// @see SnapshotTestStrategy
+    /// @see CompilesTestStrategy
+    private final TestStrategy testStrategy;
 
     /// The name of this test root relative to the examples folder.
     ///
@@ -66,12 +61,10 @@ public class TestRoot {
     /// ```
     private final String rootName;
 
-    public TestRoot(VerifierCtx ctx, Path path, TreeMap<ClientLanguage, Set<Path>> filesToTest, JSFixture testFixture, TreeSet<SnapshotSource> snapshotSources, boolean shareSnapshots) {
+    public TestRoot(VerifierCtx ctx, Path path, TreeMap<ClientLanguage, Set<Path>> filesToTest, TestStrategy testStrategy) {
         this.path = path;
         this.filesToTest = filesToTest;
-        this.testFixture = testFixture;
-        this.snapshotSources = snapshotSources;
-        this.shareSnapshots = shareSnapshots;
+        this.testStrategy = testStrategy;
         this.rootName = ctx.examplesFolder().relativize(path).toString();
     }
 
@@ -86,10 +79,10 @@ public class TestRoot {
     ///
     /// @param fileToTest the path to the example file to test
     /// @return the relative path from this test root to the example file
-    public String relativeExampleFilePath(Path fileToTest) {
+    public String displayPath(Path fileToTest) {
         if (!fileToTest.startsWith(this.path)) {
             throw new TestRunException("File to test is not within the test root path"); // sanity check; should never be thrown
         }
-        return path.relativize(fileToTest).toString();
+        return rootName + "/" + path.relativize(fileToTest);
     }
 }

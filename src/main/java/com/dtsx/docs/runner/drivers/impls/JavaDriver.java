@@ -33,7 +33,7 @@ public class JavaDriver extends ClientDriver {
     public Path setupExecutionEnvironment(VerifierCtx ctx, ExecutionEnvironment execEnv) {
         replaceArtifactPlaceholder(execEnv, "build.gradle");
 
-        if (!ExternalPrograms.custom(ctx).run(execEnv.envDir(), "./gradlew", "build").ok()) {
+        if (ExternalPrograms.custom(ctx).run(execEnv.envDir(), "./gradlew", "build").notOk()) {
             throw new TestRunException("Failed to build Java client");
         }
 
@@ -46,7 +46,12 @@ public class JavaDriver extends ClientDriver {
     }
 
     @Override
-    public RunResult execute(VerifierCtx ctx, ExecutionEnvironment execEnv, Map<String, String> envVars) {
+    public RunResult compileScript(VerifierCtx ctx, ExecutionEnvironment execEnv, Map<String, String> envVars) {
+        return ExternalPrograms.custom(ctx).run(execEnv.envDir(), envVars, "./gradlew", "build");
+    }
+
+    @Override
+    public RunResult executeScript(VerifierCtx ctx, ExecutionEnvironment execEnv, Map<String, String> envVars) {
         return ExternalPrograms.custom(ctx).run(execEnv.envDir(), envVars, "./gradlew", "run", "--quiet");
     }
 }
