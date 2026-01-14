@@ -55,7 +55,7 @@ public class PythonDriver extends ClientDriver {
 
     @Override
     public RunResult compileScript(VerifierCtx ctx, ExecutionEnvironment execEnv) {
-        return ExternalPrograms.custom(ctx).run(execEnv.envDir(), "./.venv/bin/python", "-m", "py_compile", "example.py");
+        return ExternalPrograms.custom(ctx).run(execEnv.envDir(), "./.venv/bin/python", "-m", "mypy", "example.py");
     }
 
     @Override
