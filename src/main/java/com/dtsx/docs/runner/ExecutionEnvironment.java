@@ -1,18 +1,18 @@
 package com.dtsx.docs.runner;
 
-import com.dtsx.docs.builder.fixtures.FixtureMetadata;
-import com.dtsx.docs.builder.fixtures.JSFixture;
-import com.dtsx.docs.config.VerifierCtx;
+import com.dtsx.docs.config.ctx.BaseScriptRunnerCtx;
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.runner.drivers.ClientDriver;
 import com.dtsx.docs.runner.drivers.ClientLanguage;
 import lombok.*;
 import org.apache.commons.io.file.PathUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -48,7 +48,7 @@ import java.util.stream.Collectors;
 /// @see ClientDriver
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class ExecutionEnvironment {
-    private final VerifierCtx ctx;
+    private final BaseScriptRunnerCtx ctx;
     private final Path execEnvPath;
 
     @With(AccessLevel.PRIVATE)
@@ -66,8 +66,8 @@ public class ExecutionEnvironment {
     /// @param ctx the verifier context
     /// @param drivers the client drivers to create environments for
     /// @return a collection of execution environments, one per language
-    public static ExecutionEnvironments setup(VerifierCtx ctx, Collection<ClientDriver> drivers) {
-        return Builder.setup(ctx, drivers);
+    public static ExecutionEnvironments setup(BaseScriptRunnerCtx ctx, Collection<ClientDriver> drivers, @Nullable Runnable extraSetup) {
+        return new Builder(ctx).setup(drivers, Optional.ofNullable(extraSetup).orElse(() -> {}));
     }
 
     /// Copies a test file into the execution environment, runs the test, then cleans up.
@@ -86,8 +86,8 @@ public class ExecutionEnvironment {
     /// @param sourceFile the original test file to copy
     /// @param test the test to run with the copied file
     /// @return the result of the test execution
-    public <T> T withTestFileCopied(ClientDriver driver, Path sourceFile, FixtureMetadata md, Supplier<T> test) {
-        val testFile = setupFileForTesting(driver, sourceFile, md);
+    public <T> T withTestFileCopied(ClientDriver driver, Path sourceFile, Placeholders placeholders, Supplier<T> test) {
+        val testFile = setupFileForTesting(driver, sourceFile, placeholders);
         try {
             return test.get();
         } finally {
@@ -128,9 +128,9 @@ public class ExecutionEnvironment {
     }
 
     @SneakyThrows
-    private Path setupFileForTesting(ClientDriver driver, Path sourceFile, FixtureMetadata md) {
+    private Path setupFileForTesting(ClientDriver driver, Path sourceFile, Placeholders placeholders) {
         var content = Files.readString(sourceFile);
-        content = PlaceholderResolver.replacePlaceholders(ctx, md, content);
+        content = PlaceholderResolver.replacePlaceholders(ctx, placeholders, content);
         content = driver.preprocessScript(ctx, content);
 
         Files.createDirectories(testFileCopyPath.getParent());
@@ -153,34 +153,37 @@ public class ExecutionEnvironment {
     ///    - Copies template from `resources/environments/<language>/`
     ///    - Lets the driver set up language-specific dependencies
     ///    - Determines where test files will be copied
+    @RequiredArgsConstructor
     private static class Builder {
-        private static ExecutionEnvironments setup(VerifierCtx ctx, Collection<ClientDriver> drivers) {
-            val rootDir = mkRootFolder(ctx);
-            JSFixture.installDependencies(ctx);
-            return mkExecEnvs(ctx, drivers, rootDir);
+        private final BaseScriptRunnerCtx ctx;
+
+        public ExecutionEnvironments setup(Collection<ClientDriver> drivers, Runnable extraSetup) {
+            val rootDir = mkRootFolder();
+            extraSetup.run();
+            return mkExecEnvs(drivers, rootDir);
         }
 
-        private static Path mkRootFolder(VerifierCtx ctx) {
+        private Path mkRootFolder() {
             val rootFolder = ctx.tmpFolder().resolve("execution_environments");
 
             try {
                 Files.createDirectories(rootFolder);
                 return rootFolder;
             } catch (Exception e) {
-                throw new TestRunException("Failed to create execution environments root folder", e);
+                throw new RunException("Failed to create execution environments root folder", e);
             }
         }
 
-        private static ExecutionEnvironments mkExecEnvs(VerifierCtx ctx, Collection<ClientDriver> drivers, Path rootDir) {
+        private ExecutionEnvironments mkExecEnvs(Collection<ClientDriver> drivers, Path rootDir) {
             val execEnvs = drivers.stream().collect(Collectors.toMap(
                 ClientDriver::language,
-                (driver) -> mkExecEnv(ctx, rootDir, driver)
+                (driver) -> mkExecEnv(rootDir, driver)
             ));
 
             return new ExecutionEnvironments(execEnvs);
         }
 
-        private static ExecutionEnvironment mkExecEnv(VerifierCtx ctx, Path rootDir, ClientDriver driver) {
+        private ExecutionEnvironment mkExecEnv(Path rootDir, ClientDriver driver) {
             val languageName = driver.language().name().toLowerCase();
 
             return CliLogger.loading("Setting up @!%s!@ execution environment".formatted(languageName), (_) -> {
@@ -188,7 +191,7 @@ public class ExecutionEnvironment {
                 val destExecEnv = rootDir.resolve(driver.language().name().toLowerCase());
 
                 val execEnv = new ExecutionEnvironment(ctx, destExecEnv, null);
-                cleanIfNeeded(ctx, destExecEnv);
+                cleanIfNeeded(destExecEnv);
 
                 try {
                     if (!Files.exists(destExecEnv)) {
@@ -197,7 +200,7 @@ public class ExecutionEnvironment {
                         PathUtils.copyDirectory(srcExecEnv, destExecEnv);
                     }
                 } catch (Exception e) {
-                    throw new TestRunException("Failed to setup " + languageName + " execution environment", e);
+                    throw new RunException("Failed to setup " + languageName + " execution environment", e);
                 }
 
                 val testFileCopyPath = driver.setupExecutionEnvironment(ctx, execEnv);
@@ -207,7 +210,7 @@ public class ExecutionEnvironment {
         }
 
         @SneakyThrows
-        private static void cleanIfNeeded(VerifierCtx ctx, Path execEnv) {
+        private void cleanIfNeeded(Path execEnv) {
             if (ctx.clean()) {
                 CliLogger.debug("Cleaning up execution environments");
 

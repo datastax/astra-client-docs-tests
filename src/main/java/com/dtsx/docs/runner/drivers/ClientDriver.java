@@ -1,10 +1,10 @@
 package com.dtsx.docs.runner.drivers;
 
-import com.dtsx.docs.config.VerifierCtx;
+import com.dtsx.docs.config.ctx.BaseScriptRunnerCtx;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import com.dtsx.docs.runner.ExecutionEnvironment;
-import com.dtsx.docs.runner.TestRunException;
+import com.dtsx.docs.runner.RunException;
 import com.dtsx.docs.runner.drivers.impls.*;
 import lombok.AllArgsConstructor;
 import lombok.val;
@@ -59,7 +59,7 @@ public abstract class ClientDriver {
     /// These are checked at startup to ensure they're installed.
     ///
     /// @return list of required {@linkplain com.dtsx.docs.lib.ExternalPrograms external programs}
-    public abstract List<Function<VerifierCtx, ExternalProgram>> requiredPrograms();
+    public abstract List<Function<BaseScriptRunnerCtx, ExternalProgram>> requiredPrograms();
 
     /// Sets up the {@linkplain com.dtsx.docs.runner.ExecutionEnvironment execution environment} by installing dependencies and preparing the project.
     ///
@@ -71,29 +71,29 @@ public abstract class ClientDriver {
     /// @param ctx the verifier context
     /// @param execEnv the execution environment to set up
     /// @return the path where test files should be copied (e.g., `main.ts`, `src/main/java/Main.java`)
-    /// @throws com.dtsx.docs.runner.TestRunException if setup fails
-    public abstract Path setupExecutionEnvironment(VerifierCtx ctx, ExecutionEnvironment execEnv);
+    /// @throws RunException if setup fails
+    public abstract Path setupExecutionEnvironment(BaseScriptRunnerCtx ctx, ExecutionEnvironment execEnv);
 
     /// Preprocesses the test script before execution if necessary (e.g. adding imports, prelude code, etc.).
     ///
     /// @param ctx the verifier context
     /// @param content the original script content
     /// @return the preprocessed script content
-    public abstract String preprocessScript(VerifierCtx ctx, String content);
+    public abstract String preprocessScript(BaseScriptRunnerCtx ctx, String content);
 
     /// Executes the test script and returns the result.
     ///
     /// @param ctx the verifier context
     /// @param execEnv the execution environment containing the test script
     /// @return the execution result with exit code and output
-    public abstract RunResult compileScript(VerifierCtx ctx, ExecutionEnvironment execEnv);
+    public abstract RunResult compileScript(BaseScriptRunnerCtx ctx, ExecutionEnvironment execEnv);
 
     /// Executes the test script and returns the result.
     ///
     /// @param ctx the verifier context
     /// @param execEnv the execution environment containing the test script
     /// @return the execution result with exit code and output
-    public abstract RunResult executeScript(VerifierCtx ctx, ExecutionEnvironment execEnv, Map<String, String> envVars);
+    public abstract RunResult executeScript(BaseScriptRunnerCtx ctx, ExecutionEnvironment execEnv, Map<String, String> envVars);
 
     protected void replaceArtifactPlaceholder(ExecutionEnvironment execEnv, String file) {
         val path = execEnv.envDir().resolve(file);
@@ -103,13 +103,13 @@ public abstract class ClientDriver {
             val updatedContent = content.replace("${CLIENT_ARTIFACT}", artifact());
             Files.writeString(path, updatedContent);
         } catch (Exception e) {
-            throw new TestRunException("Failed to update " + file + " with client version", e);
+            throw new RunException("Failed to update " + file + " with client version", e);
         }
     }
 
     protected String artifact() {
         if (artifact == null) {
-            throw new TestRunException("Attempted to access artifact for driver that does not use one: " + language() + ". Did *someone* forget to set a default artifact in ClientLanguage?");
+            throw new RunException("Attempted to access artifact for driver that does not use one: " + language() + ". Did *someone* forget to set a default artifact in ClientLanguage?");
         }
         return artifact;
     }

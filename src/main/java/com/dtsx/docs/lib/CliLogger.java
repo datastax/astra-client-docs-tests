@@ -1,16 +1,12 @@
 package com.dtsx.docs.lib;
 
-import com.dtsx.docs.builder.TestRoot;
-import com.dtsx.docs.config.VerifierCtx;
+import com.dtsx.docs.config.ctx.BaseCtx;
 import com.dtsx.docs.lib.LoadingSpinner.LoadingSpinnerControls;
-import com.dtsx.docs.runner.TestResults.TestOutcome;
-import com.dtsx.docs.runner.drivers.ClientLanguage;
 import lombok.Cleanup;
 import lombok.NonNull;
 import lombok.val;
 
 import java.io.IOException;
-import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Files;
@@ -50,7 +46,7 @@ public class CliLogger {
     
     private static final String logFileName;
     private static final ExecutorService logExecutor = Executors.newSingleThreadExecutor();
-    private static VerifierCtx ctx;
+    private static BaseCtx ctx;
     
     static {
         val timestamp = DateTimeFormatter.ofPattern("yyyy_MM_dd___HH_mm_ss").format(Instant.now().atZone(ZoneId.systemDefault()));
@@ -61,20 +57,14 @@ public class CliLogger {
     ///
     /// Must be called before any logging methods that write to file.
     ///
-    /// @param verifierCtx the verifier context
-    public static void initialize(VerifierCtx verifierCtx) {
-        ctx = verifierCtx;
+    /// @param baseCtx the cli context
+    public static void initialize(BaseCtx baseCtx) {
+        ctx = baseCtx;
         try {
             val logFile = logsDir(ctx).resolve(logFileName);
             Files.createDirectories(logFile.getParent());
             deleteOldLogs(logsDir(ctx));
         } catch (Exception _) {}
-
-        CliLogger.println(false, "@|bold Starting verifier in @!" + ctx.verifyMode().displayName(ctx) + "!@ mode.|@");
-        CliLogger.println(false);
-        CliLogger.println(false, "@|bold View logs:|@");
-        CliLogger.println(false, "@!$!@ open " + CliLogger.logFilePath(ctx));
-        CliLogger.println(false);
     }
 
     /// Enables or disables the loading spinner.
@@ -87,7 +77,7 @@ public class CliLogger {
 
     /// Prints to stdout with a newline.
     public static void println(boolean appendToFile, String... msg) {
-        log(appendToFile, String.join("", msg) + System.lineSeparator(), System.out);
+        log(appendToFile, String.join("", msg));
     }
 
     /// Executes a function while showing a loading spinner with a message.
@@ -131,20 +121,27 @@ public class CliLogger {
         writeToLogFile("DEBUG", String.join("", msg));
     }
 
-    /// Logs the result of failed test executions (only to log file, not console).
+    /// Logs a debug message (only to log file, not console).
     ///
-    /// Prefixed with `[FAILED]` in the log file for failed tests.
-    public static void result(TestRoot testRoot, ClientLanguage language, TestOutcome testOutcome, String extra) {
-        if (testOutcome.passed()) {
-            return;
-        }
-
-        writeToLogFile("FAILED", testRoot.rootName() + " (" + language + ") => " + testOutcome.name());
-
-        if (!extra.isBlank()) {
-            writeToLogFile("FAILED", extra);
-        }
+    /// Prefixed with `[FAILED]` in the log file.
+    public static void failed(String... msg) {
+        writeToLogFile("FAILED", String.join("", msg));
     }
+
+//    /// Logs the result of failed test executions (only to log file, not console).
+//    ///
+//    /// Prefixed with `[FAILED]` in the log file for failed tests.
+//    public static void failed(TestRoot testRoot, ClientLanguage language, TestOutcome testOutcome, String extra) {
+//        if (testOutcome.passed()) {
+//            return;
+//        }
+//
+//        writeToLogFile("FAILED", testRoot.rootName() + " (" + language + ") => " + testOutcome.name());
+//
+//        if (!extra.isBlank()) {
+//            writeToLogFile("FAILED", extra);
+//        }
+//    }
 
     /// Logs an exception message (only to log file, not console).
     ///
@@ -181,11 +178,11 @@ public class CliLogger {
     ///
     /// @param ctx the verifier context
     /// @return the absolute path to the log file
-    public static Path logFilePath(VerifierCtx ctx) {
+    public static Path logFilePath(BaseCtx ctx) {
         return logsDir(ctx).resolve(logFileName).toAbsolutePath();
     }
 
-    private static void log(boolean appendToFile, String msg, PrintStream ps) {
+    private static void log(boolean appendToFile, String msg) {
         val formattedMsg = ColorUtils.format(msg);
 
         if (appendToFile) {
@@ -195,8 +192,7 @@ public class CliLogger {
         val resume = globalSpinner.pause();
 
         try {
-            ps.print(formattedMsg);
-            ps.flush();
+            System.out.println(formattedMsg);
         } finally {
             resume.run();
         }
@@ -252,7 +248,7 @@ public class CliLogger {
         return sw.toString();
     }
 
-    private static Path logsDir(VerifierCtx ctx) {
+    private static Path logsDir(BaseCtx ctx) {
         return ctx.tmpFolder().resolve("logs");
     }
 }

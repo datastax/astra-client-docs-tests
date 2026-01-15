@@ -57,7 +57,7 @@ tasks.register<Jar>("fatJar") {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
     manifest {
-        attributes["Main-Class"] = "com.dtsx.docs.VerifierCli"
+        attributes["Main-Class"] = "com.dtsx.docs.HelperCli"
     }
 
     from(sourceSets.main.get().output)

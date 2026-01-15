@@ -1,0 +1,31 @@
+package com.dtsx.docs.commands.test;
+
+import com.dtsx.docs.commands.BaseCmd;
+import com.dtsx.docs.lib.CliLogger;
+import com.dtsx.docs.planner.TestPlanBuilder;
+import com.dtsx.docs.runner.tests.TestRunner;
+import lombok.Getter;
+import lombok.val;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
+
+@Command(
+    name = "test",
+    mixinStandardHelpOptions = true
+)
+public class TestCmd extends BaseCmd<TestCtx> {
+    @Mixin @Getter
+    private TestArgs $args;
+
+    @Override
+    public int run() {
+        CliLogger.println(false, "@|bold Starting verifier in @!" + ctx.verifyMode().displayName(ctx) + "!@ mode.|@");
+        CliLogger.println(false);
+        CliLogger.println(false, "@|bold View logs:|@");
+        CliLogger.println(false, "@!$!@ open " + CliLogger.logFilePath(ctx));
+        CliLogger.println(false);
+
+        val ok = TestRunner.runTests(ctx, TestPlanBuilder.buildPlan(ctx));
+        return (ok) ? 0 : 1;
+    }
+}

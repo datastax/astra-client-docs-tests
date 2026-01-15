@@ -1,6 +1,6 @@
 package com.dtsx.docs.runner.drivers.impls;
 
-import com.dtsx.docs.config.VerifierCtx;
+import com.dtsx.docs.config.ctx.BaseScriptRunnerCtx;
 import com.dtsx.docs.lib.ExternalPrograms;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
@@ -24,27 +24,27 @@ public class BashDriver extends ClientDriver {
     }
 
     @Override
-    public List<Function<VerifierCtx, ExternalProgram>> requiredPrograms() {
+    public List<Function<BaseScriptRunnerCtx, ExternalProgram>> requiredPrograms() {
         return List.of(ExternalPrograms::bash);
     }
 
     @Override
-    public Path setupExecutionEnvironment(VerifierCtx ctx, ExecutionEnvironment execEnv) {
+    public Path setupExecutionEnvironment(BaseScriptRunnerCtx ctx, ExecutionEnvironment execEnv) {
         return execEnv.envDir().resolve("example.sh");
     }
 
     @Override
-    public String preprocessScript(VerifierCtx ignoredCtx, String content) {
+    public String preprocessScript(BaseScriptRunnerCtx ignoredCtx, String content) {
         return "#!/bin/bash\n\nset -euo pipefail\n\n" + content;
     }
 
     @Override
-    public RunResult compileScript(VerifierCtx ctx, ExecutionEnvironment execEnv) {
+    public RunResult compileScript(BaseScriptRunnerCtx ctx, ExecutionEnvironment execEnv) {
         return ExternalPrograms.bash(ctx).run(execEnv.envDir(), "-n", execEnv.scriptPath());
     }
 
     @Override
-    public RunResult executeScript(VerifierCtx ctx, ExecutionEnvironment execEnv, Map<String, String> envVars) {
+    public RunResult executeScript(BaseScriptRunnerCtx ctx, ExecutionEnvironment execEnv, Map<String, String> envVars) {
         return ExternalPrograms.bash(ctx).run(execEnv.envDir(), envVars, execEnv.scriptPath());
     }
 }

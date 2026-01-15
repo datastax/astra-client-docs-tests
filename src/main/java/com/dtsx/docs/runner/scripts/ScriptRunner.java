@@ -1,0 +1,80 @@
+package com.dtsx.docs.runner.scripts;
+
+import com.dtsx.docs.commands.run.RunCtx;
+import com.dtsx.docs.lib.CliLogger;
+import com.dtsx.docs.runner.ExecutionEnvironment;
+import com.dtsx.docs.runner.PlaceholderResolver;
+import com.dtsx.docs.runner.drivers.ClientDriver;
+import com.dtsx.docs.runner.scripts.reporter.ScriptReporter;
+import lombok.val;
+
+import java.nio.file.Path;
+import java.util.Map;
+import java.util.Set;
+
+public class ScriptRunner {
+    private final RunCtx ctx;
+    private final Map<ClientDriver, Set<Path>> scripts;
+    private final Map<String, String> envVars;
+    private final ScriptReporter reporter;
+
+    private ScriptRunner(RunCtx ctx) {
+        this.ctx = ctx;
+        this.scripts = ctx.scripts();
+        this.envVars = PlaceholderResolver.mkEnvVars(ctx, ctx.placeholders());
+        this.reporter = ctx.reporter();
+    }
+
+    public static boolean runScripts(RunCtx ctx) {
+        return new ScriptRunner(ctx).runAllScripts();
+    }
+
+    private boolean runAllScripts() {
+        val execEnvs = ExecutionEnvironment.setup(ctx, scripts.keySet(), null);
+
+        var allSucceeded = true;
+
+        for (val entry : ctx.scripts().entrySet()) {
+            val driver = entry.getKey();
+            val scripts = entry.getValue();
+
+            val execEnv = execEnvs.forLanguage(driver.language());
+
+            for (val script : scripts) {
+                val success = runScript(driver, execEnv, script);
+
+                if (success) {
+                    continue;
+                }
+
+                allSucceeded = false;
+
+                if (ctx.bail()) {
+                    reporter.printBailMessage();
+                    return false;
+                }
+            }
+        }
+
+        return allSucceeded;
+    }
+
+    private boolean runScript(ClientDriver driver, ExecutionEnvironment execEnv, Path script) {
+        CliLogger.debug("Running script '" + script + "'");
+
+        val scriptName = resolveScriptDisplayName(script);
+
+        val result = execEnv.withTestFileCopied(driver, script, ctx.placeholders(), () -> {
+            return CliLogger.loading("Running @!" + scriptName + "!@", (_) -> {
+                return driver.executeScript(ctx, execEnv, envVars);
+            });
+        });
+
+        reporter.printResult(scriptName, result);
+        return result.ok();
+    }
+
+    private String resolveScriptDisplayName(Path script) {
+        return ctx.examplesFolder().relativize(script).toString(); // won't work in all cases, but I'll just use it until I notice it doesn't work right
+    }
+}

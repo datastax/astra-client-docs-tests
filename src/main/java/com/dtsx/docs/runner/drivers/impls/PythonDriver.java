@@ -1,6 +1,6 @@
 package com.dtsx.docs.runner.drivers.impls;
 
-import com.dtsx.docs.config.VerifierCtx;
+import com.dtsx.docs.config.ctx.BaseScriptRunnerCtx;
 import com.dtsx.docs.lib.ExternalPrograms;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
@@ -25,12 +25,12 @@ public class PythonDriver extends ClientDriver {
     }
 
     @Override
-    public List<Function<VerifierCtx, ExternalProgram>> requiredPrograms() {
+    public List<Function<BaseScriptRunnerCtx, ExternalProgram>> requiredPrograms() {
         return List.of(ExternalPrograms::python);
     }
 
     @Override
-    public Path setupExecutionEnvironment(VerifierCtx ctx, ExecutionEnvironment execEnv) {
+    public Path setupExecutionEnvironment(BaseScriptRunnerCtx ctx, ExecutionEnvironment execEnv) {
         val python = ExternalPrograms.python(ctx);
 
         val mkVenv = python.run(execEnv.envDir(), "-m", "venv", ".venv");
@@ -49,17 +49,17 @@ public class PythonDriver extends ClientDriver {
     }
 
     @Override
-    public String preprocessScript(VerifierCtx ignoredCtx, String content) {
+    public String preprocessScript(BaseScriptRunnerCtx ignoredCtx, String content) {
         return "import os\n\n" + content;
     }
 
     @Override
-    public RunResult compileScript(VerifierCtx ctx, ExecutionEnvironment execEnv) {
+    public RunResult compileScript(BaseScriptRunnerCtx ctx, ExecutionEnvironment execEnv) {
         return ExternalPrograms.custom(ctx).run(execEnv.envDir(), "./.venv/bin/python", "-m", "mypy", "example.py");
     }
 
     @Override
-    public RunResult executeScript(VerifierCtx ctx, ExecutionEnvironment execEnv, Map<String, String> envVars) {
+    public RunResult executeScript(BaseScriptRunnerCtx ctx, ExecutionEnvironment execEnv, Map<String, String> envVars) {
         return ExternalPrograms.custom(ctx).run(execEnv.envDir(), envVars, ".venv/bin/python", execEnv.scriptPath());
     }
 }

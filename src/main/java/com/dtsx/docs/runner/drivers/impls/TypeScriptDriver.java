@@ -1,11 +1,11 @@
 package com.dtsx.docs.runner.drivers.impls;
 
-import com.dtsx.docs.config.VerifierCtx;
+import com.dtsx.docs.config.ctx.BaseScriptRunnerCtx;
 import com.dtsx.docs.lib.ExternalPrograms;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import com.dtsx.docs.runner.ExecutionEnvironment;
-import com.dtsx.docs.runner.TestRunException;
+import com.dtsx.docs.runner.RunException;
 import com.dtsx.docs.runner.drivers.ClientDriver;
 import com.dtsx.docs.runner.drivers.ClientLanguage;
 import lombok.val;
@@ -26,33 +26,33 @@ public class TypeScriptDriver extends ClientDriver {
     }
 
     @Override
-    public List<Function<VerifierCtx, ExternalProgram>> requiredPrograms() {
+    public List<Function<BaseScriptRunnerCtx, ExternalProgram>> requiredPrograms() {
         return List.of(ExternalPrograms::npm, ExternalPrograms::tsx);
     }
 
     @Override
-    public Path setupExecutionEnvironment(VerifierCtx ctx, ExecutionEnvironment execEnv) {
+    public Path setupExecutionEnvironment(BaseScriptRunnerCtx ctx, ExecutionEnvironment execEnv) {
         val res = ExternalPrograms.npm(ctx).run(execEnv.envDir(), "install", artifact());
 
         if (res.exitCode() != 0) {
-            throw new TestRunException("Failed to setup TypeScript environment: " + res.output());
+            throw new RunException("Failed to setup TypeScript environment: " + res.output());
         }
 
         return execEnv.envDir().resolve("example.ts");
     }
 
     @Override
-    public String preprocessScript(VerifierCtx ignoredCtx, String content) {
+    public String preprocessScript(BaseScriptRunnerCtx ignoredCtx, String content) {
         return content;
     }
 
     @Override
-    public RunResult compileScript(VerifierCtx ctx, ExecutionEnvironment execEnv) {
+    public RunResult compileScript(BaseScriptRunnerCtx ctx, ExecutionEnvironment execEnv) {
         return ExternalPrograms.npm(ctx).run(execEnv.envDir(), "run", "typecheck");
     }
 
     @Override
-    public RunResult executeScript(VerifierCtx ctx, ExecutionEnvironment execEnv, Map<String, String> envVars) {
+    public RunResult executeScript(BaseScriptRunnerCtx ctx, ExecutionEnvironment execEnv, Map<String, String> envVars) {
         return ExternalPrograms.tsx(ctx).run(execEnv.envDir(), envVars, execEnv.scriptPath());
     }
 }
