@@ -1,6 +1,6 @@
 package com.dtsx.docs.planner.meta.impls;
 
-import com.dtsx.docs.planner.TestPlanException;
+import com.dtsx.docs.planner.PlanException;
 import com.dtsx.docs.planner.fixtures.JSFixture;
 import com.dtsx.docs.planner.fixtures.JSFixtureImpl;
 import com.dtsx.docs.planner.fixtures.NoopFixture;
@@ -50,7 +50,7 @@ public final class SnapshotTestMetaYml implements BaseMetaYml {
     /// @param ctx the verifier context
     /// @param fixtureName the optional name of the base fixture file
     /// @return the resolved [JSFixture]
-    /// @throws TestPlanException if the fixture doesn't exist
+    /// @throws PlanException if the fixture doesn't exist
     ///
     /// @see JSFixture
     private static JSFixture resolveBaseFixture(TestCtx ctx, Optional<String> fixtureName) {
@@ -61,7 +61,7 @@ public final class SnapshotTestMetaYml implements BaseMetaYml {
         val path = ctx.examplesFolder().resolve(FIXTURES_DIR).resolve(fixtureName.get());
 
         if (!Files.exists(path)) {
-            throw new TestPlanException("Base fixture '" + fixtureName.get() + "' does not exist in '" + FIXTURES_DIR + "'");
+            throw new PlanException("Base fixture '" + fixtureName.get() + "' does not exist in '" + FIXTURES_DIR + "'");
         }
 
         return mkJsFixtureImpl(ctx, path);
@@ -105,7 +105,7 @@ public final class SnapshotTestMetaYml implements BaseMetaYml {
     ///
     /// @param config the snapshots configuration from meta.yml
     /// @return set of configured snapshot sources
-    /// @throws TestPlanException if unsupported parameters are provided
+    /// @throws PlanException if unsupported parameters are provided
     ///
     /// @see SnapshotSources
     private static TreeSet<SnapshotSource> buildSnapshotTypes(SnapshotsConfig config) {
@@ -116,7 +116,7 @@ public final class SnapshotTestMetaYml implements BaseMetaYml {
             val params = Objects.requireNonNullElse(rawSource.getValue(), Collections.<String, Object>emptyMap());
 
             if (params.keySet().stream().anyMatch(param -> !source.supportedParams().contains(param))) {
-                throw new TestPlanException("Unsupported parameter found for snapshot source " + source.name() + ". Supported parameters are: " + String.join(", ", source.supportedParams()));
+                throw new PlanException("Unsupported parameter found for snapshot source " + source.name() + ". Supported parameters are: " + String.join(", ", source.supportedParams()));
             }
 
             sources.add(source.create(params));

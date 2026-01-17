@@ -1,7 +1,7 @@
 package com.dtsx.docs.runner.tests.snapshots.sources;
 
+import com.dtsx.docs.planner.PlanException;
 import com.dtsx.docs.planner.meta.reps.SnapshotTestMetaYmlRep;
-import com.dtsx.docs.planner.TestPlanException;
 import com.dtsx.docs.runner.Placeholders;
 import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
@@ -51,7 +51,7 @@ public sealed abstract class OutputSnapshotSource extends SnapshotSource {
             if (params.get("matches") instanceof String matchesStr) {
                 this.pattern = Pattern.compile(matchesStr, Pattern.DOTALL);
             } else {
-                throw new TestPlanException("The 'matches' parameter must be a String");
+                throw new PlanException("The 'matches' parameter must be a String");
             }
         }
     }

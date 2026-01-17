@@ -3,8 +3,8 @@ package com.dtsx.docs.runner.tests.snapshots.sources;
 import com.datastax.astra.client.collections.definition.documents.Document;
 import com.datastax.astra.client.core.query.Filter;
 import com.datastax.astra.client.tables.definition.rows.Row;
+import com.dtsx.docs.planner.PlanException;
 import com.dtsx.docs.planner.meta.reps.SnapshotTestMetaYmlRep;
-import com.dtsx.docs.planner.TestPlanException;
 import com.dtsx.docs.runner.Placeholders;
 import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.lib.DataAPIUtils;
@@ -49,7 +49,7 @@ public sealed abstract class RecordSnapshotSource extends SnapshotSource {
             if (params.get("filter") instanceof Map<?, ?> filterMap) {
                 this.filter = new Filter((Map<String, Object>) filterMap);
             } else {
-                throw new TestPlanException("The 'filter' parameter must be a Map<String, Object>");
+                throw new PlanException("The 'filter' parameter must be a Map<String, Object>");
             }
         }
     }
@@ -61,7 +61,7 @@ public sealed abstract class RecordSnapshotSource extends SnapshotSource {
     public String mkSnapshot(TestCtx ctx, RunResult res, Placeholders placeholders) {
         // error should never be thrown since it would've been caught earlier in PlaceholderResolver.resolvePlaceholders
         // since the snapshot shouldn't be depending on a collection/table that the example file doesn't explicitly use anyway
-        val schemaObjName = extractSchemaObjectName(placeholders).orElseThrow(() -> new TestPlanException("Could not determine schema object name from fixture metadata"));
+        val schemaObjName = extractSchemaObjectName(placeholders).orElseThrow(() -> new PlanException("Could not determine schema object name from fixture metadata"));
 
         return JacksonUtils.prettyPrintJson(
             mkJsonDeterministic(streamRecords(ctx, schemaObjName).toList())

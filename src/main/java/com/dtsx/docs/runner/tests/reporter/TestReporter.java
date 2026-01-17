@@ -1,7 +1,7 @@
 package com.dtsx.docs.runner.tests.reporter;
 
 import com.dtsx.docs.planner.TestPlan;
-import com.dtsx.docs.planner.TestPlanException;
+import com.dtsx.docs.planner.PlanException;
 import com.dtsx.docs.planner.fixtures.JSFixture;
 import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.lib.CliLogger;
@@ -105,7 +105,7 @@ public abstract class TestReporter {
     /// @param ctx the verifier context
     /// @param reporter the reporter name ("all_tests" or "only_failures")
     /// @return the reporter instance
-    /// @throws TestPlanException if the reporter name is unknown
+    /// @throws PlanException if the reporter name is unknown
     public static TestReporter parse(TestCtx ctx, String reporter) {
         final Map<String, Function<TestCtx, TestReporter>> availableReporters = Map.of(
             "only_failures", OnlyFailuresReporter::new,
@@ -115,7 +115,7 @@ public abstract class TestReporter {
         val supplier = availableReporters.get(reporter.toLowerCase());
 
         if (supplier == null) {
-            throw new TestPlanException("Unknown reporter: '" + reporter + "' (expected one of: " + String.join(", ", availableReporters.keySet()) + ")");
+            throw new PlanException("Unknown reporter: '" + reporter + "' (expected one of: " + String.join(", ", availableReporters.keySet()) + ")");
         }
 
         return supplier.apply(ctx);

@@ -52,7 +52,7 @@ public class TestPlanBuilder {
     ///
     /// @param ctx the verifier context containing configuration and paths
     /// @return a test plan containing all discovered test roots grouped by base fixture
-    /// @throws TestPlanException if any errors occur during plan building
+    /// @throws PlanException if any errors occur during plan building
     ///
     /// @see TestPlan
     public static TestPlan buildPlan(TestCtx ctx) {
@@ -74,7 +74,7 @@ public class TestPlanBuilder {
             CliLogger.println(true);
 
             if (plan.totalTests() == 0) {
-                throw new TestPlanException("No tests found to run after building test plan");
+                throw new PlanException("No tests found to run after building test plan");
             }
 
             return plan;
@@ -96,12 +96,12 @@ public class TestPlanBuilder {
     ///
     /// @param examplesFolder the root examples directory to search
     /// @return list of paths to directories containing meta.yml files
-    /// @throws TestPlanException if the examples folder doesn't exist or no test roots are found
+    /// @throws PlanException if the examples folder doesn't exist or no test roots are found
     ///
     /// @see TestRoot
     private static List<Path> findTestRoots(Path examplesFolder) {
         if (!Files.exists(examplesFolder) || !Files.isDirectory(examplesFolder)) {
-            throw new TestPlanException("Examples folder '" + examplesFolder + "' does not exist or is not a directory");
+            throw new PlanException("Examples folder '" + examplesFolder + "' does not exist or is not a directory");
         }
 
         try (val files = Files.walk(examplesFolder)) {
@@ -113,12 +113,12 @@ public class TestPlanBuilder {
                 .toList();
 
             if (dirs.isEmpty()) {
-                throw new TestPlanException("No test roots found in examples directory '" + examplesFolder + "'");
+                throw new PlanException("No test roots found in examples directory '" + examplesFolder + "'");
             }
 
             return dirs;
         } catch (IOException e) {
-            throw new TestPlanException("Failed to traverse examples directory '" + examplesFolder + "' to find test roots", e);
+            throw new PlanException("Failed to traverse examples directory '" + examplesFolder + "' to find test roots", e);
         }
     }
 
@@ -180,7 +180,7 @@ public class TestPlanBuilder {
     /// @param root the test root directory to search
     /// @param ctx the verifier context containing language configuration
     /// @return map of client languages to their example file paths
-    /// @throws TestPlanException if traversal fails
+    /// @throws PlanException if traversal fails
     private static TreeMap<ClientLanguage, Set<Path>> findFilesToTestInRoot(Path root, TestCtx ctx) {
         val ret = new TreeMap<ClientLanguage, Set<Path>>();
 
@@ -200,7 +200,7 @@ public class TestPlanBuilder {
                 }
             });
         } catch (IOException e) {
-            throw new TestPlanException("Failed to traverse test root '" + root + "' to find example files", e);
+            throw new PlanException("Failed to traverse test root '" + root + "' to find example files", e);
         }
 
         return ret;

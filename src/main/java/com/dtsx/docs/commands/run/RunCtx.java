@@ -70,9 +70,14 @@ public class RunCtx extends BaseScriptRunnerCtx {
         for (val root : roots) {
             val candidate = root.resolve(fileStr);
 
+            if (!candidate.startsWith(examplesFolder())) {
+                throw new ParameterException(cmd, "Invalid file path '" + candidate + "'. Must be inside examples folder: " + examplesFolder());
+            }
+
             if (Files.exists(candidate)) {
                 return candidate;
             }
+
             triedPaths.add(candidate.toAbsolutePath().normalize().toString());
         }
 

@@ -28,7 +28,7 @@ import java.util.function.Function;
 /// - [JavaDriver] - Compiles and runs Java via Gradle
 /// - [PythonDriver] - Runs Python scripts, using `pip` via `python` in a venv for dependencies
 /// - [BashDriver] - Runs bash scripts directly
-/// - [CSharpDriver] - TODO
+/// - [CSharpDriver] - Runs C# scripts via `dotnet@9`
 /// - [GoDriver] - TODO
 ///
 /// @see ClientLanguage
