@@ -14,6 +14,8 @@ public class PlaceholderResolver {
     private static final Map<String, BiFunction<BaseScriptRunnerCtx, Placeholders, Optional<String>>> PLACEHOLDERS = Map.of(
         "APPLICATION_TOKEN", (ctx, _) -> Optional.of(ctx.connectionInfo().token()),
         "API_ENDPOINT", (ctx, _) -> Optional.of(ctx.connectionInfo().endpoint()),
+        "USERNAME", (ctx, _) -> ctx.connectionInfo().username(),
+        "PASSWORD", (ctx, _) -> ctx.connectionInfo().password(),
         "KEYSPACE_NAME", (_, phs) -> Optional.of(phs.keyspaceName()),
         "TABLE_NAME", (_, phs) -> phs.tableName(),
         "COLLECTION_NAME", (_, phs) -> phs.collectionName(),

@@ -78,7 +78,7 @@ public abstract class BaseScriptRunnerCtx extends BaseCtx {
     private ConnectionInfo mkConnectionInfo(CommandLine cmd, BaseScriptRunnerArgs<?> args) {
         val token = ArgUtils.requireFlag(cmd, args.$token, "astra token", "-t", "ASTRA_TOKEN");
         val apiEndpoint = ArgUtils.requireFlag(cmd, args.$apiEndpoint, "API endpoint", "-e", "API_ENDPOINT");
-        return ConnectionInfo.parse(token, apiEndpoint);
+        return new ConnectionInfo(token, apiEndpoint);
     }
 
     private Map<ExternalProgramType, String[]> mkCommandOverrides(BaseScriptRunnerArgs<?> args) {
