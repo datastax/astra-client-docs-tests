@@ -1,18 +1,13 @@
 package com.dtsx.docs.commands.test;
 
 import com.dtsx.docs.config.args.BaseScriptRunnerArgs;
-import com.dtsx.docs.lib.CliLogger;
-import com.dtsx.docs.lib.ExternalPrograms.ExternalProgramType;
-import com.dtsx.docs.runner.drivers.ClientLanguage;
-import com.dtsx.docs.runner.tests.VerifyMode;
+import com.dtsx.docs.core.runner.tests.VerifyMode;
 import lombok.ToString;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 @ToString
 public class TestArgs extends BaseScriptRunnerArgs<TestCtx> {

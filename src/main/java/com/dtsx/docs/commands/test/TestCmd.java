@@ -2,8 +2,8 @@ package com.dtsx.docs.commands.test;
 
 import com.dtsx.docs.commands.BaseCmd;
 import com.dtsx.docs.lib.CliLogger;
-import com.dtsx.docs.planner.TestPlanBuilder;
-import com.dtsx.docs.runner.tests.TestRunner;
+import com.dtsx.docs.core.planner.TestPlanBuilder;
+import com.dtsx.docs.core.runner.tests.TestRunner;
 import lombok.Getter;
 import lombok.val;
 import picocli.CommandLine.Command;

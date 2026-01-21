@@ -2,7 +2,7 @@ package com.dtsx.docs.config.args;
 
 import com.dtsx.docs.config.ctx.BaseScriptRunnerCtx;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgramType;
-import com.dtsx.docs.runner.drivers.ClientLanguage;
+import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import picocli.CommandLine.Option;
 
 import java.util.Map;

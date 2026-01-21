@@ -2,12 +2,12 @@ package com.dtsx.docs.commands.run;
 
 import com.dtsx.docs.config.ctx.BaseScriptRunnerCtx;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
-import com.dtsx.docs.runner.Placeholders;
-import com.dtsx.docs.runner.drivers.ClientDriver;
-import com.dtsx.docs.runner.drivers.ClientLanguage;
-import com.dtsx.docs.runner.scripts.reporter.DetailedScriptReporter;
-import com.dtsx.docs.runner.scripts.reporter.PlainScriptReporter;
-import com.dtsx.docs.runner.scripts.reporter.ScriptReporter;
+import com.dtsx.docs.core.runner.Placeholders;
+import com.dtsx.docs.core.runner.drivers.ClientDriver;
+import com.dtsx.docs.core.runner.drivers.ClientLanguage;
+import com.dtsx.docs.core.runner.scripts.reporter.DetailedScriptReporter;
+import com.dtsx.docs.core.runner.scripts.reporter.PlainScriptReporter;
+import com.dtsx.docs.core.runner.scripts.reporter.ScriptReporter;
 import lombok.Getter;
 import lombok.val;
 import picocli.CommandLine;
