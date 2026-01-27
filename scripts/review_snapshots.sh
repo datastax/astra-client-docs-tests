@@ -1,6 +1,15 @@
 #!/bin/sh
 
-SNAPSHOT_DIR="snapshots"
+# Use provided snapshot directory or default to "snapshots"
+SNAPSHOT_DIR="${1:-snapshots}"
+
+# Validate that the snapshot directory exists
+if [ ! -d "$SNAPSHOT_DIR" ]; then
+  echo "Error: Snapshot directory '$SNAPSHOT_DIR' does not exist."
+  echo "Usage: $0 [snapshot_directory]"
+  exit 1
+fi
+
 
 if command -v difft >/dev/null 2>&1; then
   DIFF_TOOL="difft"
