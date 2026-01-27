@@ -28,17 +28,16 @@ public class LoadingSpinner {
     }
 
     public Optional<LoadingSpinnerControls> start(String message) {
-        if (active) {
-            return Optional.empty();
-        }
-
-        this.message = message;
-        this.active = true;
-
         synchronized (activityLock) {
+            if (active) {
+                return Optional.empty();
+            }
+
+            this.message = message;
+            this.active = true;
+
             activityLock.notifyAll();
         }
-
         return Optional.of(new LoadingSpinnerControls());
     }
 
@@ -55,8 +54,10 @@ public class LoadingSpinner {
     }
 
     public Runnable pause() {
-        paused = true;
-        clearLine();
+        synchronized (activityLock) {
+            paused = true;
+            clearLine();
+        }
 
         return () -> {
             paused = false;
@@ -81,8 +82,10 @@ public class LoadingSpinner {
 
             val currentLine = ColorUtils.highlight(SPINNER_FRAMES[frameIndex]) + " " + message + "...";
 
-            System.err.print(currentLine);
-            System.err.flush();
+            synchronized (activityLock) {
+                System.err.print(currentLine);
+                System.err.flush();
+            }
 
             lastLineLength = stripAnsi(currentLine).length();
             frameIndex = (frameIndex + 1) % SPINNER_FRAMES.length;
@@ -92,10 +95,12 @@ public class LoadingSpinner {
     }
 
     private void clearLine() {
-        if (lastLineLength > 0) {
-            System.err.print("\r" + " ".repeat(lastLineLength) + "\r");
-            System.err.flush();
-            lastLineLength = 0;
+        synchronized (activityLock) {
+            if (lastLineLength > 0) {
+                System.err.print("\r" + " ".repeat(lastLineLength) + "\r");
+                System.err.flush();
+                lastLineLength = 0;
+            }
         }
     }
 
