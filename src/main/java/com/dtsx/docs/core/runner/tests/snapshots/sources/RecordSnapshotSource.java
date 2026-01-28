@@ -212,6 +212,9 @@ public sealed abstract class RecordSnapshotSource extends SnapshotSource {
             case Long _ -> {
                 yield 0; // in case of timestamps
             }
+            case null -> {
+                yield 0;
+            }
             default -> {
                 yield obj.hashCode();
             }
