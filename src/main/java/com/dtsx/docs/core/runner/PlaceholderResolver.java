@@ -11,15 +11,18 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PlaceholderResolver {
-    private static final Map<String, BiFunction<BaseScriptRunnerCtx, Placeholders, Optional<String>>> PLACEHOLDERS = Map.of(
-        "APPLICATION_TOKEN", (ctx, _) -> Optional.of(ctx.connectionInfo().token()),
-        "API_ENDPOINT", (ctx, _) -> Optional.of(ctx.connectionInfo().endpoint()),
-        "USERNAME", (ctx, _) -> ctx.connectionInfo().username(),
-        "PASSWORD", (ctx, _) -> ctx.connectionInfo().password(),
-        "KEYSPACE_NAME", (_, phs) -> Optional.of(phs.keyspaceName()),
-        "TABLE_NAME", (_, phs) -> phs.tableName(),
-        "COLLECTION_NAME", (_, phs) -> phs.collectionName(),
-        "DATABASE_NAME", (_, _) -> Optional.of("whatever_db_name") // can be actually implemented later if needed
+    private static final Map<String, BiFunction<BaseScriptRunnerCtx, Placeholders, Optional<String>>> PLACEHOLDERS = Map.ofEntries(
+        Map.entry("APPLICATION_TOKEN", (ctx, _) -> Optional.of(ctx.connectionInfo().token())),
+        Map.entry("API_ENDPOINT", (ctx, _) -> Optional.of(ctx.connectionInfo().endpoint())),
+        Map.entry("USERNAME", (ctx, _) -> ctx.connectionInfo().username()),
+        Map.entry("PASSWORD", (ctx, _) -> ctx.connectionInfo().password()),
+        Map.entry("KEYSPACE_NAME", (_, phs) -> Optional.of(phs.keyspaceName())),
+        Map.entry("TABLE_NAME", (_, phs) -> phs.tableName()),
+        Map.entry("COLLECTION_NAME", (_, phs) -> phs.collectionName()),
+        Map.entry("DATABASE_NAME", (_, _) -> Optional.of("whatever_db_name")), // can be actually implemented later if needed
+        Map.entry("DATABASE_ID", (_, _) -> Optional.of("whatever_db_id")), // can be actually implemented later if needed
+        Map.entry("OLD_COLLECTION_NAME", (_, _) -> Optional.of("whatever_old_name")), // can be actually implemented later if needed
+        Map.entry("NEW_COLLECTION_NAME", (_, _) -> Optional.of("whatever_new_name")) // can be actually implemented later if needed
     );
 
     private static final Pattern PLACEHOLDER = Pattern.compile("\\*\\*(\\w+)\\*\\*");
