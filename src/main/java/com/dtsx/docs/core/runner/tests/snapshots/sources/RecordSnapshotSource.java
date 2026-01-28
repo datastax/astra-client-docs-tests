@@ -1,8 +1,10 @@
 package com.dtsx.docs.core.runner.tests.snapshots.sources;
 
+import com.datastax.astra.client.collections.commands.options.CollectionFindOptions;
 import com.datastax.astra.client.collections.definition.documents.Document;
 import com.datastax.astra.client.core.query.Filter;
 import com.datastax.astra.client.core.query.Projection;
+import com.datastax.astra.client.tables.commands.options.TableFindOptions;
 import com.datastax.astra.client.tables.definition.rows.Row;
 import com.dtsx.docs.core.planner.PlanException;
 import com.dtsx.docs.core.planner.meta.reps.SnapshotTestMetaYmlRep;
@@ -15,10 +17,7 @@ import com.dtsx.docs.core.runner.tests.snapshots.verifier.SnapshotVerifier;
 import lombok.val;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Stream;
 
 /// Base class for snapshot sources that deterministically captures database records (documents or rows).
@@ -73,40 +72,43 @@ public sealed abstract class RecordSnapshotSource extends SnapshotSource {
     }
 
     private Projection[] buildProjection(Map<String, Object> projectionMap) {
-        // Determine if this is an include or exclude projection
-        // We need to check ALL fields (including _id) to determine the projection type
-        Boolean isInclude = null;
+        val projections = new ArrayList<Projection>();
 
-        for (Map.Entry<String, Object> entry : projectionMap.entrySet()) {
-            Object value = entry.getValue();
+        for (val entry : projectionMap.entrySet()) {
+            val field = entry.getKey();
+            val value = entry.getValue();
 
-            // Determine if this is include (1/true) or exclude (0/false)
-            boolean fieldIsInclude = value.equals(1) || value.equals(true) || value.equals(1L);
+            if (value.equals(1) || value.equals(true)) {
+                projections.add(Projection.include(field)[0]);
+            } else if (value.equals(0) || value.equals(false)) {
+                projections.add(Projection.exclude(field)[0]);
+            } else if (value instanceof Map<?, ?> map) {
+                val sliceValue = map.get("$slice");
 
-            if (isInclude == null) {
-                isInclude = fieldIsInclude;
-            } else if (isInclude != fieldIsInclude) {
-                // Only _id and $ fields can be mixed with other projections
-                String field = entry.getKey();
-                if (!field.equals("_id") && !field.startsWith("$")) {
-                    throw new PlanException("Cannot mix include and exclude projections (except for _id and $ fields)");
+                switch (sliceValue) {
+                    case null -> {
+                        throw new PlanException("The projection operator map for field '" + field + "' must contain a '$slice' key");
+                    }
+                    case Integer start -> {
+                        projections.add(Projection.slice(field, start, null));
+                    }
+                    case List<?> list when list.size() == 2 -> {
+                        if (list.get(0) instanceof Integer start && list.get(1) instanceof Integer end) {
+                            projections.add(Projection.slice(field, start, end));
+                        } else {
+                            throw new PlanException("The '$slice' values must be integers");
+                        }
+                    }
+                    default -> {
+                        throw new PlanException("The '$slice' value must be an integer or a list of two integers");
+                    }
                 }
+            } else {
+                throw new PlanException("The projection value for field '" + field + "' must be 1, 0, true, false, or a valid $slice map");
             }
         }
 
-        // This should never be null since we have at least one entry
-        if (isInclude == null) {
-            throw new PlanException("Projection map is empty");
-        }
-
-        final boolean finalIsInclude = isInclude;
-        String[] fields = projectionMap.keySet().toArray(new String[0]);
-
-        if (finalIsInclude) {
-            return Projection.include(fields);
-        } else {
-            return Projection.exclude(fields);
-        }
+        return projections.toArray(new Projection[0]);
     }
 
     protected abstract Optional<String> extractSchemaObjectName(Placeholders placeholders);
@@ -140,13 +142,14 @@ public sealed abstract class RecordSnapshotSource extends SnapshotSource {
 
         @Override
         public Stream<Map<String, Object>> streamRecords(TestCtx ctx, String name) {
-            var collection = DataAPIUtils.getCollection(ctx.connectionInfo(), name);
+            val collection = DataAPIUtils.getCollection(ctx.connectionInfo(), name);
+            val options = new CollectionFindOptions();
+
             if (projection != null) {
-                return collection.find(filter, new com.datastax.astra.client.collections.commands.options.CollectionFindOptions().projection(projection))
-                    .stream()
-                    .map(Document::getDocumentMap);
+                options.projection(projection);
             }
-            return collection.find(filter).stream().map(Document::getDocumentMap);
+
+            return collection.find(filter, options).stream().map(Document::getDocumentMap);
         }
     }
 
@@ -163,13 +166,14 @@ public sealed abstract class RecordSnapshotSource extends SnapshotSource {
 
         @Override
         public Stream<Map<String, Object>> streamRecords(TestCtx ctx, String name) {
-            var table = DataAPIUtils.getTable(ctx.connectionInfo(), name);
+            val table = DataAPIUtils.getTable(ctx.connectionInfo(), name);
+            val options = new TableFindOptions();
+
             if (projection != null) {
-                return table.find(filter, new com.datastax.astra.client.tables.commands.options.TableFindOptions().projection(projection))
-                    .stream()
-                    .map(Row::getColumnMap);
+                options.projection(projection);
             }
-            return table.find(filter).stream().map(Row::getColumnMap);
+
+            return table.find(filter, options).stream().map(Row::getColumnMap);
         }
     }
 
