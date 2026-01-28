@@ -1,7 +1,10 @@
 package com.dtsx.docs.core.runner.tests.snapshots.sources;
 
+import com.datastax.astra.client.collections.commands.options.CollectionFindOptions;
 import com.datastax.astra.client.collections.definition.documents.Document;
 import com.datastax.astra.client.core.query.Filter;
+import com.datastax.astra.client.core.query.Projection;
+import com.datastax.astra.client.tables.commands.options.TableFindOptions;
 import com.datastax.astra.client.tables.definition.rows.Row;
 import com.dtsx.docs.core.planner.PlanException;
 import com.dtsx.docs.core.planner.meta.reps.SnapshotTestMetaYmlRep;
@@ -14,10 +17,7 @@ import com.dtsx.docs.core.runner.tests.snapshots.verifier.SnapshotVerifier;
 import lombok.val;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Stream;
 
 /// Base class for snapshot sources that deterministically captures database records (documents or rows).
@@ -27,11 +27,19 @@ import java.util.stream.Stream;
 /// Records are sorted to ensure deterministic ordering for snapshot comparisons, even with dynamically generated IDs or timestamps.
 ///
 /// Supports an optional collection/table filter to narrow the records captured in the snapshot.
+/// Supports an optional projection to include/exclude specific fields from the snapshot.
 ///
 /// Example configuration:
 /// ```
 /// documents:
 ///   filter: { "status": "active" } <- optional Data API filter
+///   projection: { "name": 1, "email": 1 } <- optional Data API projection (include fields)
+/// ```
+/// or
+/// ```
+/// documents:
+///   filter: { "status": "active" }
+///   projection: { "password": 0, "ssn": 0 } <- optional Data API projection (exclude fields)
 /// ```
 ///
 /// @apiNote Pairs well with [OutputSnapshotSource] to capture any undesired warnings or errors
@@ -40,6 +48,7 @@ import java.util.stream.Stream;
 /// @see SnapshotTestMetaYmlRep
 public sealed abstract class RecordSnapshotSource extends SnapshotSource {
     protected @Nullable Filter filter;
+    protected @Nullable Projection[] projection;
 
     @SuppressWarnings("unchecked")
     public RecordSnapshotSource(Map<String, Object> params, SnapshotSources enumRep) {
@@ -52,6 +61,54 @@ public sealed abstract class RecordSnapshotSource extends SnapshotSource {
                 throw new PlanException("The 'filter' parameter must be a Map<String, Object>");
             }
         }
+
+        if (params.get("projection") != null) {
+            if (params.get("projection") instanceof Map<?, ?> projectionMap) {
+                this.projection = buildProjection((Map<String, Object>) projectionMap);
+            } else {
+                throw new PlanException("The 'projection' parameter must be a Map<String, Object>");
+            }
+        }
+    }
+
+    private Projection[] buildProjection(Map<String, Object> projectionMap) {
+        val projections = new ArrayList<Projection>();
+
+        for (val entry : projectionMap.entrySet()) {
+            val field = entry.getKey();
+            val value = entry.getValue();
+
+            if (value.equals(1) || value.equals(true)) {
+                projections.add(Projection.include(field)[0]);
+            } else if (value.equals(0) || value.equals(false)) {
+                projections.add(Projection.exclude(field)[0]);
+            } else if (value instanceof Map<?, ?> map) {
+                val sliceValue = map.get("$slice");
+
+                switch (sliceValue) {
+                    case null -> {
+                        throw new PlanException("The projection operator map for field '" + field + "' must contain a '$slice' key");
+                    }
+                    case Integer start -> {
+                        projections.add(Projection.slice(field, start, null));
+                    }
+                    case List<?> list when list.size() == 2 -> {
+                        if (list.get(0) instanceof Integer start && list.get(1) instanceof Integer end) {
+                            projections.add(Projection.slice(field, start, end));
+                        } else {
+                            throw new PlanException("The '$slice' values must be integers");
+                        }
+                    }
+                    default -> {
+                        throw new PlanException("The '$slice' value must be an integer or a list of two integers");
+                    }
+                }
+            } else {
+                throw new PlanException("The projection value for field '" + field + "' must be 1, 0, true, false, or a valid $slice map");
+            }
+        }
+
+        return projections.toArray(new Projection[0]);
     }
 
     protected abstract Optional<String> extractSchemaObjectName(Placeholders placeholders);
@@ -69,7 +126,7 @@ public sealed abstract class RecordSnapshotSource extends SnapshotSource {
     }
 
     public static List<String> supportedParams() {
-        return List.of("filter");
+        return List.of("filter", "projection");
     }
 
     /// Implementation of [RecordSnapshotSource] that captures documents from a collection.
@@ -85,7 +142,14 @@ public sealed abstract class RecordSnapshotSource extends SnapshotSource {
 
         @Override
         public Stream<Map<String, Object>> streamRecords(TestCtx ctx, String name) {
-            return DataAPIUtils.getCollection(ctx.connectionInfo(), name).find(filter).stream().map(Document::getDocumentMap);
+            val collection = DataAPIUtils.getCollection(ctx.connectionInfo(), name);
+            val options = new CollectionFindOptions();
+
+            if (projection != null) {
+                options.projection(projection);
+            }
+
+            return collection.find(filter, options).stream().map(Document::getDocumentMap);
         }
     }
 
@@ -102,7 +166,14 @@ public sealed abstract class RecordSnapshotSource extends SnapshotSource {
 
         @Override
         public Stream<Map<String, Object>> streamRecords(TestCtx ctx, String name) {
-            return DataAPIUtils.getTable(ctx.connectionInfo(), name).find(filter).stream().map(Row::getColumnMap);
+            val table = DataAPIUtils.getTable(ctx.connectionInfo(), name);
+            val options = new TableFindOptions();
+
+            if (projection != null) {
+                options.projection(projection);
+            }
+
+            return table.find(filter, options).stream().map(Row::getColumnMap);
         }
     }
 
