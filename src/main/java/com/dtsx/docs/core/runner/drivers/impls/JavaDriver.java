@@ -2,13 +2,15 @@ package com.dtsx.docs.core.runner.drivers.impls;
 
 import com.dtsx.docs.config.ctx.BaseScriptRunnerCtx;
 import com.dtsx.docs.core.planner.meta.snapshot.sources.OutputJsonifySourceMeta;
-import com.dtsx.docs.lib.ExternalPrograms;
-import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
-import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import com.dtsx.docs.core.runner.ExecutionEnvironment;
+import com.dtsx.docs.core.runner.ExecutionEnvironment.TestFileModifierFlags;
+import com.dtsx.docs.core.runner.ExecutionEnvironment.TestFileModifiers;
 import com.dtsx.docs.core.runner.RunException;
 import com.dtsx.docs.core.runner.drivers.ClientDriver;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
+import com.dtsx.docs.lib.ExternalPrograms;
+import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
+import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import com.dtsx.docs.lib.JacksonUtils;
 import lombok.val;
 
@@ -46,7 +48,36 @@ public class JavaDriver extends ClientDriver {
     }
 
     @Override
-    public String preprocessScript(BaseScriptRunnerCtx ignoredCtx, String content) {
+    public String preprocessScript(BaseScriptRunnerCtx ignoredCtx, String content, @TestFileModifierFlags int mods) {
+        if ((mods & TestFileModifiers.JSONIFY_OUTPUT) != 0) {
+            content = "import com.fasterxml.jackson.databind.json.JsonMapper;\nimport com.dtsx.astra.sdk.utils.JsonUtils;\nimport java.io.PrintStream;\n" + content;
+
+            val target = "public static void main(String[] args) {";
+            val mainMethodIdx = content.indexOf(target);
+
+            if (mainMethodIdx == -1) {
+                throw new IllegalStateException("main method not found");
+            }
+
+            int insertPos = mainMethodIdx + target.length();
+
+            content =
+                content.substring(0, insertPos)+
+                """
+                System.setOut(new PrintStream(System.out) {
+                    @Override
+                    public void println(Object obj) {
+                        try {
+                            super.println(JsonUtils.valueAsJson(obj));
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                });
+                """
+                + content.substring(insertPos);
+        }
+
         return Pattern.compile("^public\\s+class\\s+\\w+", Pattern.MULTILINE)
             .matcher(content)
             .replaceFirst("public class Example");
@@ -54,6 +85,9 @@ public class JavaDriver extends ClientDriver {
 
     @Override
     public List<?> preprocessToJson(BaseScriptRunnerCtx ctx, OutputJsonifySourceMeta meta, String content) {
+        if (content.startsWith("Optional[")) {
+            content = content.substring(9, content.length() - 1);
+        }
         return JacksonUtils.parseJsonRoots(content, Object.class);
     }
 

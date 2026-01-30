@@ -1,6 +1,9 @@
 package com.dtsx.docs.core.runner.tests.strategies;
 
 import com.dtsx.docs.commands.test.TestCtx;
+import com.dtsx.docs.core.planner.meta.snapshot.sources.OutputJsonifySourceMeta;
+import com.dtsx.docs.core.runner.ExecutionEnvironment.TestFileModifiers;
+import com.dtsx.docs.core.runner.tests.snapshots.sources.output.OutputJsonifySource;
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.core.planner.TestRoot;
@@ -92,7 +95,11 @@ public final class SnapshotTestStrategy extends TestStrategy {
             return verifier.verify(driver, testRoot, placeholders, filesForLang, (path) -> {
                 resetter.run();
 
-                return execEnv.withTestFileCopied(driver, path, placeholders, () -> {
+                val testFileModifiers = (snapshotSources.stream().anyMatch(OutputJsonifySource.class::isInstance))
+                    ? TestFileModifiers.JSONIFY_OUTPUT
+                    : TestFileModifiers.NONE;
+
+                return execEnv.withTestFileCopied(driver, path, placeholders, testFileModifiers, () -> {
                     val displayPath = testRoot.displayPath(path);
 
                     return CliLogger.loading("Verifying @!%s!@".formatted(displayPath), (_) -> {

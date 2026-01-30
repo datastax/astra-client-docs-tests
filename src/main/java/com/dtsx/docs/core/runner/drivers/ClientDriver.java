@@ -2,7 +2,7 @@ package com.dtsx.docs.core.runner.drivers;
 
 import com.dtsx.docs.config.ctx.BaseScriptRunnerCtx;
 import com.dtsx.docs.core.planner.meta.snapshot.sources.OutputJsonifySourceMeta;
-import com.dtsx.docs.lib.ExternalPrograms;
+import com.dtsx.docs.core.runner.ExecutionEnvironment.TestFileModifierFlags;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import com.dtsx.docs.core.runner.ExecutionEnvironment;
@@ -78,15 +78,16 @@ public abstract class ClientDriver {
 
     /// Preprocesses the test script before execution if necessary (e.g. adding imports, prelude code, etc.).
     ///
-    /// @param ctx the verifier context
+    /// @param ctx     the verifier context
     /// @param content the original script content
+    /// @param mods
     /// @return the preprocessed script content
-    public abstract String preprocessScript(BaseScriptRunnerCtx ctx, String content);
+    public abstract String preprocessScript(BaseScriptRunnerCtx ctx, String content, @TestFileModifierFlags int mods);
 
     /// Interprets the test script output into JSON for snapshotting.
     ///
     /// @param ctx     the verifier context
-    /// @param meta
+    /// @param meta    the snapshot source's meta information
     /// @param content the original script output content
     /// @return the content as JSON
     public abstract List<?> preprocessToJson(BaseScriptRunnerCtx ctx, OutputJsonifySourceMeta meta, String content);

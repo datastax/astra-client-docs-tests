@@ -5,9 +5,8 @@ import com.dtsx.docs.core.runner.tests.snapshots.verifier.SnapshotVerifier;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import lombok.experimental.UtilityClass;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @UtilityClass
 public class SnapshotSourceUtils {
@@ -30,9 +29,7 @@ public class SnapshotSourceUtils {
     //
     // Any deeper maps will be sorted by SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS
     public static List<?> mkJsonDeterministic(List<?> records) {
-        return records.stream()
-            .sorted(Comparator.comparing(SnapshotSourceUtils::calcSortValue))
-            .toList();
+        return (List<?>) mkJsonDeterministic((Object) records);
     }
 
     public static void recursivelyPrintTypes(Object obj, String indent) {
@@ -55,7 +52,41 @@ public class SnapshotSourceUtils {
         }
     }
 
+    private static Object mkJsonDeterministic(Object obj) {
+        if (obj == null) {
+            return null;
+        }
+
+        return switch (obj) {
+            case Map<?, ?> map -> {
+                yield map.entrySet().stream()
+                    .sorted(Comparator.comparing(e -> calcSortValue(e.getKey())))
+                    .collect(
+                        Collectors.toMap(
+                            Map.Entry::getKey,
+                            e -> mkJsonDeterministic(e.getValue()),
+                            (e1, _) -> e1,
+                            LinkedHashMap::new
+                        )
+                    );
+            }
+            case Collection<?> coll -> {
+                yield coll.stream()
+                    .sorted(Comparator.comparing(SnapshotSourceUtils::calcSortValue))
+                    .map(SnapshotSourceUtils::mkJsonDeterministic)
+                    .toList();
+            }
+            default -> {
+                yield obj;
+            }
+        };
+    }
+
     private static int calcSortValue(Object obj) {
+        if (obj == null) {
+            return 0;
+        }
+
         return switch (obj) {
             case Map<?, ?> map -> {
                 yield map.entrySet().stream()
@@ -67,6 +98,11 @@ public class SnapshotSourceUtils {
                     .mapToInt(SnapshotSourceUtils::calcSortValue)
                     .sum();
             }
+            case Set<?> set -> {
+                yield set.stream()
+                    .mapToInt(SnapshotSourceUtils::calcSortValue)
+                    .sum();
+            }
             case String str -> {
                 if (!SnapshotVerifier.SCRUBBER.scrub(str).equals(str)) {
                     yield 0;
@@ -75,9 +111,6 @@ public class SnapshotSourceUtils {
             }
             case Long _ -> {
                 yield 0; // in case of timestamps
-            }
-            case null -> {
-                yield 0;
             }
             default -> {
                 yield obj.hashCode();

@@ -1,5 +1,7 @@
 {
   "dependencies": {
+    "@types/json-bigint": "^1.0.4",
+    "json-bigint": "^1.0.0",
     "typescript": "^5.2.2"
   },
   "scripts": {

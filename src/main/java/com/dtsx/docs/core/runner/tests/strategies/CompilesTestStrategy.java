@@ -1,6 +1,7 @@
 package com.dtsx.docs.core.runner.tests.strategies;
 
 import com.dtsx.docs.core.planner.TestRoot;
+import com.dtsx.docs.core.runner.ExecutionEnvironment.TestFileModifiers;
 import com.dtsx.docs.core.runner.Placeholders;
 import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.lib.CliLogger;
@@ -42,7 +43,7 @@ public final class CompilesTestStrategy extends TestStrategy {
                     continue;
                 }
 
-                execEnv.withTestFileCopied(driver, path, FAKE_FIXTURE_MD, () -> {
+                execEnv.withTestFileCopied(driver, path, FAKE_FIXTURE_MD, TestFileModifiers.NONE, () -> {
                     val displayPath = testRoot.displayPath(path);
 
                     val res = CliLogger.loading("Compiling @!%s!@".formatted(displayPath), (_) -> {

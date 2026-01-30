@@ -3,6 +3,7 @@ package com.dtsx.docs.commands.run;
 import com.dtsx.docs.commands.BaseCmd;
 import com.dtsx.docs.core.runner.scripts.ScriptRunner;
 import lombok.Getter;
+import lombok.val;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
@@ -17,8 +18,7 @@ public class RunCmd extends BaseCmd<RunCtx> {
 
     @Override
     public int run() {
-        return ScriptRunner.runScripts(ctx)
-            ? 0
-            : 1;
+        val ok = ScriptRunner.runScripts(ctx);
+        return (ok) ? 0 : 1;
     }
 }

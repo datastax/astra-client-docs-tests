@@ -103,9 +103,11 @@ public class SnapshotVerifier {
         return new ExampleResultNamer(ctx, language, testRoot, shareSnapshots);
     }
 
-    private static class $DateScrubber extends RegExScrubber {
+    public static class $DateScrubber extends RegExScrubber {
+        public static final Pattern DATE_PATTERN = Pattern.compile("\\{\\s*\"\\$date\"\\s*:\\s*\\d+\\s*}");
+
         public $DateScrubber() {
-            super(Pattern.compile("\\{\\s*\"\\$date\"\\s*:\\s*\\d+\\s*}"), n -> "{ \"$date\" : \"date_" + n + "\" }");
+            super(DATE_PATTERN, n -> "{ \"$date\" : \"date_" + n + "\" }");
         }
     }
 }

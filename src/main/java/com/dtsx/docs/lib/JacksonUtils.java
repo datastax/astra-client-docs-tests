@@ -3,6 +3,7 @@ package com.dtsx.docs.lib;
 import com.dtsx.docs.config.ctx.BaseScriptRunnerCtx;
 import com.dtsx.docs.core.runner.RunException;
 import lombok.SneakyThrows;
+import lombok.experimental.UtilityClass;
 import lombok.val;
 import tools.jackson.core.json.JsonReadFeature;
 import tools.jackson.core.util.DefaultIndenter;
@@ -18,6 +19,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 
+@UtilityClass
 public class JacksonUtils {
     private static final YAMLMapper YAML = YAMLMapper.builder()
         .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS, true)
@@ -50,17 +52,29 @@ public class JacksonUtils {
 
     @SneakyThrows
     public static <T> T parseJson(String string, Class<T> clazz) {
-        return JSON.readValue(string, clazz);
+        try {
+            return JSON.readValue(string, clazz);
+        } catch (Exception e) {
+            throw new RunException("Failed to parse JSON into " + clazz.getSimpleName() + ": " + e.getMessage() + "\nJSON:\n" + string, e);
+        }
     }
 
     @SneakyThrows
     public static <T> List<T> parseJsonRoots(String string, Class<T> clazz) {
-        return JSON.readerFor(clazz).<T>readValues(string).readAll();
+        try {
+            return JSON.readerFor(clazz).<T>readValues(string).readAll();
+        } catch (Exception e) {
+            throw new RunException("Failed to parse JSON array into List<" + clazz.getSimpleName() + ">: " + e.getMessage() + "\nJSON:\n" + string, e);
+        }
     }
 
     @SneakyThrows
     public static <T> T convertValue(Object fromValue, Class<T> toValueType) {
-        return JSON.convertValue(fromValue, toValueType);
+        try {
+            return JSON.convertValue(fromValue, toValueType);
+        } catch (Exception e) {
+            throw new RunException("Failed to convert value to " + toValueType.getSimpleName() + ": " + e.getMessage() + "\nValue:\n" + printJson(fromValue), e);
+        }
     }
 
     @SneakyThrows

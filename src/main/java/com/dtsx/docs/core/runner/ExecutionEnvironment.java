@@ -1,11 +1,12 @@
 package com.dtsx.docs.core.runner;
 
 import com.dtsx.docs.config.ctx.BaseScriptRunnerCtx;
-import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.core.runner.drivers.ClientDriver;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
+import com.dtsx.docs.lib.CliLogger;
 import lombok.*;
 import org.apache.commons.io.file.PathUtils;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Files;
@@ -70,6 +71,14 @@ public class ExecutionEnvironment {
         return new Builder(ctx).setup(drivers, Optional.ofNullable(extraSetup).orElse(() -> {}));
     }
 
+    public static class TestFileModifiers {
+        public static final int NONE = 0;
+        public static final int JSONIFY_OUTPUT = 1;
+    }
+
+    @MagicConstant(flagsFromClass = TestFileModifiers.class)
+    public @interface TestFileModifierFlags {}
+
     /// Copies a test file into the execution environment, runs the test, then cleans up.
     ///
     /// The test file is preprocessed to replace placeholders (e.g., `{{API_ENDPOINT}}`)
@@ -86,8 +95,8 @@ public class ExecutionEnvironment {
     /// @param sourceFile the original test file to copy
     /// @param test the test to run with the copied file
     /// @return the result of the test execution
-    public <T> T withTestFileCopied(ClientDriver driver, Path sourceFile, Placeholders placeholders, Supplier<T> test) {
-        val testFile = setupFileForTesting(driver, sourceFile, placeholders);
+    public <T> T withTestFileCopied(ClientDriver driver, Path sourceFile, Placeholders placeholders, @TestFileModifierFlags int mods, Supplier<T> test) {
+        val testFile = setupFileForTesting(driver, sourceFile, placeholders, mods);
         try {
             return test.get();
         } finally {
@@ -128,11 +137,11 @@ public class ExecutionEnvironment {
     }
 
     @SneakyThrows
-    private Path setupFileForTesting(ClientDriver driver, Path sourceFile, Placeholders placeholders) {
+    private Path setupFileForTesting(ClientDriver driver, Path sourceFile, Placeholders placeholders, @TestFileModifierFlags int mods) {
         var content = Files.readString(sourceFile);
         content = PlaceholderResolver.replacePlaceholders(ctx, placeholders, content);
-        content = driver.preprocessScript(ctx, content);
-        
+        content = driver.preprocessScript(ctx, content, mods);
+
         Files.createDirectories(testFileCopyPath.getParent());
         Files.writeString(testFileCopyPath, content);
         return testFileCopyPath;

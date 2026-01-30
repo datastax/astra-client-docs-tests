@@ -2,13 +2,15 @@ package com.dtsx.docs.core.runner.drivers.impls;
 
 import com.dtsx.docs.config.ctx.BaseScriptRunnerCtx;
 import com.dtsx.docs.core.planner.meta.snapshot.sources.OutputJsonifySourceMeta;
-import com.dtsx.docs.lib.ExternalPrograms;
-import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
-import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import com.dtsx.docs.core.runner.ExecutionEnvironment;
+import com.dtsx.docs.core.runner.ExecutionEnvironment.TestFileModifierFlags;
+import com.dtsx.docs.core.runner.ExecutionEnvironment.TestFileModifiers;
 import com.dtsx.docs.core.runner.RunException;
 import com.dtsx.docs.core.runner.drivers.ClientDriver;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
+import com.dtsx.docs.lib.ExternalPrograms;
+import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
+import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import com.dtsx.docs.lib.JacksonUtils;
 import lombok.val;
 
@@ -44,7 +46,27 @@ public class TypeScriptDriver extends ClientDriver {
     }
 
     @Override
-    public String preprocessScript(BaseScriptRunnerCtx ignoredCtx, String content) {
+    public String preprocessScript(BaseScriptRunnerCtx ignoredCtx, String content, @TestFileModifierFlags int mods) {
+        if ((mods & TestFileModifiers.JSONIFY_OUTPUT) != 0) {
+            content = """
+            const _log = console.log;
+            
+            import { stringify } from "json-bigint";
+            
+            (console.log as any) = (json: any) => {
+              for (const [key, value] of Object.entries(json)) {
+                if (value instanceof Map) {
+                  json[key] = Object.fromEntries(value);
+                }
+                if (value instanceof Set) {
+                  json[key] = Array.from(value);
+                }
+              }
+              _log(stringify(json));
+            };
+            """ + content;
+        }
+
         return content;
     }
 

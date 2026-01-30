@@ -1,11 +1,12 @@
 package com.dtsx.docs.core.runner.scripts;
 
 import com.dtsx.docs.commands.run.RunCtx;
-import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.core.runner.ExecutionEnvironment;
+import com.dtsx.docs.core.runner.ExecutionEnvironment.TestFileModifiers;
 import com.dtsx.docs.core.runner.PlaceholderResolver;
 import com.dtsx.docs.core.runner.drivers.ClientDriver;
 import com.dtsx.docs.core.runner.scripts.reporter.ScriptReporter;
+import com.dtsx.docs.lib.CliLogger;
 import lombok.val;
 
 import java.nio.file.Path;
@@ -64,7 +65,7 @@ public class ScriptRunner {
 
         val scriptName = resolveScriptDisplayName(script);
 
-        val result = execEnv.withTestFileCopied(driver, script, ctx.placeholders(), () -> {
+        val result = execEnv.withTestFileCopied(driver, script, ctx.placeholders(), TestFileModifiers.NONE, () -> {
             return CliLogger.loading("Running @!" + scriptName + "!@", (_) -> {
                 return driver.executeScript(ctx, execEnv, envVars);
             });
