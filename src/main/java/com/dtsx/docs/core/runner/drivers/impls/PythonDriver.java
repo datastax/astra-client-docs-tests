@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 public class PythonDriver extends ClientDriver {
     public PythonDriver(String artifact) {
@@ -57,7 +58,16 @@ public class PythonDriver extends ClientDriver {
 
     @Override
     public List<?> preprocessToJson(BaseScriptRunnerCtx ctx, OutputJsonifySourceMeta meta, String content) {
-        return JacksonUtils.parseJsonRoots(content.replace(" True,", " true,").replace(" False,", " false,"), Object.class);
+        // Replace Python boolean literals with JSON equivalents
+        String processed = content.replace(" True,", " true,").replace(" False,", " false,");
+
+        // Replace DataAPITimestamp objects with their ISO string representation
+        // Pattern matches: DataAPITimestamp(timestamp_ms=1732752000000 [2024-11-28T00:00:00.000Z])
+        // and extracts the ISO timestamp string
+        Pattern timestampPattern = Pattern.compile("DataAPITimestamp\\(timestamp_ms=\\d+ \\[([^\\]]+)\\]\\)");
+        processed = timestampPattern.matcher(processed).replaceAll("\"$1\"");
+
+        return JacksonUtils.parseJsonRoots(processed, Object.class);
     }
 
     @Override
