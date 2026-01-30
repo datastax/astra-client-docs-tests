@@ -1,12 +1,12 @@
-package com.dtsx.docs.core.planner.meta.reps;
+package com.dtsx.docs.core.planner.meta.snapshot;
 
-import com.dtsx.docs.core.runner.tests.snapshots.sources.SnapshotSources;
+import com.dtsx.docs.core.planner.meta.BaseMetaYml.BaseMetaYmlRep;
 import lombok.NonNull;
 
 import java.util.Map;
 import java.util.Optional;
 
-import static com.dtsx.docs.core.planner.meta.reps.BaseMetaYmlRep.TestType.SNAPSHOT;
+import static com.dtsx.docs.core.planner.meta.BaseMetaYml.BaseMetaYmlRep.TestType.SNAPSHOT;
 
 public record SnapshotTestMetaYmlRep(
     @NonNull String $schema,
@@ -20,7 +20,7 @@ public record SnapshotTestMetaYmlRep(
 
     public record SnapshotsConfig(
         @NonNull Optional<Boolean> share,
-        @NonNull Map<SnapshotSources, Map<String, Object>> sources
+        @NonNull Map<String, Map<String, Object>> sources
     ) {}
 
     @Override

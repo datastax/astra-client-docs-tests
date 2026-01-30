@@ -69,6 +69,13 @@ public class ExternalPrograms {
         return get(DOTNET, ctx);
     }
 
+    /// Returns a jq executor (default: `jq`).
+    ///
+    /// Used to further refine JSON.
+    public static ExternalProgram jq(BaseScriptRunnerCtx ctx) {
+        return get(JQ, ctx);
+    }
+
     /// Returns a custom executor with no default command.
     ///
     /// Useful for calling definitely-available scripts (such as `./.gradlew`)
@@ -90,7 +97,8 @@ public class ExternalPrograms {
         BASH("bash"),
         PYTHON("python3"),
         JAVA("java"),
-        DOTNET("dotnet");
+        DOTNET("dotnet"),
+        JQ("jq");
 
         private final String defaultCommand;
 

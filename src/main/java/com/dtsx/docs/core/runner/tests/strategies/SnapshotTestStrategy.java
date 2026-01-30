@@ -5,7 +5,7 @@ import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.core.planner.TestRoot;
 import com.dtsx.docs.core.planner.fixtures.JSFixture;
-import com.dtsx.docs.core.planner.meta.impls.SnapshotTestMetaYml;
+import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaYml;
 import com.dtsx.docs.core.runner.ExecutionEnvironment;
 import com.dtsx.docs.core.runner.ExecutionEnvironment.ExecutionEnvironments;
 import com.dtsx.docs.core.runner.PlaceholderResolver;
@@ -89,7 +89,7 @@ public final class SnapshotTestStrategy extends TestStrategy {
         }
 
         private TestOutcome runTestsForLanguage(Runnable resetter, ClientDriver driver, Set<Path> filesForLang, ExecutionEnvironment execEnv) {
-            return verifier.verify(driver.language(), testRoot, placeholders, filesForLang, (path) -> {
+            return verifier.verify(driver, testRoot, placeholders, filesForLang, (path) -> {
                 resetter.run();
 
                 return execEnv.withTestFileCopied(driver, path, placeholders, () -> {

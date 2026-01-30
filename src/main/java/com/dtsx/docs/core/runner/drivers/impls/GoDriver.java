@@ -1,6 +1,7 @@
 package com.dtsx.docs.core.runner.drivers.impls;
 
 import com.dtsx.docs.config.ctx.BaseScriptRunnerCtx;
+import com.dtsx.docs.core.planner.meta.snapshot.sources.OutputJsonifySourceMeta;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import com.dtsx.docs.core.runner.ExecutionEnvironment;
@@ -35,6 +36,11 @@ public class GoDriver extends ClientDriver {
     @Override
     public String preprocessScript(BaseScriptRunnerCtx ignoredCtx, String content) {
         return "";
+    }
+
+    @Override
+    public List<?> preprocessToJson(BaseScriptRunnerCtx ctx, OutputJsonifySourceMeta meta, String content) {
+        return List.of();
     }
 
     @Override

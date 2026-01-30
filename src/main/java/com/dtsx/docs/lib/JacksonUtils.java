@@ -1,7 +1,10 @@
 package com.dtsx.docs.lib;
 
+import com.dtsx.docs.config.ctx.BaseScriptRunnerCtx;
+import com.dtsx.docs.core.runner.RunException;
 import lombok.SneakyThrows;
 import lombok.val;
+import tools.jackson.core.json.JsonReadFeature;
 import tools.jackson.core.util.DefaultIndenter;
 import tools.jackson.core.util.DefaultPrettyPrinter;
 import tools.jackson.databind.DeserializationFeature;
@@ -12,6 +15,8 @@ import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
 
 public class JacksonUtils {
     private static final YAMLMapper YAML = YAMLMapper.builder()
@@ -34,6 +39,8 @@ public class JacksonUtils {
             .withArrayIndenter(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE);
 
         JSON = JsonMapper.builder()
+            .enable(JsonReadFeature.ALLOW_SINGLE_QUOTES)
+            .enable(JsonReadFeature.ALLOW_UNQUOTED_PROPERTY_NAMES)
             .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS, true)
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
             .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true)
@@ -47,7 +54,35 @@ public class JacksonUtils {
     }
 
     @SneakyThrows
+    public static <T> List<T> parseJsonRoots(String string, Class<T> clazz) {
+        return JSON.readerFor(clazz).<T>readValues(string).readAll();
+    }
+
+    @SneakyThrows
+    public static <T> T convertValue(Object fromValue, Class<T> toValueType) {
+        return JSON.convertValue(fromValue, toValueType);
+    }
+
+    @SneakyThrows
+    public static String printJson(Object obj) {
+        return JSON.writeValueAsString(obj);
+    }
+
+    @SneakyThrows
     public static String prettyPrintJson(Object obj) {
         return JSON.writerWithDefaultPrettyPrinter().writeValueAsString(obj);
+    }
+
+    // TODO probably move this somewhere else
+    public static String runJq(BaseScriptRunnerCtx ctx, String json, String filter) {
+        val args = new String[] { "-n", "--argjson", "input", json, "$input | " + filter };
+
+        val res = ExternalPrograms.jq(ctx).run(args);
+
+        if (res.exitCode() != 0) {
+            throw new RunException("Failed to run jq with args " + Arrays.toString(args) + "\n: " + res.output());
+        }
+
+        return res.output();
     }
 }

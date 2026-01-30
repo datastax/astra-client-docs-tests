@@ -53,7 +53,7 @@ public final class JSFixtureImpl extends JSFixture {
     @Override
     protected void reset(ExternalProgram tsx, Placeholders placeholders) {
         if (!dryRun) {
-            tryCallJsFunction(tsx, placeholders, "Reset");
+            tryCallJsFunction(tsx, placeholders, "Reset"); // TODO cache if any of the method aren't present (if possible?)
         }
     }
 

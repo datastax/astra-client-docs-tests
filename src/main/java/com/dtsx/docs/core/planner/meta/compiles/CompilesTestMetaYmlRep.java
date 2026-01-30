@@ -1,8 +1,9 @@
-package com.dtsx.docs.core.planner.meta.reps;
+package com.dtsx.docs.core.planner.meta.compiles;
 
+import com.dtsx.docs.core.planner.meta.BaseMetaYml.BaseMetaYmlRep;
 import lombok.NonNull;
 
-import static com.dtsx.docs.core.planner.meta.reps.BaseMetaYmlRep.TestType.COMPILES;
+import static com.dtsx.docs.core.planner.meta.BaseMetaYml.BaseMetaYmlRep.TestType.COMPILES;
 
 public record CompilesTestMetaYmlRep(
     @NonNull String $schema,

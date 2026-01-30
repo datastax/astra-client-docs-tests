@@ -132,7 +132,7 @@ public class ExecutionEnvironment {
         var content = Files.readString(sourceFile);
         content = PlaceholderResolver.replacePlaceholders(ctx, placeholders, content);
         content = driver.preprocessScript(ctx, content);
-
+        
         Files.createDirectories(testFileCopyPath.getParent());
         Files.writeString(testFileCopyPath, content);
         return testFileCopyPath;

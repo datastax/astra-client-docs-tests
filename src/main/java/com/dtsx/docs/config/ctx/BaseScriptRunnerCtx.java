@@ -3,6 +3,7 @@ package com.dtsx.docs.config.ctx;
 import com.dtsx.docs.config.ArgUtils;
 import com.dtsx.docs.config.ConnectionInfo;
 import com.dtsx.docs.config.args.BaseScriptRunnerArgs;
+import com.dtsx.docs.lib.ExternalPrograms;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgramType;
 import com.dtsx.docs.core.runner.drivers.ClientDriver;
@@ -120,6 +121,9 @@ public abstract class BaseScriptRunnerCtx extends BaseCtx {
     }
 
     protected void verifyRequiredProgramsAvailable(HashSet<Function<BaseScriptRunnerCtx, ExternalProgram>> programs, CommandLine cmd) {
+        programs.add(ExternalPrograms::bash);
+        programs.add(ExternalPrograms::jq);
+        
         for (val mkProgram : programs) {
             val program = mkProgram.apply(this);
 

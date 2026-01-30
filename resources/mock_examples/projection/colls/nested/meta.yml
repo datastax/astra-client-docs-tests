@@ -6,7 +6,7 @@ fixtures:
 snapshots:
   share: true
   sources:
-    stderr:
-      matches: ^$
-    stdout:
-      matches: ^$
+    stderr::matches:
+      regex: ^$
+    stdout::matches:
+      regex: ^$

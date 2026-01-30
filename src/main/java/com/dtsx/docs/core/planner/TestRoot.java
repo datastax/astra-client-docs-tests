@@ -1,6 +1,6 @@
 package com.dtsx.docs.core.planner;
 
-import com.dtsx.docs.core.planner.meta.reps.SnapshotTestMetaYmlRep;
+import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaYmlRep;
 import com.dtsx.docs.core.runner.tests.strategies.CompilesTestStrategy;
 import com.dtsx.docs.core.runner.tests.strategies.SnapshotTestStrategy;
 import com.dtsx.docs.core.runner.tests.strategies.TestStrategy;

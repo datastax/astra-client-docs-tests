@@ -1,28 +1,25 @@
-package com.dtsx.docs.core.planner.meta.impls;
+package com.dtsx.docs.core.planner.meta.snapshot;
 
+import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.core.planner.PlanException;
 import com.dtsx.docs.core.planner.fixtures.JSFixture;
 import com.dtsx.docs.core.planner.fixtures.JSFixtureImpl;
 import com.dtsx.docs.core.planner.fixtures.NoopFixture;
-import com.dtsx.docs.core.planner.meta.reps.SnapshotTestMetaYmlRep;
-import com.dtsx.docs.core.planner.meta.reps.SnapshotTestMetaYmlRep.FixturesConfig;
-import com.dtsx.docs.core.planner.meta.reps.SnapshotTestMetaYmlRep.SnapshotsConfig;
-import com.dtsx.docs.commands.test.TestCtx;
+import com.dtsx.docs.core.planner.meta.BaseMetaYml;
+import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaYmlRep.FixturesConfig;
+import com.dtsx.docs.core.planner.meta.snapshot.sources.SnapshotSourcesParser;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.SnapshotSource;
-import com.dtsx.docs.core.runner.tests.snapshots.sources.SnapshotSources;
 import lombok.Getter;
 import lombok.val;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeSet;
 
+import static com.dtsx.docs.core.runner.tests.VerifyMode.DRY_RUN;
 import static com.dtsx.docs.lib.Constants.DEFAULT_TEST_FIXTURE;
 import static com.dtsx.docs.lib.Constants.FIXTURES_DIR;
-import static com.dtsx.docs.core.runner.tests.VerifyMode.DRY_RUN;
 
 @Getter
 public final class SnapshotTestMetaYml implements BaseMetaYml {
@@ -34,7 +31,7 @@ public final class SnapshotTestMetaYml implements BaseMetaYml {
     public SnapshotTestMetaYml(TestCtx ctx, Path testRoot, SnapshotTestMetaYmlRep meta) {
         this.baseFixture = resolveBaseFixture(ctx, meta.fixtures().flatMap(FixturesConfig::base));
         this.testFixture = resolveTestFixture(ctx, testRoot);
-        this.snapshotSources = buildSnapshotTypes(meta.snapshots());
+        this.snapshotSources = SnapshotSourcesParser.parseSources(meta.snapshots());
         this.shareSnapshots = meta.snapshots().share().orElse(true);
     }
 
@@ -99,29 +96,5 @@ public final class SnapshotTestMetaYml implements BaseMetaYml {
 
     private static JSFixture mkJsFixtureImpl(TestCtx ctx, Path path) {
         return new JSFixtureImpl(ctx, path, ctx.verifyMode() == DRY_RUN);
-    }
-
-    /// Builds snapshot sources from the snapshots configuration.
-    ///
-    /// @param config the snapshots configuration from meta.yml
-    /// @return set of configured snapshot sources
-    /// @throws PlanException if unsupported parameters are provided
-    ///
-    /// @see SnapshotSources
-    private static TreeSet<SnapshotSource> buildSnapshotTypes(SnapshotsConfig config) {
-        val sources = new TreeSet<SnapshotSource>();
-
-        for (val rawSource : config.sources().entrySet()) {
-            val source = rawSource.getKey();
-            val params = Objects.requireNonNullElse(rawSource.getValue(), Collections.<String, Object>emptyMap());
-
-            if (params.keySet().stream().anyMatch(param -> !source.supportedParams().contains(param))) {
-                throw new PlanException("Unsupported parameter found for snapshot source " + source.name() + ". Supported parameters are: " + String.join(", ", source.supportedParams()));
-            }
-
-            sources.add(source.create(params));
-        }
-
-        return sources;
     }
 }

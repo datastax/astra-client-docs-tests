@@ -6,7 +6,7 @@ fixtures:
 snapshots:
   share: true
   sources:
-    stdout:
-      matches: ^(?:\d+|\{"status":\{"count":\d+}})$ # Not deterministic so just any number will do
-    stderr:
-      matches: ^$
+    stdout::matches:
+      regex: ^(?:\d+|\{"status":\{"count":\d+}})$ # Not deterministic so just any number will do
+    stderr::matches:
+      regex: ^$

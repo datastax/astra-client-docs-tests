@@ -3,9 +3,9 @@ package com.dtsx.docs.core.planner;
 import com.dtsx.docs.core.planner.TestPlan.Builder;
 import com.dtsx.docs.core.planner.fixtures.JSFixture;
 import com.dtsx.docs.core.planner.meta.MetaYmlParser;
-import com.dtsx.docs.core.planner.meta.impls.CompilesTestMetaYml;
-import com.dtsx.docs.core.planner.meta.impls.SnapshotTestMetaYml;
-import com.dtsx.docs.core.planner.meta.reps.SnapshotTestMetaYmlRep;
+import com.dtsx.docs.core.planner.meta.compiles.CompilesTestMetaYml;
+import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaYml;
+import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaYmlRep;
 import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
@@ -151,6 +151,7 @@ public class TestPlanBuilder {
         val strategy = switch (meta) {
             case SnapshotTestMetaYml m -> new SnapshotTestStrategy(ctx, m);
             case CompilesTestMetaYml _ -> new CompilesTestStrategy(ctx);
+            default ->  null; // unreachable
         };
 
         val testMetadata = new TestRoot(

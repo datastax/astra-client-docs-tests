@@ -1,0 +1,13 @@
+---stdout::jsonify---
+[
+  {
+    "_id" : "guid_1",
+    "is_checked_out" : false,
+    "number_of_pages" : 150
+  },
+  {
+    "_id" : "guid_2",
+    "is_checked_out" : false,
+    "number_of_pages" : 0
+  }
+]

@@ -1,12 +1,14 @@
 package com.dtsx.docs.core.runner.drivers.impls;
 
 import com.dtsx.docs.config.ctx.BaseScriptRunnerCtx;
+import com.dtsx.docs.core.planner.meta.snapshot.sources.OutputJsonifySourceMeta;
 import com.dtsx.docs.lib.ExternalPrograms;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import com.dtsx.docs.core.runner.ExecutionEnvironment;
 import com.dtsx.docs.core.runner.drivers.ClientDriver;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
+import com.dtsx.docs.lib.JacksonUtils;
 import lombok.val;
 
 import java.nio.file.Path;
@@ -51,6 +53,11 @@ public class PythonDriver extends ClientDriver {
     @Override
     public String preprocessScript(BaseScriptRunnerCtx ignoredCtx, String content) {
         return "import os\n\n" + content;
+    }
+
+    @Override
+    public List<?> preprocessToJson(BaseScriptRunnerCtx ctx, OutputJsonifySourceMeta meta, String content) {
+        return JacksonUtils.parseJsonRoots(content.replace(" True,", " true,").replace(" False,", " false,"), Object.class);
     }
 
     @Override

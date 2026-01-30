@@ -1,12 +1,10 @@
 package com.dtsx.docs.core.planner.meta;
 
 import com.dtsx.docs.core.planner.PlanException;
-import com.dtsx.docs.core.planner.meta.impls.BaseMetaYml;
-import com.dtsx.docs.core.planner.meta.impls.CompilesTestMetaYml;
-import com.dtsx.docs.core.planner.meta.impls.SnapshotTestMetaYml;
-import com.dtsx.docs.core.planner.meta.reps.BaseMetaYmlRep;
-import com.dtsx.docs.core.planner.meta.reps.CompilesTestMetaYmlRep;
-import com.dtsx.docs.core.planner.meta.reps.SnapshotTestMetaYmlRep;
+import com.dtsx.docs.core.planner.meta.compiles.CompilesTestMetaYml;
+import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaYml;
+import com.dtsx.docs.core.planner.meta.compiles.CompilesTestMetaYmlRep;
+import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaYmlRep;
 import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.lib.JacksonUtils;
 import lombok.val;
@@ -39,10 +37,11 @@ public class MetaYmlParser {
         return switch (rep) {
             case SnapshotTestMetaYmlRep m -> new SnapshotTestMetaYml(ctx, ymlFile.getParent(), m);
             case CompilesTestMetaYmlRep _ -> new CompilesTestMetaYml();
+            default ->  null; // unreachable
         };
     }
 
-    private static BaseMetaYmlRep parseRep(Path file) {
+    private static BaseMetaYml.BaseMetaYmlRep parseRep(Path file) {
         try {
             return JacksonUtils.parseYaml(file, SnapshotTestMetaYmlRep.class);
         } catch (JacksonException se) {
@@ -56,7 +55,7 @@ public class MetaYmlParser {
         }
     }
 
-    private static void validateSchemaPath(BaseMetaYmlRep rep, Path ymlFile) {
+    private static void validateSchemaPath(BaseMetaYml.BaseMetaYmlRep rep, Path ymlFile) {
         val schemaPath = ymlFile.getParent().resolve(rep.$schema());
 
         if (!Files.exists(schemaPath)) {

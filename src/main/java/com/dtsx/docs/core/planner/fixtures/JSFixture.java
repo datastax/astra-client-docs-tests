@@ -1,7 +1,7 @@
 package com.dtsx.docs.core.planner.fixtures;
 
 import com.dtsx.docs.core.planner.TestRoot;
-import com.dtsx.docs.core.planner.meta.reps.SnapshotTestMetaYmlRep;
+import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaYmlRep;
 import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms;
