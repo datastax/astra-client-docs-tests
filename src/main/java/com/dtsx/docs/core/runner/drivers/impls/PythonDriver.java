@@ -52,62 +52,56 @@ public class PythonDriver extends ClientDriver {
 
     @Override
     public String preprocessScript(BaseScriptRunnerCtx ignoredCtx, String content) {
-        // Add JSON encoder for Data API types at the beginning of the script
+        // Use astrapy's built-in serialization to convert Data API types to EJSON format
         String jsonEncoderPrelude = """
             import os
             import json as _json_module
-            from astrapy import data_types as _data_types
+            from astrapy.data.utils.collection_converters import preprocess_collection_payload_value, FullSerdesOptions
             
-            class _DataAPIEncoder(_json_module.JSONEncoder):
-                def default(self, o):
-                    # Handle all Data API types with appropriate conversions
-                    if isinstance(o, _data_types.DataAPITimestamp):
-                        return o.to_string()
-                    elif isinstance(o, _data_types.DataAPIDate):
-                        return o.to_string()
-                    elif isinstance(o, _data_types.DataAPITime):
-                        return str(o)
-                    elif isinstance(o, _data_types.DataAPIVector):
-                        return list(o)
-                    elif isinstance(o, _data_types.DataAPIMap):
-                        return dict(o)
-                    elif isinstance(o, _data_types.DataAPISet):
-                        return list(o)
-                    elif isinstance(o, _data_types.DataAPIDuration):
-                        return str(o)
-                    elif isinstance(o, _data_types.DataAPIDictUDT):
-                        return dict(o)
-                    return super().default(o)
+            # Create serdes options for converting Data API types
+            _serdes_options = FullSerdesOptions(
+                binary_encode_vectors=False,
+                custom_datatypes_in_reading=True,
+                unroll_iterables_to_lists=True,
+                use_decimals_in_collections=False,
+                encode_maps_as_lists_in_tables=False,
+                accept_naive_datetimes=False,
+                datetime_tzinfo=None,
+                serializer_by_class={},
+                deserializer_by_udt={}
+            )
             
-            def _contains_data_api_types(obj):
-                '''Recursively check if object contains Data API types'''
-                # Check if obj is any Data API type
-                if isinstance(obj, (
-                    _data_types.DataAPITimestamp,
-                    _data_types.DataAPIDate,
-                    _data_types.DataAPITime,
-                    _data_types.DataAPIVector,
-                    _data_types.DataAPIMap,
-                    _data_types.DataAPISet,
-                    _data_types.DataAPIDuration,
-                    _data_types.DataAPIDictUDT,
-                )):
-                    return True
-                elif isinstance(obj, dict):
-                    return any(_contains_data_api_types(v) for v in obj.values())
+            def _preprocess_for_json(obj):
+                '''Recursively preprocess object to convert Data API types to JSON-serializable format'''
+                if isinstance(obj, dict):
+                    return {k: _preprocess_for_json(v) for k, v in obj.items()}
                 elif isinstance(obj, (list, tuple)):
-                    return any(_contains_data_api_types(item) for item in obj)
-                return False
+                    return [_preprocess_for_json(item) for item in obj]
+                else:
+                    # Use astrapy's built-in converter
+                    processed = preprocess_collection_payload_value([], obj, _serdes_options)
+                    # If it's still not JSON serializable (like DataAPIVector), convert to list
+                    if hasattr(processed, '__iter__') and not isinstance(processed, (str, dict)):
+                        try:
+                            _json_module.dumps(processed)
+                            return processed
+                        except (TypeError, ValueError):
+                            return list(processed)
+                    return processed
             
-            # Override print to automatically JSON-encode Data API types
+            # Override print to automatically preprocess Data API types
             _original_print = print
             def print(*args, **kwargs):
                 json_args = []
                 for arg in args:
-                    if _contains_data_api_types(arg):
-                        json_args.append(_json_module.dumps(arg, cls=_DataAPIEncoder))
-                    else:
+                    try:
+                        # Try to serialize directly first
+                        _json_module.dumps(arg)
                         json_args.append(arg)
+                    except (TypeError, ValueError):
+                        # If it fails, preprocess and serialize
+                        preprocessed = _preprocess_for_json(arg)
+                        json_args.append(_json_module.dumps(preprocessed))
                 _original_print(*json_args, **kwargs)
             
             """;
