@@ -56,17 +56,42 @@ public class PythonDriver extends ClientDriver {
         String jsonEncoderPrelude = """
             import os
             import json as _json_module
-            from astrapy.data_types import DataAPITimestamp as _DataAPITimestamp
+            from astrapy import data_types as _data_types
             
             class _DataAPIEncoder(_json_module.JSONEncoder):
                 def default(self, o):
-                    if isinstance(o, _DataAPITimestamp):
+                    # Handle all Data API types with appropriate conversions
+                    if isinstance(o, _data_types.DataAPITimestamp):
                         return o.to_string()
+                    elif isinstance(o, _data_types.DataAPIDate):
+                        return o.to_string()
+                    elif isinstance(o, _data_types.DataAPITime):
+                        return str(o)
+                    elif isinstance(o, _data_types.DataAPIVector):
+                        return list(o)
+                    elif isinstance(o, _data_types.DataAPIMap):
+                        return dict(o)
+                    elif isinstance(o, _data_types.DataAPISet):
+                        return list(o)
+                    elif isinstance(o, _data_types.DataAPIDuration):
+                        return str(o)
+                    elif isinstance(o, _data_types.DataAPIDictUDT):
+                        return dict(o)
                     return super().default(o)
             
             def _contains_data_api_types(obj):
                 '''Recursively check if object contains Data API types'''
-                if isinstance(obj, _DataAPITimestamp):
+                # Check if obj is any Data API type
+                if isinstance(obj, (
+                    _data_types.DataAPITimestamp,
+                    _data_types.DataAPIDate,
+                    _data_types.DataAPITime,
+                    _data_types.DataAPIVector,
+                    _data_types.DataAPIMap,
+                    _data_types.DataAPISet,
+                    _data_types.DataAPIDuration,
+                    _data_types.DataAPIDictUDT,
+                )):
                     return True
                 elif isinstance(obj, dict):
                     return any(_contains_data_api_types(v) for v in obj.values())
