@@ -13,6 +13,7 @@
     "importHelpers": true,
     "skipLibCheck": true,
     "isolatedModules": true,
+    "noImplicitAny": false,
     "lib": ["es2020", "dom"],
   },
   "include": ["example.ts"],

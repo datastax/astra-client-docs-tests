@@ -1,0 +1,6 @@
+---stderr::matches---
+Matches '^$'
+---stdout::matches---
+Failed to match '^$':
+
+{"data":{"documents":[{"_id":"guid_1","title":"Rankine 910.67","metadata":{"edition":"1955"}},{"_id":"guid_2","title":"Moby Richard","metadata":{"edition":"1852"}}],"nextPageState":null}}
