@@ -6,6 +6,7 @@ import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import lombok.val;
 import tools.jackson.core.json.JsonReadFeature;
+import tools.jackson.core.type.TypeReference;
 import tools.jackson.core.util.DefaultIndenter;
 import tools.jackson.core.util.DefaultPrettyPrinter;
 import tools.jackson.databind.DeserializationFeature;
@@ -69,11 +70,11 @@ public class JacksonUtils {
     }
 
     @SneakyThrows
-    public static <T> T convertValue(Object fromValue, Class<T> toValueType) {
+    public static <T> T convertValue(Object fromValue, TypeReference<T> toValueType) {
         try {
             return JSON.convertValue(fromValue, toValueType);
         } catch (Exception e) {
-            throw new RunException("Failed to convert value to " + toValueType.getSimpleName() + ": " + e.getMessage() + "\nValue:\n" + printJson(fromValue), e);
+            throw new RunException("Failed to convert value to " + toValueType.getType().getTypeName() + ": " + e.getMessage() + "\nValue:\n" + printJson(fromValue), e);
         }
     }
 

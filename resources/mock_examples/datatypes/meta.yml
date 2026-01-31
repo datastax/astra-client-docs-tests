@@ -2,7 +2,7 @@ $schema: "../_base/meta.schema.json"
 test:
   type: snapshot
 snapshots:
-  share: true
+  share: false
   sources:
     stdout::jsonify:
       jq-bash: '.'

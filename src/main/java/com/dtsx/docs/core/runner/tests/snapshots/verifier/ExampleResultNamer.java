@@ -2,6 +2,7 @@ package com.dtsx.docs.core.runner.tests.snapshots.verifier;
 
 import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.core.planner.TestRoot;
+import com.dtsx.docs.core.planner.meta.snapshot.SnapshotsShareConfig;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import lombok.Getter;
 import org.approvaltests.namer.ApprovalNamer;
@@ -15,10 +16,10 @@ public class ExampleResultNamer implements ApprovalNamer {
     private final String fileName;
     private final TestCtx ctx;
 
-    public ExampleResultNamer(TestCtx ctx, ClientLanguage language, TestRoot testRoot, boolean shareSnapshots) {
+    public ExampleResultNamer(TestCtx ctx, ClientLanguage language, TestRoot testRoot, SnapshotsShareConfig shareConfig) {
         this.exampleName = testRoot.rootName();
 
-        this.fileName = (!shareSnapshots)
+        this.fileName = (!shareConfig.isShared(language))
             ? language.name().toLowerCase()
             : "shared";
 

@@ -2,6 +2,7 @@ package com.dtsx.docs.core.runner.tests.snapshots.verifier;
 
 import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.core.planner.TestRoot;
+import com.dtsx.docs.core.planner.meta.snapshot.SnapshotsShareConfig;
 import com.dtsx.docs.core.runner.Placeholders;
 import com.dtsx.docs.core.runner.drivers.ClientDriver;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
@@ -40,7 +41,7 @@ public class SnapshotVerifier {
 
     private final TestCtx ctx;
     private final TreeSet<SnapshotSource> snapshotSources;
-    private final boolean shareSnapshots;
+    private final SnapshotsShareConfig shareConfig;
 
     public TestOutcome verify(ClientDriver driver, TestRoot testRoot, Placeholders placeholders, Set<Path> filesForLang, Function<Path, RunResult> result) {
         if (ctx.verifyMode() == DRY_RUN) {
@@ -100,7 +101,7 @@ public class SnapshotVerifier {
     }
 
     private ExampleResultNamer mkNamer(ClientLanguage language, TestRoot testRoot) {
-        return new ExampleResultNamer(ctx, language, testRoot, shareSnapshots);
+        return new ExampleResultNamer(ctx, language, testRoot, shareConfig);
     }
 
     public static class $DateScrubber extends RegExScrubber {

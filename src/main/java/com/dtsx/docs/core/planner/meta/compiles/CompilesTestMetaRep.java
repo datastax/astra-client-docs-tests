@@ -5,7 +5,7 @@ import lombok.NonNull;
 
 import static com.dtsx.docs.core.planner.meta.BaseMetaYml.BaseMetaYmlRep.TestType.COMPILES;
 
-public record CompilesTestMetaYmlRep(
+public record CompilesTestMetaRep(
     @NonNull String $schema,
     @NonNull TestBlock test
 ) implements BaseMetaYmlRep {

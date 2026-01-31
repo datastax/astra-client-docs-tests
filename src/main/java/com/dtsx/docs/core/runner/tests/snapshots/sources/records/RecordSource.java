@@ -4,7 +4,7 @@ import com.datastax.astra.client.core.query.Filter;
 import com.datastax.astra.client.core.query.Projection;
 import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.core.planner.PlanException;
-import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaYmlRep;
+import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaRep;
 import com.dtsx.docs.core.planner.meta.snapshot.sources.RecordSourceMeta;
 import com.dtsx.docs.core.runner.Placeholders;
 import com.dtsx.docs.core.runner.drivers.ClientDriver;
@@ -46,7 +46,7 @@ import static com.dtsx.docs.core.runner.tests.snapshots.sources.SnapshotSourceUt
 ///
 /// @apiNote Pairs well with [OutputCaptureSource] to capture any undesired warnings or errors
 ///
-/// @see SnapshotTestMetaYmlRep
+/// @see SnapshotTestMetaRep
 public abstract class RecordSource extends SnapshotSource {
     protected final Optional<Filter> filter;
     protected final Optional<Projection[]> projection;

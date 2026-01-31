@@ -1,14 +1,14 @@
 package com.dtsx.docs.core.runner.tests.strategies;
 
 import com.dtsx.docs.commands.test.TestCtx;
-import com.dtsx.docs.core.planner.meta.snapshot.sources.OutputJsonifySourceMeta;
+import com.dtsx.docs.core.planner.meta.snapshot.SnapshotsShareConfig;
 import com.dtsx.docs.core.runner.ExecutionEnvironment.TestFileModifiers;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.output.OutputJsonifySource;
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.core.planner.TestRoot;
 import com.dtsx.docs.core.planner.fixtures.JSFixture;
-import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaYml;
+import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMeta;
 import com.dtsx.docs.core.runner.ExecutionEnvironment;
 import com.dtsx.docs.core.runner.ExecutionEnvironment.ExecutionEnvironments;
 import com.dtsx.docs.core.runner.PlaceholderResolver;
@@ -42,13 +42,13 @@ public final class SnapshotTestStrategy extends TestStrategy {
     ///
     /// If true, a snapshot created by one client language can be used to verify the output of another
     ///  client language within the same test root for stronger consistency and reduced effort.
-    private final boolean shareSnapshots;
+    private final SnapshotsShareConfig shareConfig;
 
-    public SnapshotTestStrategy(TestCtx ctx, SnapshotTestMetaYml meta) {
+    public SnapshotTestStrategy(TestCtx ctx, SnapshotTestMeta meta) {
         super(ctx);
         this.testFixture = meta.testFixture();
         this.snapshotSources = meta.snapshotSources();
-        this.shareSnapshots = meta.shareSnapshots();
+        this.shareConfig = meta.shareConfig();
     }
 
     @Override
@@ -70,7 +70,7 @@ public final class SnapshotTestStrategy extends TestStrategy {
             this.execEnvs = execEnvs;
             this.placeholders = placeholders;
             this.envVars = PlaceholderResolver.mkEnvVars(ctx, placeholders);
-            this.verifier = new SnapshotVerifier(ctx, snapshotSources, shareSnapshots);
+            this.verifier = new SnapshotVerifier(ctx, snapshotSources, shareConfig);
         }
 
         public TestRootResults runTestsInRoot() {

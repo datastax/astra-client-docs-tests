@@ -1,10 +1,10 @@
 package com.dtsx.docs.core.planner.meta;
 
 import com.dtsx.docs.core.planner.PlanException;
-import com.dtsx.docs.core.planner.meta.compiles.CompilesTestMetaYml;
-import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaYml;
-import com.dtsx.docs.core.planner.meta.compiles.CompilesTestMetaYmlRep;
-import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaYmlRep;
+import com.dtsx.docs.core.planner.meta.compiles.CompilesTestMeta;
+import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMeta;
+import com.dtsx.docs.core.planner.meta.compiles.CompilesTestMetaRep;
+import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaRep;
 import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.lib.JacksonUtils;
 import lombok.val;
@@ -31,22 +31,22 @@ public class MetaYmlParser {
         }
 
         if (ctx.verifyMode() == COMPILE_ONLY) {
-            return new CompilesTestMetaYml(); // Dependent on the invariant that all snapshot tests can be run as compilation tests
+            return new CompilesTestMeta(); // Dependent on the invariant that all snapshot tests can be run as compilation tests
         }
 
         return switch (rep) {
-            case SnapshotTestMetaYmlRep m -> new SnapshotTestMetaYml(ctx, ymlFile.getParent(), m);
-            case CompilesTestMetaYmlRep _ -> new CompilesTestMetaYml();
+            case SnapshotTestMetaRep m -> new SnapshotTestMeta(ctx, ymlFile.getParent(), m);
+            case CompilesTestMetaRep _ -> new CompilesTestMeta();
             default ->  null; // unreachable
         };
     }
 
     private static BaseMetaYml.BaseMetaYmlRep parseRep(Path file) {
         try {
-            return JacksonUtils.parseYaml(file, SnapshotTestMetaYmlRep.class);
+            return JacksonUtils.parseYaml(file, SnapshotTestMetaRep.class);
         } catch (JacksonException se) {
             try {
-                return JacksonUtils.parseYaml(file, CompilesTestMetaYmlRep.class);
+                return JacksonUtils.parseYaml(file, CompilesTestMetaRep.class);
             } catch (JacksonException ce) {
                 throw new PlanException("Failed to parse meta.yml file at '" + file + "'; errors:\n" +
                     "- SnapshotTestMetaYml: " + se.getMessage() + "\n" +

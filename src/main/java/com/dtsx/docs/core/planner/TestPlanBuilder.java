@@ -3,9 +3,9 @@ package com.dtsx.docs.core.planner;
 import com.dtsx.docs.core.planner.TestPlan.Builder;
 import com.dtsx.docs.core.planner.fixtures.JSFixture;
 import com.dtsx.docs.core.planner.meta.MetaYmlParser;
-import com.dtsx.docs.core.planner.meta.compiles.CompilesTestMetaYml;
-import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaYml;
-import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaYmlRep;
+import com.dtsx.docs.core.planner.meta.compiles.CompilesTestMeta;
+import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMeta;
+import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaRep;
 import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
@@ -46,7 +46,7 @@ import static com.dtsx.docs.lib.Constants.META_FILE;
 ///
 /// @see TestPlan
 /// @see TestRoot
-/// @see SnapshotTestMetaYmlRep
+/// @see SnapshotTestMetaRep
 public class TestPlanBuilder {
     /// Builds a complete {@linkplain TestPlan test plan} by discovering and processing all test roots.
     ///
@@ -149,8 +149,8 @@ public class TestPlanBuilder {
         }
 
         val strategy = switch (meta) {
-            case SnapshotTestMetaYml m -> new SnapshotTestStrategy(ctx, m);
-            case CompilesTestMetaYml _ -> new CompilesTestStrategy(ctx);
+            case SnapshotTestMeta m -> new SnapshotTestStrategy(ctx, m);
+            case CompilesTestMeta _ -> new CompilesTestStrategy(ctx);
             default ->  null; // unreachable
         };
 

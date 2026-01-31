@@ -8,7 +8,7 @@ import java.util.Optional;
 
 import static com.dtsx.docs.core.planner.meta.BaseMetaYml.BaseMetaYmlRep.TestType.SNAPSHOT;
 
-public record SnapshotTestMetaYmlRep(
+public record SnapshotTestMetaRep(
     @NonNull String $schema,
     @NonNull TestBlock test,
     @NonNull Optional<FixturesConfig> fixtures,
@@ -19,7 +19,7 @@ public record SnapshotTestMetaYmlRep(
     ) {}
 
     public record SnapshotsConfig(
-        @NonNull Optional<Boolean> share,
+        @NonNull Optional<Object> share,
         @NonNull Map<String, Map<String, Object>> sources
     ) {}
 

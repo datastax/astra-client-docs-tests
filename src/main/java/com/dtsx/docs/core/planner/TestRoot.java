@@ -1,6 +1,6 @@
 package com.dtsx.docs.core.planner;
 
-import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaYmlRep;
+import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaRep;
 import com.dtsx.docs.core.runner.tests.strategies.CompilesTestStrategy;
 import com.dtsx.docs.core.runner.tests.strategies.SnapshotTestStrategy;
 import com.dtsx.docs.core.runner.tests.strategies.TestStrategy;
@@ -36,7 +36,7 @@ import java.util.TreeMap;
 ///
 /// Each test root contains different client variants of the same example that share the same fixture and snapshot configuration, with test files called `example.<ext>`.
 ///
-/// @see SnapshotTestMetaYmlRep
+/// @see SnapshotTestMetaRep
 @Getter
 public class TestRoot {
     /// The path to this test root.

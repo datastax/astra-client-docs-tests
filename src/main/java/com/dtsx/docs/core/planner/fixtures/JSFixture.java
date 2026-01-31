@@ -1,7 +1,7 @@
 package com.dtsx.docs.core.planner.fixtures;
 
 import com.dtsx.docs.core.planner.TestRoot;
-import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaYmlRep;
+import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaRep;
 import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms;
@@ -39,7 +39,7 @@ import java.util.function.BiConsumer;
 /// 1. The "base" fixture
 ///    - This fixture sets up major resources to be reused between a group of tests, such as a collection or keyspace.
 ///    - Defined in the `_fixtures/` directory of the examples folder.
-///    - Referenced in {@link SnapshotTestMetaYmlRep meta.yml} under `fixtures.base`.
+///    - Referenced in {@link SnapshotTestMetaRep meta.yml} under `fixtures.base`.
 /// 2. The "per-test" fixture
 ///    - This fixture sets up and resets data that is specific to each test, such as rows in a collection.
 ///    - Defined in the {@link com.dtsx.docs.core.planner.TestRoot test root directory} of each example.
@@ -57,7 +57,7 @@ import java.util.function.BiConsumer;
 ///     meta.yml
 /// ```
 ///
-/// @see SnapshotTestMetaYmlRep
+/// @see SnapshotTestMetaRep
 /// @see TestRoot
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public sealed abstract class JSFixture implements Comparable<JSFixture> permits NoopFixture, JSFixtureImpl  {
