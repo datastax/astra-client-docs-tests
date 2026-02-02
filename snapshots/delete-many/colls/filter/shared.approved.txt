@@ -1,5 +1,3 @@
----stderr---
-Matches '^$'
 ---documents---
 [
   {
@@ -13,3 +11,7 @@ Matches '^$'
     "number_of_pages" : 150
   }
 ]
+---stdout::matches---
+Failed to match '^$':
+
+{"status":{"deletedCount":2}}

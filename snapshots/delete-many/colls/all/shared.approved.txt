@@ -1,4 +1,4 @@
----stderr---
-Matches '^$'
 ---documents---
 [ ]
+---stderr::matches---
+Matches '^$'

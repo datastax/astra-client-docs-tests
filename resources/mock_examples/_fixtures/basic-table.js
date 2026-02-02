@@ -22,6 +22,7 @@ export async function Setup() {
       },
       primaryKey: 'id',
     },
+    ifNotExists: true,
   });
 }
 

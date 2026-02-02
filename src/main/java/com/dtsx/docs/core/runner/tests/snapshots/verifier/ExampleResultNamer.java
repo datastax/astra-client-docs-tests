@@ -6,6 +6,9 @@ import com.dtsx.docs.core.planner.meta.snapshot.SnapshotsShareConfig;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import lombok.Getter;
 import lombok.val;
+import org.approvaltests.Approvals;
+import org.approvaltests.approvers.ApprovalTracker;
+import org.approvaltests.approvers.FileApprover;
 import org.approvaltests.namer.ApprovalNamer;
 import org.approvaltests.writers.Writer;
 
@@ -17,6 +20,10 @@ public class ExampleResultNamer implements ApprovalNamer {
     private final String groupName;
     private final ClientLanguage language;
     private final TestCtx ctx;
+
+    static {
+        FileApprover.tracker.addAllowedDuplicates((_) -> true);
+    }
 
     public ExampleResultNamer(TestCtx ctx, ClientLanguage language, TestRoot testRoot, SnapshotsShareConfig shareConfig) {
         this.exampleName = testRoot.rootName();

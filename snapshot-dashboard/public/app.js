@@ -36,7 +36,17 @@ const elements = {
   errorCloseBtn: document.getElementById('error-close-btn'),
   helpBtn: document.getElementById('help-btn'),
   helpModal: document.getElementById('help-modal'),
-  helpCloseBtn: document.getElementById('help-close-btn')
+  helpCloseBtn: document.getElementById('help-close-btn'),
+  toolsBtn: document.getElementById('tools-btn'),
+  toolsMenu: document.getElementById('tools-menu'),
+  autoApproveModal: document.getElementById('auto-approve-modal'),
+  autoApproveCount: document.getElementById('auto-approve-count'),
+  autoApproveConfirmBtn: document.getElementById('auto-approve-confirm-btn'),
+  autoApproveCancelBtn: document.getElementById('auto-approve-cancel-btn'),
+  autoRejectModal: document.getElementById('auto-reject-modal'),
+  autoRejectCount: document.getElementById('auto-reject-count'),
+  autoRejectConfirmBtn: document.getElementById('auto-reject-confirm-btn'),
+  autoRejectCancelBtn: document.getElementById('auto-reject-cancel-btn')
 };
 
 /**
@@ -545,6 +555,214 @@ const holdState = {
   animationFrame: null
 };
 
+
+/**
+ * Toggle tools menu visibility
+ */
+function toggleToolsMenu() {
+  const isVisible = elements.toolsMenu.style.display === 'flex';
+  elements.toolsMenu.style.display = isVisible ? 'none' : 'flex';
+}
+
+/**
+ * Hide tools menu
+ */
+function hideToolsMenu() {
+  elements.toolsMenu.style.display = 'none';
+}
+
+/**
+ * Show auto approve confirmation modal
+ */
+function showAutoApproveModal() {
+  hideToolsMenu();
+  const count = state.flatApprovedFileList.length;
+  elements.autoApproveCount.textContent = count;
+  elements.autoApproveModal.style.display = 'flex';
+}
+
+/**
+ * Hide auto approve modal
+ */
+function hideAutoApproveModal() {
+  elements.autoApproveModal.style.display = 'none';
+}
+
+/**
+ * Show auto reject confirmation modal
+ */
+function showAutoRejectModal() {
+  hideToolsMenu();
+  const count = state.flatApprovedFileList.length;
+  elements.autoRejectCount.textContent = count;
+  elements.autoRejectModal.style.display = 'flex';
+}
+
+/**
+ * Hide auto reject modal
+ */
+function hideAutoRejectModal() {
+  elements.autoRejectModal.style.display = 'none';
+}
+
+/**
+ * Auto approve all files
+ */
+async function autoApproveAll() {
+  hideAutoApproveModal();
+  
+  // Disable buttons during operation
+  elements.approveBtn.disabled = true;
+  elements.rejectBtn.disabled = true;
+  
+  const totalFiles = state.flatApprovedFileList.length;
+  let successCount = 0;
+  let errorCount = 0;
+  
+  // Show progress
+  console.log(`Auto-approving ${totalFiles} files...`);
+  
+  // Process each file
+  for (let i = 0; i < totalFiles; i++) {
+    const item = state.flatApprovedFileList[0]; // Always take first as list shrinks
+    const approvedFile = item.approvedFile;
+    const diffGroup = approvedFile.diffGroups[0];
+    
+    try {
+      const response = await fetch('/api/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          approvedFileId: approvedFile.id,
+          lastModified: state.lastModified,
+          expectedReceivedContent: diffGroup.receivedContent,
+          expectedApprovedContent: diffGroup.approvedContent
+        })
+      });
+      
+      if (response.status === 409) {
+        // Stale data - stop and refresh
+        showStaleDataModal();
+        return;
+      }
+      
+      if (!response.ok) {
+        errorCount++;
+        console.error(`Failed to approve ${approvedFile.id}`);
+        continue;
+      }
+      
+      const result = await response.json();
+      state.lastModified = result.lastModified;
+      successCount++;
+      
+      // Remove from list
+      state.flatApprovedFileList.shift();
+      
+    } catch (error) {
+      errorCount++;
+      console.error(`Error approving ${approvedFile.id}:`, error);
+    }
+  }
+  
+  // Re-enable buttons
+  elements.approveBtn.disabled = false;
+  elements.rejectBtn.disabled = false;
+  
+  // Show result
+  if (state.flatApprovedFileList.length === 0) {
+    showCompletionState();
+  } else {
+    // Some files remain, show current file
+    state.currentIndex = 0;
+    state.selectedDiffGroupIndex = 0;
+    render();
+    
+    if (errorCount > 0) {
+      showError(`Auto-approved ${successCount} file(s). ${errorCount} file(s) failed.`);
+    }
+  }
+}
+
+/**
+ * Auto reject all files
+ */
+async function autoRejectAll() {
+  hideAutoRejectModal();
+  
+  // Disable buttons during operation
+  elements.approveBtn.disabled = true;
+  elements.rejectBtn.disabled = true;
+  
+  const totalFiles = state.flatApprovedFileList.length;
+  let successCount = 0;
+  let errorCount = 0;
+  
+  // Show progress
+  console.log(`Auto-rejecting ${totalFiles} files...`);
+  
+  // Process each file
+  for (let i = 0; i < totalFiles; i++) {
+    const item = state.flatApprovedFileList[0]; // Always take first as list shrinks
+    const approvedFile = item.approvedFile;
+    const diffGroup = approvedFile.diffGroups[0];
+    
+    try {
+      const response = await fetch('/api/reject', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          approvedFileId: approvedFile.id,
+          lastModified: state.lastModified,
+          expectedReceivedContent: diffGroup.receivedContent
+        })
+      });
+      
+      if (response.status === 409) {
+        // Stale data - stop and refresh
+        showStaleDataModal();
+        return;
+      }
+      
+      if (!response.ok) {
+        errorCount++;
+        console.error(`Failed to reject ${approvedFile.id}`);
+        continue;
+      }
+      
+      const result = await response.json();
+      state.lastModified = result.lastModified;
+      successCount++;
+      
+      // Remove from list
+      state.flatApprovedFileList.shift();
+      
+    } catch (error) {
+      errorCount++;
+      console.error(`Error rejecting ${approvedFile.id}:`, error);
+    }
+  }
+  
+  // Re-enable buttons
+  elements.approveBtn.disabled = false;
+  elements.rejectBtn.disabled = false;
+  
+  // Show result
+  if (state.flatApprovedFileList.length === 0) {
+    showCompletionState();
+  } else {
+    // Some files remain, show current file
+    state.currentIndex = 0;
+    state.selectedDiffGroupIndex = 0;
+    render();
+    
+    if (errorCount > 0) {
+      showError(`Auto-rejected ${successCount} file(s). ${errorCount} file(s) failed.`);
+    }
+  }
+}
+
+
 /**
  * Start hold-to-confirm for approve/reject
  */
@@ -751,6 +969,57 @@ function setupEventListeners() {
   elements.helpModal.addEventListener('click', (e) => {
     if (e.target === elements.helpModal) {
       hideHelp();
+    }
+  });
+  
+  // Tools menu
+  elements.toolsBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleToolsMenu();
+  });
+  
+  // Close tools menu when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!elements.toolsMenu.contains(e.target) && e.target !== elements.toolsBtn) {
+      hideToolsMenu();
+    }
+  });
+  
+  // Tools menu item clicks
+  elements.toolsMenu.addEventListener('click', (e) => {
+    const item = e.target.closest('.tools-menu-item');
+    if (!item) return;
+    
+    const action = item.dataset.action;
+    
+    switch (action) {
+      case 'auto-approve-all':
+        showAutoApproveModal();
+        break;
+      case 'auto-reject-all':
+        showAutoRejectModal();
+        break;
+    }
+  });
+  
+  // Auto approve modal buttons
+  elements.autoApproveConfirmBtn.addEventListener('click', autoApproveAll);
+  elements.autoApproveCancelBtn.addEventListener('click', hideAutoApproveModal);
+  
+  // Auto reject modal buttons
+  elements.autoRejectConfirmBtn.addEventListener('click', autoRejectAll);
+  elements.autoRejectCancelBtn.addEventListener('click', hideAutoRejectModal);
+  
+  // Close modals on backdrop click
+  elements.autoApproveModal.addEventListener('click', (e) => {
+    if (e.target === elements.autoApproveModal) {
+      hideAutoApproveModal();
+    }
+  });
+  
+  elements.autoRejectModal.addEventListener('click', (e) => {
+    if (e.target === elements.autoRejectModal) {
+      hideAutoRejectModal();
     }
   });
 }

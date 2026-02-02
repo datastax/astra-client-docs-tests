@@ -13,9 +13,9 @@ export function Meta() {
 }
 
 export async function Setup() {
-  // await $.db.createCollection(basicCollection.name);
+  await $.db.createCollection(basicCollection.name);
 }
 
 export async function Teardown() {
-  // await basicCollection.drop();
+  await basicCollection.drop();
 }

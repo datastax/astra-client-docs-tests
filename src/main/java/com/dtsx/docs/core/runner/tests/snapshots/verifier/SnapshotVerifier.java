@@ -8,7 +8,6 @@ import com.dtsx.docs.core.runner.drivers.ClientDriver;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import com.dtsx.docs.core.runner.tests.results.TestOutcome;
 import com.dtsx.docs.core.runner.tests.results.TestOutcome.FailedToVerify;
-import com.dtsx.docs.core.runner.tests.snapshots.LastModifiedUpdater;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.SnapshotSource;
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;

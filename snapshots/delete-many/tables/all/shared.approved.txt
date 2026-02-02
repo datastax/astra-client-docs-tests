@@ -1,4 +1,6 @@
----stderr---
-Matches '^$'
 ---rows---
 [ ]
+---stdout::matches---
+Failed to match '^$':
+
+{"status":{"deletedCount":-1}}

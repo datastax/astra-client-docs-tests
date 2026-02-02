@@ -42,6 +42,9 @@
         <div id="diff-groups-list" class="diff-groups-list">
           <!-- Populated by JavaScript -->
         </div>
+        <button id="tools-btn" class="tools-btn" title="Advanced Tools">
+          <span>⚙️</span>
+        </button>
         <button id="help-btn" class="help-btn" title="Keyboard Shortcuts (?)">
           <span>?</span>
         </button>
@@ -176,6 +179,50 @@
           </div>
         </div>
         <button id="help-close-btn" class="btn btn-primary">Close</button>
+      </div>
+    </div>
+
+    <!-- Tools Context Menu -->
+    <div id="tools-menu" class="tools-menu" style="display: none;">
+      <div class="tools-menu-item" data-action="auto-approve-all">
+        <span class="tools-menu-icon">✓</span>
+        <div class="tools-menu-content">
+          <span class="tools-menu-label">Auto Approve All</span>
+          <span class="tools-menu-description">Approve all pending files</span>
+        </div>
+      </div>
+      <div class="tools-menu-item" data-action="auto-reject-all">
+        <span class="tools-menu-icon">✗</span>
+        <div class="tools-menu-content">
+          <span class="tools-menu-label">Auto Reject All</span>
+          <span class="tools-menu-description">Reject all pending files</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Auto Approve All Modal -->
+    <div id="auto-approve-modal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <h2>⚠️ Auto Approve All Files</h2>
+        <p>This will approve <strong id="auto-approve-count">0</strong> file(s) with all their diff groups.</p>
+        <p class="warning-text">This action cannot be undone. Are you sure?</p>
+        <div class="modal-actions">
+          <button id="auto-approve-confirm-btn" class="btn btn-approve">Yes, Approve All</button>
+          <button id="auto-approve-cancel-btn" class="btn btn-secondary">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Auto Reject All Modal -->
+    <div id="auto-reject-modal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <h2>⚠️ Auto Reject All Files</h2>
+        <p>This will reject <strong id="auto-reject-count">0</strong> file(s) with all their diff groups.</p>
+        <p class="warning-text">This action cannot be undone. Are you sure?</p>
+        <div class="modal-actions">
+          <button id="auto-reject-confirm-btn" class="btn btn-reject">Yes, Reject All</button>
+          <button id="auto-reject-cancel-btn" class="btn btn-secondary">Cancel</button>
+        </div>
       </div>
     </div>
   </div>
