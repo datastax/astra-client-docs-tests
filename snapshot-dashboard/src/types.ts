@@ -98,16 +98,3 @@ export interface StaleDataErrorResponse {
   message: string;
   currentLastModified: string;
 }
-
-/**
- * Generic error response
- */
-export interface ErrorResponse {
-  error: string;
-  message: string;
-}
-
-/**
- * Union type for action responses
- */
-export type ActionResponse = ActionSuccessResponse | StaleDataErrorResponse | ErrorResponse;

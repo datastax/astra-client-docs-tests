@@ -79,7 +79,7 @@ export function sortTestRoots(testRoots: TestRoot[]): TestRoot[] {
 async function readFileContent(filePath: string): Promise<string | null> {
   try {
     return await fs.readFile(filePath, 'utf-8');
-  } catch (error) {
+  } catch (_) {
     return null;
   }
 }
@@ -116,7 +116,6 @@ async function groupSharedReceivedFiles(
  */
 async function createSharedDiffGroups(
   dirPath: string,
-  rootName: string
 ): Promise<DiffGroup[]> {
   const files = await fs.readdir(dirPath);
   const receivedFiles = files
@@ -134,7 +133,7 @@ async function createSharedDiffGroups(
   const diffGroups: DiffGroup[] = [];
   
   let groupIndex = 0;
-  for (const [hash, group] of groups.entries()) {
+  for (const group of groups.values()) {
     diffGroups.push({
       id: `group-${groupIndex}`,
       languages: sortLanguages(group.languages),
@@ -189,7 +188,7 @@ async function createSharedApprovedFile(
 ): Promise<SharedApprovedFile | null> {
   const approvedPath = path.join(dirPath, 'shared.approved.txt');
   const fileContent = await readFileContent(approvedPath);
-  const diffGroups = await createSharedDiffGroups(dirPath, rootName);
+  const diffGroups = await createSharedDiffGroups(dirPath);
   
   if (diffGroups.length === 0) {
     return null; // No changes for this shared file

@@ -210,7 +210,7 @@ router.post('/', async (req: Request, res: Response) => {
     
     const response: ActionSuccessResponse = {
       success: true,
-      message: `Approved ${filename} affecting ${languages.size} language${languages.size !== 1 ? 's' : ''}`,
+      message: `Approved ${filename} affecting ${languages.size} language${languages.size === 1 ? '' : 's'}`,
       lastModified: newLastModified
     };
     

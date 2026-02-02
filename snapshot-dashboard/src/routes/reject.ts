@@ -25,16 +25,6 @@ async function validateLastModified(
 }
 
 /**
- * Update last-modified.txt with current timestamp
- */
-async function updateLastModified(snapshotsDir: string): Promise<string> {
-  const timestamp = new Date().toISOString();
-  const lastModifiedPath = path.join(snapshotsDir, 'last-modified.txt');
-  await fs.writeFile(lastModifiedPath, timestamp, 'utf-8');
-  return timestamp;
-}
-
-/**
  * Verify received file content matches expected value
  */
 async function verifyReceivedContent(
@@ -158,7 +148,9 @@ router.post('/', async (req: Request, res: Response) => {
     await Promise.all(receivedFiles.map(f => fs.unlink(f)));
     
     // Update last-modified timestamp
-    const newLastModified = await updateLastModified(snapshotsDir);
+    const timestamp = new Date().toISOString();
+    const lastModifiedPath = path.join(snapshotsDir, 'last-modified.txt');
+    await fs.writeFile(lastModifiedPath, timestamp, 'utf-8');
     
     // Count languages
     const languages = new Set<string>();
@@ -176,7 +168,7 @@ router.post('/', async (req: Request, res: Response) => {
     const response: ActionSuccessResponse = {
       success: true,
       message: `Rejected ${filename} affecting ${languages.size} language${languages.size !== 1 ? 's' : ''}`,
-      lastModified: newLastModified
+      lastModified: timestamp
     };
     
     res.json(response);
