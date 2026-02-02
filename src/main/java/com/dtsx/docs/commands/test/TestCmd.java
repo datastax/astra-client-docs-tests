@@ -19,7 +19,7 @@ public class TestCmd extends BaseCmd<TestCtx> {
 
     @Override
     public int run() {
-        CliLogger.println(false, "@|bold Starting verifier in @!" + ctx.verifyMode().displayName(ctx) + "!@ mode.|@");
+        CliLogger.println(false, "@|bold Starting verifier in @!" + ctx.verifyMode().displayName() + "!@ mode.|@");
         CliLogger.println(false);
         CliLogger.println(false, "@|bold View logs:|@");
         CliLogger.println(false, "@!$!@ open " + CliLogger.logFilePath(ctx));

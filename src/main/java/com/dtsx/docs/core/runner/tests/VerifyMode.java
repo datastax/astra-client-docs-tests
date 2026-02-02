@@ -13,16 +13,10 @@ import java.nio.file.Path;
 /// Verification mode controlling how test output is compared against snapshots using ApprovalTests.
 ///
 /// Modes:
-/// - `DEFAULT` - Auto-selects based on number of languages (`NORMAL` for 1, `VERIFY_ONLY` for multiple)
 /// - `NORMAL` - Standard ApprovalTests behavior: creates a "diff" file on mismatch
 /// - `VERIFY_ONLY` - Read-only mode: compares against approved files but does not create "diff" files
 /// - `DRY_RUN` - Prints what would run without executing anything
 public enum VerifyMode {
-    /// Auto-selects NORMAL for single-language runs, VERIFY_ONLY for multi-language.
-    ///
-    /// This is the default mode when not explicitly specified.
-    DEFAULT,
-
     /// Compares the snapshot output against approved files on disk, creating a "diff" file if they differ.
     ///
     /// Only works against a single language at a time.
@@ -54,11 +48,8 @@ public enum VerifyMode {
     /// @return a function that configures ApprovalTests options
     /// @throws RunException if mode is invalid for the configuration
     public Function1<Options, Options> applyOptions(TestCtx ctx, Path approvedFile) {
-        return switch (actual(ctx)) {
+        return switch (ctx.verifyMode()) {
             case NORMAL -> {
-                if (ctx.languages().size() > 1) {
-                    throw new RunException("NORMAL verification mode is only supported for single-language test runs. This should've been caught during VerifierCtx initialization.");
-                }
                 yield (o) -> o;
             }
             case VERIFY_ONLY -> (o) -> {
@@ -78,20 +69,10 @@ public enum VerifyMode {
             case COMPILE_ONLY -> {
                 throw new RunException("COMPILE_ONLY mode should not apply verification options; it should've used a different test strategy.");
             }
-            case DEFAULT -> {
-                throw new RunException("DEFAULT mode should have been resolved to a concrete mode before applying verification options.");
-            }
         };
     }
 
-    public String displayName(TestCtx ctx) {
-        return actual(ctx).name().toLowerCase().replace("_", " ");
-    }
-
-    private VerifyMode actual(TestCtx ctx) {
-        if (this == DEFAULT) {
-            return (ctx.languages().size() > 1) ? VERIFY_ONLY : NORMAL;
-        }
-        return this;
+    public String displayName() {
+        return name().toLowerCase().replace("_", " ");
     }
 }

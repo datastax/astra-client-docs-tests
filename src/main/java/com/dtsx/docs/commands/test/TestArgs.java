@@ -39,8 +39,8 @@ public class TestArgs extends BaseScriptRunnerArgs<TestCtx> {
 
     @Option(
         names = { "-m", "--verify-mode" },
-        description = "Verification mode to use (default, normal, verify_only, dry_run).",
-        defaultValue = "${VERIFY_MODE:-default}",
+        description = "Verification mode to use (normal, verify_only, dry_run).",
+        defaultValue = "${VERIFY_MODE:-normal}",
         paramLabel = "MODE"
     )
     public VerifyMode $verifyMode;

@@ -5,6 +5,7 @@ import com.dtsx.docs.core.planner.TestRoot;
 import com.dtsx.docs.core.planner.meta.snapshot.SnapshotsShareConfig;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import lombok.Getter;
+import lombok.val;
 import org.approvaltests.namer.ApprovalNamer;
 import org.approvaltests.writers.Writer;
 
@@ -13,22 +14,24 @@ import java.io.File;
 public class ExampleResultNamer implements ApprovalNamer {
     @Getter
     private final String exampleName;
-    private final String fileName;
+    private final String groupName;
+    private final ClientLanguage language;
     private final TestCtx ctx;
 
     public ExampleResultNamer(TestCtx ctx, ClientLanguage language, TestRoot testRoot, SnapshotsShareConfig shareConfig) {
         this.exampleName = testRoot.rootName();
 
-        this.fileName = (!shareConfig.isShared(language))
+        this.groupName = (!shareConfig.isShared(language))
             ? language.name().toLowerCase()
             : "shared";
 
+        this.language = language;
         this.ctx = ctx;
     }
 
     @Override
     public String getApprovalName() {
-        return exampleName + "/" + fileName + getAdditionalInformation();
+        return exampleName + "/" + groupName;
     }
 
     @Override
@@ -38,7 +41,11 @@ public class ExampleResultNamer implements ApprovalNamer {
 
     @Override
     public File getReceivedFile(String extensionWithDot) {
-        return new File(getSourceFilePath() + "/" + getApprovalName() + Writer.received + extensionWithDot);
+        val lang = getApprovalName().equals("shared")
+            ? "." + language.name().toLowerCase()
+            : "";
+
+        return new File(getSourceFilePath() + "/" + getApprovalName() + lang + Writer.received + extensionWithDot);
     }
 
     @Override

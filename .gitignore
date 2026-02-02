@@ -44,6 +44,8 @@ bin/
 /tmp
 /.docs_tests_temp
 /.approval_tests_temp
-/node_modules
+node_modules
 /.env*
 !/.env.example
+/.bob
+dist

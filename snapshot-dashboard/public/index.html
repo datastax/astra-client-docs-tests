@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snapshot Review Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/diff@5.1.0/dist/diff.min.js"></script>
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header class="header">
+      <h1>Snapshot Review Dashboard</h1>
+      <div id="progress" class="progress">
+        <span id="progress-text">Loading...</span>
+      </div>
+    </header>
+
+    <!-- Loading State -->
+    <div id="loading" class="loading">
+      <div class="spinner"></div>
+      <p>Scanning snapshots...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="empty-state" style="display: none;">
+      <h2>🎉 All Clear!</h2>
+      <p>No snapshot changes to review.</p>
+    </div>
+
+    <!-- Main Content -->
+    <div id="main-content" class="main-content" style="display: none;">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <h3>Diff Groups</h3>
+          <div class="sidebar-help">
+            <kbd>↑</kbd> <kbd>↓</kbd> Navigate
+          </div>
+        </div>
+        <div id="diff-groups-list" class="diff-groups-list">
+          <!-- Populated by JavaScript -->
+        </div>
+      </aside>
+
+      <!-- Main View -->
+      <main class="main-view">
+        <!-- Test Root Info -->
+        <div class="test-root-info">
+          <div class="test-root-name" id="test-root-name">
+            <!-- Populated by JavaScript -->
+          </div>
+          <div class="approved-file-name" id="approved-file-name">
+            <!-- Populated by JavaScript -->
+          </div>
+        </div>
+
+        <!-- Diff Group Info -->
+        <div class="diff-group-info" id="diff-group-info">
+          <!-- Populated by JavaScript -->
+        </div>
+
+        <!-- Diff View -->
+        <div class="diff-container">
+          <div class="diff-controls">
+            <button id="toggle-raw" class="btn btn-secondary">
+              <kbd>v</kbd> Toggle Raw View
+            </button>
+            <button id="toggle-whitespace" class="btn btn-secondary">
+              <kbd>w</kbd> Toggle Whitespace
+            </button>
+          </div>
+          <div id="diff-view" class="diff-view">
+            <!-- Populated by JavaScript -->
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="actions">
+          <button id="approve-btn" class="btn btn-approve">
+            <kbd>a</kbd> Approve
+          </button>
+          <button id="reject-btn" class="btn btn-reject">
+            <kbd>r</kbd> Reject
+          </button>
+          <div class="navigation-help">
+            <kbd>←</kbd> <kbd>→</kbd> Navigate Files
+            <span class="separator">|</span>
+            <kbd>↑</kbd> <kbd>↓</kbd> Navigate Groups
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Completion State -->
+    <div id="completion-state" class="completion-state" style="display: none;">
+      <h2>✅ Review Complete!</h2>
+      <p>All snapshot changes have been reviewed.</p>
+      <button id="refresh-btn" class="btn btn-primary">Refresh to Check for More</button>
+    </div>
+
+    <!-- Stale Data Modal -->
+    <div id="stale-modal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <h2>⚠️ Snapshots Changed</h2>
+        <p>The snapshots have been modified externally.</p>
+        <p>Refreshing to load latest changes...</p>
+        <div class="spinner"></div>
+      </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div id="error-modal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <h2>❌ Error</h2>
+        <p id="error-message"></p>
+        <button id="error-close-btn" class="btn btn-primary">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

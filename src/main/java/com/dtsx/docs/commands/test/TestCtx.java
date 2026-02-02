@@ -81,7 +81,7 @@ public class TestCtx extends BaseScriptRunnerCtx {
 
         this.drivers = mkDrivers(cmd, args);
         this.reporter = TestReporter.parse(this, args.$reporter);
-        this.verifyMode = resolveVerifyMode(cmd, args, drivers.keySet());
+        this.verifyMode = resolveVerifyMode(args);
 
         this.filter = mkFilter(args.$filters, args.$inverseFilters);
 
@@ -118,13 +118,8 @@ public class TestCtx extends BaseScriptRunnerCtx {
         }
     }
 
-    private VerifyMode resolveVerifyMode(CommandLine cmd, TestArgs args, Set<ClientLanguage> languages) {
-        if (languages.size() > 1 && args.$verifyMode == VerifyMode.NORMAL) {
-            throw new ParameterException(cmd, "When using multiple client drivers, --verify-mode must be either 'verify_only' or 'dry_run'.");
-        }
-
-        return (args.$dryRun)
-            ? DRY_RUN
+    private VerifyMode resolveVerifyMode(TestArgs args) {
+        return (args.$dryRun) ? DRY_RUN
             : args.$verifyMode;
     }
 
