@@ -530,11 +530,13 @@ Rejects ALL diff groups for an approved file by deleting all received files.
 | `↑` (Up Arrow) | Previous diff group within current approved file |
 | `↓` (Down Arrow) | Next diff group within current approved file |
 | `0-9` | Select diff group by number in sidebar |
-| `a` | Approve current approved file (all its diff groups) and auto-advance |
-| `r` | Reject current approved file (all its diff groups) and auto-advance |
+| `a` (hold 0.5s) | Approve current approved file (all its diff groups) and auto-advance - shows green progress spinner |
+| `r` (hold 0.5s) | Reject current approved file (all its diff groups) and auto-advance - shows red progress spinner |
 | `w` | Toggle whitespace diff |
 | `v` | Toggle raw view |
 | `F5` / `Ctrl+R` / `Cmd+R` | Refresh (reload page to get latest snapshots) |
+
+**Hold-to-Confirm:** The `a` (approve) and `r` (reject) actions require holding the key for 0.5 seconds to prevent accidental actions. A circular donut-shaped progress spinner appears (green for approve, red for reject) that fills as you hold. Release the key before completion to cancel the action.
 
 **Note:** Letter shortcuts (a, r, w, v) only trigger when pressed WITHOUT modifier keys (Ctrl, Cmd, Alt, Shift), preventing conflicts with native browser shortcuts like Cmd+R.
 

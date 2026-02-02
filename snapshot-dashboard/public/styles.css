@@ -586,3 +586,58 @@ kbd {
     flex-direction: column;
   }
 }
+
+/* Hold-to-Confirm Spinner */
+.hold-spinner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  pointer-events: none;
+}
+
+.hold-spinner-svg {
+  width: 120px;
+  height: 120px;
+  transform: rotate(-90deg);
+}
+
+.hold-spinner-bg {
+  fill: none;
+  stroke-width: 8;
+  stroke-linecap: round;
+}
+
+.hold-spinner-progress {
+  fill: none;
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 251.2; /* 2 * PI * 40 */
+  stroke-dashoffset: 251.2;
+  transition: stroke-dashoffset 0.05s linear;
+}
+
+/* Green variant for approve */
+.hold-spinner.green .hold-spinner-bg {
+  stroke: #1e4620; /* dark green */
+}
+
+.hold-spinner.green .hold-spinner-progress {
+  stroke: #4ec9b0; /* light green */
+}
+
+/* Red variant for reject */
+.hold-spinner.red .hold-spinner-bg {
+  stroke: #5a1e1e; /* dark red */
+}
+
+.hold-spinner.red .hold-spinner-progress {
+  stroke: #f48771; /* light red */
+}
+

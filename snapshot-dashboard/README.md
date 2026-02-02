@@ -77,11 +77,13 @@ Open your browser to: `http://localhost:3000`
 | `↑` | Previous diff group |
 | `↓` | Next diff group |
 | `0-9` | Select diff group by number |
-| `a` | Approve current file (all diff groups) |
-| `r` | Reject current file (all diff groups) |
+| `a` (hold 0.5s) | Approve current file (all diff groups) - shows green progress spinner |
+| `r` (hold 0.5s) | Reject current file (all diff groups) - shows red progress spinner |
 | `v` | Toggle raw view |
 | `w` | Toggle whitespace in diff |
 | `F5` / `Cmd+R` / `Ctrl+R` | Refresh page |
+
+**Hold-to-Confirm:** The `a` (approve) and `r` (reject) actions require holding the key for 0.5 seconds. A circular progress spinner appears (green for approve, red for reject) that fills as you hold. Release the key before completion to cancel.
 
 **Note:** Letter shortcuts (a, r, w, v) only work when pressed WITHOUT modifier keys (Ctrl, Cmd, Alt, Shift). This prevents conflicts with native browser shortcuts like `Cmd+R` (refresh) or `Ctrl+W` (close tab).
 

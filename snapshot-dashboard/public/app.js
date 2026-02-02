@@ -529,6 +529,111 @@ function advanceToNextFile() {
   render();
 }
 
+// Hold-to-confirm state
+const holdState = {
+  key: null,
+  timer: null,
+  startTime: null,
+  animationFrame: null
+};
+
+/**
+ * Start hold-to-confirm for approve/reject
+ */
+function startHoldConfirm(key, action, color) {
+  // Prevent multiple holds
+  if (holdState.key) return;
+  
+  holdState.key = key;
+  holdState.startTime = Date.now();
+  
+  // Show spinner
+  showHoldSpinner(color);
+  
+  // Start animation loop
+  function animate() {
+    const elapsed = Date.now() - holdState.startTime;
+    const progress = Math.min(elapsed / 500, 1); // 0.5s = 500ms
+    
+    updateHoldSpinner(progress);
+    
+    if (progress >= 1) {
+      // Complete - trigger action
+      hideHoldSpinner();
+      action();
+      holdState.key = null;
+      holdState.timer = null;
+      holdState.animationFrame = null;
+    } else {
+      // Continue animation
+      holdState.animationFrame = requestAnimationFrame(animate);
+    }
+  }
+  
+  holdState.animationFrame = requestAnimationFrame(animate);
+}
+
+/**
+ * Cancel hold-to-confirm
+ */
+function cancelHoldConfirm() {
+  if (holdState.animationFrame) {
+    cancelAnimationFrame(holdState.animationFrame);
+  }
+  if (holdState.timer) {
+    clearTimeout(holdState.timer);
+  }
+  hideHoldSpinner();
+  holdState.key = null;
+  holdState.timer = null;
+  holdState.startTime = null;
+  holdState.animationFrame = null;
+}
+
+/**
+ * Show hold spinner overlay
+ */
+function showHoldSpinner(color) {
+  let spinner = document.getElementById('hold-spinner');
+  if (!spinner) {
+    spinner = document.createElement('div');
+    spinner.id = 'hold-spinner';
+    spinner.innerHTML = `
+      <svg class="hold-spinner-svg" viewBox="0 0 100 100">
+        <circle class="hold-spinner-bg" cx="50" cy="50" r="40" />
+        <circle class="hold-spinner-progress" cx="50" cy="50" r="40" />
+      </svg>
+    `;
+    document.body.appendChild(spinner);
+  }
+  
+  spinner.className = `hold-spinner ${color}`;
+  spinner.style.display = 'flex';
+}
+
+/**
+ * Update hold spinner progress
+ */
+function updateHoldSpinner(progress) {
+  const spinner = document.getElementById('hold-spinner');
+  if (!spinner) return;
+  
+  const circle = spinner.querySelector('.hold-spinner-progress');
+  const circumference = 2 * Math.PI * 40; // r=40
+  const offset = circumference * (1 - progress);
+  circle.style.strokeDashoffset = offset;
+}
+
+/**
+ * Hide hold spinner
+ */
+function hideHoldSpinner() {
+  const spinner = document.getElementById('hold-spinner');
+  if (spinner) {
+    spinner.style.display = 'none';
+  }
+}
+
 /**
  * Setup event listeners
  */
@@ -546,6 +651,12 @@ function setupEventListeners() {
     
     if (hasModifier && /^[a-z]$/i.test(e.key)) {
       return; // Let browser handle modified letter keys (Cmd+R, Ctrl+W, etc.)
+    }
+    
+    // Prevent key repeat from triggering multiple holds
+    if (e.repeat) {
+      e.preventDefault();
+      return;
     }
     
     switch (e.key) {
@@ -567,11 +678,11 @@ function setupEventListeners() {
         break;
       case 'a':
         e.preventDefault();
-        approveCurrentFile();
+        startHoldConfirm('a', approveCurrentFile, 'green');
         break;
       case 'r':
         e.preventDefault();
-        rejectCurrentFile();
+        startHoldConfirm('r', rejectCurrentFile, 'red');
         break;
       case 'v':
         e.preventDefault();
@@ -594,6 +705,13 @@ function setupEventListeners() {
         e.preventDefault();
         selectDiffGroup(parseInt(e.key));
         break;
+    }
+  });
+  
+  // Handle key release to cancel hold
+  document.addEventListener('keyup', (e) => {
+    if (e.key === holdState.key) {
+      cancelHoldConfirm();
     }
   });
   
