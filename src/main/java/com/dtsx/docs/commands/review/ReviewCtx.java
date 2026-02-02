@@ -2,14 +2,20 @@ package com.dtsx.docs.commands.review;
 
 import com.dtsx.docs.config.ArgUtils;
 import com.dtsx.docs.config.ctx.BaseCtx;
+import com.dtsx.docs.lib.ExternalPrograms;
+import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import lombok.Getter;
 import lombok.val;
+import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.ParameterException;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.function.Function;
 
 @Getter
 public class ReviewCtx extends BaseCtx {
@@ -20,13 +26,21 @@ public class ReviewCtx extends BaseCtx {
     private final boolean detached;
 
     public ReviewCtx(ReviewArgs args, CommandSpec spec) {
-        super(spec);
+        super(args, spec);
 
         this.port = validatePort(args.$port);
         this.snapshotsFolder = ArgUtils.requirePath(cmd, args.$snapshotsFolder, "snapshots folder", "-sf", "SNAPSHOTS_FOLDER");
         this.dashboardFolder = Path.of("snapshot-dashboard");
         this.openBrowser = !args.$noOpen;
         this.detached = args.$detached;
+    }
+
+    @Override
+    @MustBeInvokedByOverriders
+    protected Set<Function<BaseCtx, ExternalProgram>> requiredPrograms() {
+        return new HashSet<>(super.requiredPrograms()) {{
+            add(ExternalPrograms::npm);
+        }};
     }
 
     private int validatePort(int port) {

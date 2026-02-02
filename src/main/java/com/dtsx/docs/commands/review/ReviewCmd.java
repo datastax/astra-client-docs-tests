@@ -12,13 +12,11 @@ import java.awt.*;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URI;
-import java.nio.file.Files;
 import java.util.concurrent.TimeUnit;
 
 @Command(
     name = "review",
-    description = "Start the snapshot review dashboard",
-    mixinStandardHelpOptions = true
+    description = "Start the snapshot review dashboard"
 )
 public class ReviewCmd extends BaseCmd<ReviewCtx> {
     @Mixin @Getter
@@ -40,34 +38,30 @@ public class ReviewCmd extends BaseCmd<ReviewCtx> {
     }
 
     private void ensureDependenciesInstalled() {
-        val nodeModules = ctx.dashboardFolder().resolve("node_modules");
-        
-        if (!Files.exists(nodeModules)) {
-            CliLogger.println(false, "@|bold Installing dashboard dependencies...|@");
+        CliLogger.println(false, "@|bold Installing dashboard dependencies...|@");
 
-            CliLogger.loading("Installing", (_) -> {
-                val installProcess = new ProcessBuilder()
-                    .command("npm", "install")
-                    .directory(ctx.dashboardFolder().toFile())
-                    .redirectErrorStream(true)
-                    .start();
+        CliLogger.loading("Installing dependencies", (_) -> {
+            val installProcess = new ProcessBuilder()
+                .command("npm", "install")
+                .directory(ctx.dashboardFolder().toFile())
+                .redirectErrorStream(true)
+                .start();
 
-                try (val reader = new BufferedReader(new InputStreamReader(installProcess.getInputStream()))) {
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        CliLogger.println(false, line);
-                    }
+            try (val reader = new BufferedReader(new InputStreamReader(installProcess.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    CliLogger.println(false, line);
                 }
+            }
 
-                val exitCode = installProcess.waitFor();
-                if (exitCode != 0) {
-                    throw new RunException("npm install failed with exit code: " + exitCode);
-                }
-                return null;
-            });
-            
-            CliLogger.println(false);
-        }
+            val exitCode = installProcess.waitFor();
+            if (exitCode != 0) {
+                throw new RunException("npm install failed with exit code: " + exitCode);
+            }
+            return null;
+        });
+
+        CliLogger.println(false);
     }
 
     private void startDashboard() throws Exception {

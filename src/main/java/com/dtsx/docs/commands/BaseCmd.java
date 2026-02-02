@@ -20,6 +20,7 @@ public abstract class BaseCmd<Ctx extends BaseCtx> implements Callable<Integer> 
     public final Integer call() {
         ctx = $args().toCtx(spec);
         CliLogger.initialize(ctx);
+        ctx.verifyRequiredProgramsAvailable(spec.commandLine());
         return run();
     }
 

@@ -3,24 +3,23 @@ package com.dtsx.docs.config.ctx;
 import com.dtsx.docs.config.ArgUtils;
 import com.dtsx.docs.config.ConnectionInfo;
 import com.dtsx.docs.config.args.BaseScriptRunnerArgs;
-import com.dtsx.docs.lib.ExternalPrograms;
-import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
-import com.dtsx.docs.lib.ExternalPrograms.ExternalProgramType;
 import com.dtsx.docs.core.runner.drivers.ClientDriver;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
+import com.dtsx.docs.lib.ExternalPrograms;
+import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.val;
+import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.ParameterException;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -46,13 +45,6 @@ public abstract class BaseScriptRunnerCtx extends BaseCtx {
     ///
     /// When true, deletes `.docs_tests_temp/` after all tests complete.
     private final boolean clean;
-
-    /// Built from `<PROGRAM>_COMMAND` env vars (e.g., `TSX_COMMAND=npx -y tsx`).
-    ///
-    /// Allows overriding default program paths when they're not in PATH or you need
-    /// a specific version (e.g., `PYTHON_COMMAND=python3.11`).
-    private final Map<ExternalProgramType, String[]> commandOverrides;
-
     /// Set by `--bail` flag or `BAIL` env var (default: false).
     ///
     /// When true, stops execution upon the first failure.
@@ -67,37 +59,27 @@ public abstract class BaseScriptRunnerCtx extends BaseCtx {
     }
 
     public BaseScriptRunnerCtx(BaseScriptRunnerArgs<?> args, CommandSpec spec) {
-        super(spec);
+        super(args, spec);
         this.examplesFolder = resolveExampleFolder(spec.commandLine(), args).toAbsolutePath().normalize();
         this.connectionInfo = mkConnectionInfo(cmd, args);
         this.execEnvTemplatesFolder = Path.of("resources/environments/");
         this.clean = args.$clean;
-        this.commandOverrides = mkCommandOverrides(args);
         this.bail = args.$bail;
+    }
+
+    @Override
+    @MustBeInvokedByOverriders
+    protected Set<Function<BaseCtx, ExternalProgram>> requiredPrograms() {
+        return new HashSet<>(super.requiredPrograms()) {{
+            add(ExternalPrograms::bash);
+            add(ExternalPrograms::tsx);
+        }};
     }
 
     private ConnectionInfo mkConnectionInfo(CommandLine cmd, BaseScriptRunnerArgs<?> args) {
         val token = ArgUtils.requireFlag(cmd, args.$token, "astra token", "-t", "ASTRA_TOKEN");
         val apiEndpoint = ArgUtils.requireFlag(cmd, args.$apiEndpoint, "API endpoint", "-e", "API_ENDPOINT");
         return new ConnectionInfo(token, apiEndpoint);
-    }
-
-    private Map<ExternalProgramType, String[]> mkCommandOverrides(BaseScriptRunnerArgs<?> args) {
-        val overrides = new HashMap<ExternalProgramType, String[]>();
-
-        for (val programType : ExternalProgramType.values()) {
-            val envVarName = programType.name().toUpperCase() + "_COMMAND";
-
-            Optional.ofNullable(System.getenv(envVarName)).or(() -> Optional.ofNullable(System.getProperty(envVarName))).ifPresent((value) -> {
-                overrides.put(programType, value.split(" "));
-            });
-        }
-
-        for (val override : args.$commandOverrides.entrySet()) {
-            overrides.put(override.getKey(), override.getValue().split(" "));
-        }
-
-        return overrides;
     }
 
     private Path resolveExampleFolder(CommandLine cmd, BaseScriptRunnerArgs<?> args) {
@@ -118,19 +100,6 @@ public abstract class BaseScriptRunnerCtx extends BaseCtx {
         }
 
         throw new ParameterException(cmd, "Neither " + folder + " nor " + nestedFolder + " is the expected examples folder.");
-    }
-
-    protected void verifyRequiredProgramsAvailable(HashSet<Function<BaseScriptRunnerCtx, ExternalProgram>> programs, CommandLine cmd) {
-        programs.add(ExternalPrograms::bash);
-        programs.add(ExternalPrograms::jq);
-        
-        for (val mkProgram : programs) {
-            val program = mkProgram.apply(this);
-
-            if (!program.exists()) {
-                throw new ParameterException(cmd, program.name() + " could not be found. Please install it or set the " + program.envVar() + " environment variable.");
-            }
-        }
     }
 
     protected ClientDriver mkDriverForLanguage(CommandLine cmd, ClientLanguage lang, BaseScriptRunnerArgs<?> args) {

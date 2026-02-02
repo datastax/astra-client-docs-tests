@@ -1,16 +1,17 @@
 package com.dtsx.docs.commands.run;
 
+import com.dtsx.docs.config.ctx.BaseCtx;
 import com.dtsx.docs.config.ctx.BaseScriptRunnerCtx;
-import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.core.runner.Placeholders;
 import com.dtsx.docs.core.runner.drivers.ClientDriver;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import com.dtsx.docs.core.runner.scripts.reporter.DetailedScriptReporter;
 import com.dtsx.docs.core.runner.scripts.reporter.PlainScriptReporter;
 import com.dtsx.docs.core.runner.scripts.reporter.ScriptReporter;
+import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import lombok.Getter;
 import lombok.val;
-import picocli.CommandLine;
+import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.ParameterException;
 
@@ -33,8 +34,16 @@ public class RunCtx extends BaseScriptRunnerCtx {
         this.placeholders = mkPlaceholders(args);
         this.scripts = associateDriversToFiles(mkScriptPaths(args), args);
         this.reporter = mkReporter(args);
+    }
 
-        verifyRequiredProgramsAvailable(cmd);
+    @Override
+    @MustBeInvokedByOverriders
+    protected Set<Function<BaseCtx, ExternalProgram>> requiredPrograms() {
+        return new HashSet<>(super.requiredPrograms()) {{
+            for (val driver : scripts.keySet()) {
+                addAll(driver.requiredPrograms());
+            }
+        }};
     }
 
     private Placeholders mkPlaceholders(RunArgs args) {
@@ -118,15 +127,5 @@ public class RunCtx extends BaseScriptRunnerCtx {
             return new PlainScriptReporter();
         }
         return new DetailedScriptReporter();
-    }
-
-    private void verifyRequiredProgramsAvailable(CommandLine cmd) {
-        val requiredPrograms = new HashSet<Function<BaseScriptRunnerCtx, ExternalProgram>>() {{
-            for (val driver : scripts.keySet()) {
-                addAll(driver.requiredPrograms());
-            }
-        }};
-
-        verifyRequiredProgramsAvailable(requiredPrograms, cmd);
     }
 }

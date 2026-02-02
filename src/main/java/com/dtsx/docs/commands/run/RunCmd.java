@@ -9,7 +9,6 @@ import picocli.CommandLine.Mixin;
 
 @Command(
     name = "run",
-    mixinStandardHelpOptions = true,
     description = "Run script files without testing them."
 )
 public class RunCmd extends BaseCmd<RunCtx> {

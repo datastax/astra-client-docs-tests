@@ -1,5 +1,6 @@
 package com.dtsx.docs.core.runner.drivers.impls;
 
+import com.dtsx.docs.config.ctx.BaseCtx;
 import com.dtsx.docs.config.ctx.BaseScriptRunnerCtx;
 import com.dtsx.docs.core.planner.meta.snapshot.sources.OutputJsonifySourceMeta;
 import com.dtsx.docs.core.runner.ExecutionEnvironment;
@@ -31,7 +32,7 @@ public class JavaDriver extends ClientDriver {
     }
 
     @Override
-    public List<Function<BaseScriptRunnerCtx, ExternalProgram>> requiredPrograms() {
+    public List<Function<BaseCtx, ExternalProgram>> requiredPrograms() {
         return List.of(ExternalPrograms::java);
     }
 
@@ -39,7 +40,7 @@ public class JavaDriver extends ClientDriver {
     public Path setupExecutionEnvironment(BaseScriptRunnerCtx ctx, ExecutionEnvironment execEnv) {
         replaceArtifactPlaceholder(execEnv, "build.gradle");
 
-        val build = ExternalPrograms.custom(ctx).run(execEnv.envDir(), "./gradlew", "build");
+        val build = ExternalPrograms.custom().run(execEnv.envDir(), "./gradlew", "build");
         if (build.notOk()) {
             throw new RunException("Failed to build Java client:\n" + build.output());
         }
@@ -93,11 +94,11 @@ public class JavaDriver extends ClientDriver {
 
     @Override
     public RunResult compileScript(BaseScriptRunnerCtx ctx, ExecutionEnvironment execEnv) {
-        return ExternalPrograms.custom(ctx).run(execEnv.envDir(), "./gradlew", "build");
+        return ExternalPrograms.custom().run(execEnv.envDir(), "./gradlew", "build");
     }
 
     @Override
     public RunResult executeScript(BaseScriptRunnerCtx ctx, ExecutionEnvironment execEnv, Map<String, String> envVars) {
-        return ExternalPrograms.custom(ctx).run(execEnv.envDir(), envVars, "./gradlew", "run", "--quiet");
+        return ExternalPrograms.custom().run(execEnv.envDir(), envVars, "./gradlew", "run", "--quiet");
     }
 }

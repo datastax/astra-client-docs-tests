@@ -1,6 +1,7 @@
 package com.dtsx.docs.commands.test;
 
 import com.dtsx.docs.config.ArgUtils;
+import com.dtsx.docs.config.ctx.BaseCtx;
 import com.dtsx.docs.config.ctx.BaseScriptRunnerCtx;
 import com.dtsx.docs.lib.ExternalPrograms;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
@@ -10,6 +11,7 @@ import com.dtsx.docs.core.runner.tests.VerifyMode;
 import com.dtsx.docs.core.runner.tests.reporter.TestReporter;
 import lombok.Getter;
 import lombok.val;
+import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.ParameterException;
@@ -84,8 +86,18 @@ public class TestCtx extends BaseScriptRunnerCtx {
         this.verifyMode = resolveVerifyMode(args);
 
         this.filter = mkFilter(args.$filters, args.$inverseFilters);
+    }
 
-        verifyRequiredProgramsAvailable(cmd);
+    @Override
+    @MustBeInvokedByOverriders
+    protected Set<Function<BaseCtx, ExternalProgram>> requiredPrograms() {
+        return new HashSet<>(super.requiredPrograms()) {{
+            add(ExternalPrograms::npm);
+
+            for (val driver : drivers.values()) {
+                addAll(driver.requiredPrograms());
+            }
+        }};
     }
 
     private Map<ClientLanguage, ClientDriver> mkDrivers(CommandLine cmd, TestArgs args) {
@@ -119,7 +131,8 @@ public class TestCtx extends BaseScriptRunnerCtx {
     }
 
     private VerifyMode resolveVerifyMode(TestArgs args) {
-        return (args.$dryRun) ? DRY_RUN
+        return (args.$dryRun)
+            ? DRY_RUN
             : args.$verifyMode;
     }
 
@@ -140,18 +153,5 @@ public class TestCtx extends BaseScriptRunnerCtx {
             .filter(s -> !s.isBlank())
             .map((s) -> (Predicate<Path>) (path) -> path.toString().matches(".*" + s + ".*"))
             .reduce(Predicate::or);
-    }
-
-    private void verifyRequiredProgramsAvailable(CommandLine cmd) {
-        val requiredPrograms = new HashSet<Function<BaseScriptRunnerCtx, ExternalProgram>>() {{
-            add(ExternalPrograms::tsx);
-            add(ExternalPrograms::npm);
-
-            for (val driver : drivers.values()) {
-                addAll(driver.requiredPrograms());
-            }
-        }};
-
-        verifyRequiredProgramsAvailable(requiredPrograms, cmd);
     }
 }

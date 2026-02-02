@@ -1,5 +1,6 @@
 package com.dtsx.docs.core.runner.drivers.impls;
 
+import com.dtsx.docs.config.ctx.BaseCtx;
 import com.dtsx.docs.config.ctx.BaseScriptRunnerCtx;
 import com.dtsx.docs.core.planner.meta.snapshot.sources.OutputJsonifySourceMeta;
 import com.dtsx.docs.core.runner.ExecutionEnvironment;
@@ -30,7 +31,7 @@ public class CSharpDriver extends ClientDriver {
     }
 
     @Override
-    public List<Function<BaseScriptRunnerCtx, ExternalProgram>> requiredPrograms() {
+    public List<Function<BaseCtx, ExternalProgram>> requiredPrograms() {
         return List.of(ExternalPrograms::dotnet);
     }
 

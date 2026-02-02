@@ -1,5 +1,6 @@
 package com.dtsx.docs.core.runner.drivers.impls;
 
+import com.dtsx.docs.config.ctx.BaseCtx;
 import com.dtsx.docs.config.ctx.BaseScriptRunnerCtx;
 import com.dtsx.docs.core.planner.meta.snapshot.sources.OutputJsonifySourceMeta;
 import com.dtsx.docs.core.runner.ExecutionEnvironment;
@@ -29,7 +30,7 @@ public class PythonDriver extends ClientDriver {
     }
 
     @Override
-    public List<Function<BaseScriptRunnerCtx, ExternalProgram>> requiredPrograms() {
+    public List<Function<BaseCtx, ExternalProgram>> requiredPrograms() {
         return List.of(ExternalPrograms::python);
     }
 
@@ -44,7 +45,7 @@ public class PythonDriver extends ClientDriver {
 
         replaceArtifactPlaceholder(execEnv, "requirements.txt");
 
-        val install = ExternalPrograms.custom(ctx).run(execEnv.envDir(), ".venv/bin/pip", "install", "-U", "-r", "requirements.txt", artifact());
+        val install = ExternalPrograms.custom().run(execEnv.envDir(), ".venv/bin/pip", "install", "-U", "-r", "requirements.txt", artifact());
         if (install.notOk()) {
             throw new RuntimeException("Failed to install Python dependencies:\n" + install.output());
         }
@@ -92,11 +93,11 @@ public class PythonDriver extends ClientDriver {
 
     @Override
     public RunResult compileScript(BaseScriptRunnerCtx ctx, ExecutionEnvironment execEnv) {
-        return ExternalPrograms.custom(ctx).run(execEnv.envDir(), "./.venv/bin/python", "-m", "mypy", "example.py");
+        return ExternalPrograms.custom().run(execEnv.envDir(), "./.venv/bin/python", "-m", "mypy", "example.py");
     }
 
     @Override
     public RunResult executeScript(BaseScriptRunnerCtx ctx, ExecutionEnvironment execEnv, Map<String, String> envVars) {
-        return ExternalPrograms.custom(ctx).run(execEnv.envDir(), envVars, ".venv/bin/python", execEnv.scriptPath());
+        return ExternalPrograms.custom().run(execEnv.envDir(), envVars, ".venv/bin/python", execEnv.scriptPath());
     }
 }

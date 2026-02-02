@@ -11,7 +11,7 @@ import picocli.CommandLine.Mixin;
 
 @Command(
     name = "test",
-    mixinStandardHelpOptions = true
+    description = "Run script files and verify them."
 )
 public class TestCmd extends BaseCmd<TestCtx> {
     @Mixin @Getter

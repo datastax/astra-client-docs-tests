@@ -1,7 +1,6 @@
 package com.dtsx.docs.config.args;
 
 import com.dtsx.docs.config.ctx.BaseScriptRunnerCtx;
-import com.dtsx.docs.lib.ExternalPrograms.ExternalProgramType;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import picocli.CommandLine.Option;
 
@@ -38,13 +37,6 @@ public abstract class BaseScriptRunnerArgs<Ctx extends BaseScriptRunnerCtx> exte
         defaultValue = "${CLEAN:-false}"
     )
     public boolean $clean;
-
-    @Option(
-        names = { "-C", "--command-override" },
-        description = "Override commands for external programs (e.g., `-Ctsx='npx -y tsx' -Cbash=/usr/bin/bash`).",
-        paramLabel = "PROGRAM=COMMAND"
-    )
-    public Map<ExternalProgramType, String> $commandOverrides = Map.of();
 
     @Option(
         names = { "-b", "--bail" },

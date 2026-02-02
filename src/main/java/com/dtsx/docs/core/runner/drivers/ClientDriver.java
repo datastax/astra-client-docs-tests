@@ -1,5 +1,6 @@
 package com.dtsx.docs.core.runner.drivers;
 
+import com.dtsx.docs.config.ctx.BaseCtx;
 import com.dtsx.docs.config.ctx.BaseScriptRunnerCtx;
 import com.dtsx.docs.core.planner.meta.snapshot.sources.OutputJsonifySourceMeta;
 import com.dtsx.docs.core.runner.ExecutionEnvironment.TestFileModifierFlags;
@@ -61,7 +62,7 @@ public abstract class ClientDriver {
     /// These are checked at startup to ensure they're installed.
     ///
     /// @return list of required {@linkplain com.dtsx.docs.lib.ExternalPrograms external programs}
-    public abstract List<Function<BaseScriptRunnerCtx, ExternalProgram>> requiredPrograms();
+    public abstract List<Function<BaseCtx, ExternalProgram>> requiredPrograms();
 
     /// Sets up the {@linkplain com.dtsx.docs.core.runner.ExecutionEnvironment execution environment} by installing dependencies and preparing the project.
     ///
