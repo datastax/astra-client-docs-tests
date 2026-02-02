@@ -33,7 +33,7 @@ public class OutputJsonifySource extends SnapshotSource {
         jsonAsString = JsonScrubber.scrub(jsonAsString);
 
         if (meta.jq().isPresent()) {
-            jsonAsString = runJq(ctx, meta.jq().get(), jsonAsString);
+            jsonAsString = runJq(ctx, jsonAsString, meta.jq().get());
         }
 
         val processJson = JacksonUtils.parseJson(jsonAsString, List.class);
