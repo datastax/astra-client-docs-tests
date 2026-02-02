@@ -25,16 +25,6 @@ async function validateLastModified(
 }
 
 /**
- * Update last-modified.txt with current timestamp
- */
-async function updateLastModified(snapshotsDir: string): Promise<string> {
-  const timestamp = new Date().toISOString();
-  const lastModifiedPath = path.join(snapshotsDir, 'last-modified.txt');
-  await fs.writeFile(lastModifiedPath, timestamp, 'utf-8');
-  return timestamp;
-}
-
-/**
  * Verify file contents match expected values
  */
 async function verifyFileContents(
@@ -192,9 +182,6 @@ router.post('/', async (req: Request, res: Response) => {
     // Delete all received files
     await Promise.all(receivedFiles.map(f => fs.unlink(f)));
     
-    // Update last-modified timestamp
-    const newLastModified = await updateLastModified(snapshotsDir);
-    
     // Count languages and diff groups
     const languages = new Set<string>();
     for (const file of receivedFiles) {
@@ -211,7 +198,7 @@ router.post('/', async (req: Request, res: Response) => {
     const response: ActionSuccessResponse = {
       success: true,
       message: `Approved ${filename} affecting ${languages.size} language${languages.size === 1 ? '' : 's'}`,
-      lastModified: newLastModified
+      lastModified: new Date().toISOString()
     };
     
     res.json(response);

@@ -147,11 +147,6 @@ router.post('/', async (req: Request, res: Response) => {
     // Delete all received files
     await Promise.all(receivedFiles.map(f => fs.unlink(f)));
     
-    // Update last-modified timestamp
-    const timestamp = new Date().toISOString();
-    const lastModifiedPath = path.join(snapshotsDir, 'last-modified.txt');
-    await fs.writeFile(lastModifiedPath, timestamp, 'utf-8');
-    
     // Count languages
     const languages = new Set<string>();
     for (const file of receivedFiles) {
@@ -168,7 +163,7 @@ router.post('/', async (req: Request, res: Response) => {
     const response: ActionSuccessResponse = {
       success: true,
       message: `Rejected ${filename} affecting ${languages.size} language${languages.size !== 1 ? 's' : ''}`,
-      lastModified: timestamp
+      lastModified: new Date().toISOString()
     };
     
     res.json(response);
