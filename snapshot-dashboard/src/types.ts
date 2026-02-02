@@ -41,6 +41,7 @@ export interface DiffGroup {
   languages: string[];           // Languages with identical content (1+ items), sorted alphabetically
   receivedFiles: string[];       // Paths to received files (1+ items)
   receivedContent: string;       // Common content across all files in group
+  approvedContent: string | null; // Content of approved file (null if doesn't exist)
 }
 
 /**
@@ -67,6 +68,8 @@ export interface TestRootsResponse {
 export interface ApproveRequest {
   approvedFileId: string;        // Stable ID of approved file
   lastModified: string;          // Client's last known timestamp
+  expectedReceivedContent: string;  // Content client expects for received file
+  expectedApprovedContent?: string; // Content client expects for approved file (optional)
 }
 
 /**
@@ -75,6 +78,7 @@ export interface ApproveRequest {
 export interface RejectRequest {
   approvedFileId: string;        // Stable ID of approved file
   lastModified: string;          // Client's last known timestamp
+  expectedReceivedContent: string;  // Content client expects for received file
 }
 
 /**

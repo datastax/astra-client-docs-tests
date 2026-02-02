@@ -127,6 +127,9 @@ async function createSharedDiffGroups(
     return [];
   }
   
+  const approvedPath = path.join(dirPath, 'shared.approved.txt');
+  const approvedContent = await readFileContent(approvedPath);
+  
   const groups = await groupSharedReceivedFiles(receivedFiles);
   const diffGroups: DiffGroup[] = [];
   
@@ -136,7 +139,8 @@ async function createSharedDiffGroups(
       id: `group-${groupIndex}`,
       languages: sortLanguages(group.languages),
       receivedFiles: group.files,
-      receivedContent: group.content
+      receivedContent: group.content,
+      approvedContent
     });
     groupIndex++;
   }
@@ -157,18 +161,22 @@ async function createSharedDiffGroups(
  */
 async function createLanguageDiffGroup(
   language: string,
-  receivedFile: string
+  receivedFile: string,
+  approvedFile: string
 ): Promise<DiffGroup | null> {
   const content = await readFileContent(receivedFile);
   if (content === null) {
     return null;
   }
   
+  const approvedContent = await readFileContent(approvedFile);
+  
   return {
     id: 'group-0',
     languages: [language],
     receivedFiles: [receivedFile],
-    receivedContent: content
+    receivedContent: content,
+    approvedContent
   };
 }
 
@@ -209,7 +217,7 @@ async function createLanguageApprovedFile(
   const receivedPath = path.join(dirPath, `${language}.received.txt`);
   
   const fileContent = await readFileContent(approvedPath);
-  const diffGroup = await createLanguageDiffGroup(language, receivedPath);
+  const diffGroup = await createLanguageDiffGroup(language, receivedPath, approvedPath);
   
   if (diffGroup === null) {
     return null; // No changes for this language

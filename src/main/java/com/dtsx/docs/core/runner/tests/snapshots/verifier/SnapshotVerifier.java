@@ -8,7 +8,9 @@ import com.dtsx.docs.core.runner.drivers.ClientDriver;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import com.dtsx.docs.core.runner.tests.results.TestOutcome;
 import com.dtsx.docs.core.runner.tests.results.TestOutcome.FailedToVerify;
+import com.dtsx.docs.core.runner.tests.snapshots.LastModifiedUpdater;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.SnapshotSource;
+import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -19,16 +21,21 @@ import org.approvaltests.scrubbers.GuidScrubber;
 import org.approvaltests.scrubbers.MultiScrubber;
 import org.approvaltests.scrubbers.RegExScrubber;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
 import static com.dtsx.docs.core.runner.tests.VerifyMode.DRY_RUN;
+import static com.dtsx.docs.core.runner.tests.VerifyMode.NORMAL;
 
 @RequiredArgsConstructor
 public class SnapshotVerifier {
+    private static final String LAST_MODIFIED_FILE = "last-modified.txt";
+
     /// Scrubber to clean dynamic data from snapshots before verification, replacing them with incrementing placeholders.
     ///
     /// Currently, includes:
@@ -89,6 +96,12 @@ public class SnapshotVerifier {
             val expectedPath = Optional.of(namer.getApprovedFile(".txt").toPath())
                 .filter(Files::exists);
 
+            // updates last-modified.txt when a new *.received.txt file is created
+            // allows the reviewing dashboard to automatically detect changes in the snapshots
+            if (ctx.verifyMode() == NORMAL) {
+                updateLastModified(ctx.snapshotsFolder());
+            }
+
             return new FailedToVerify(expectedPath).alsoLog(testRoot, driver.language(), snapshot);
         }
     }
@@ -102,6 +115,15 @@ public class SnapshotVerifier {
 
     private ExampleResultNamer mkNamer(ClientLanguage language, TestRoot testRoot) {
         return new ExampleResultNamer(ctx, language, testRoot, shareConfig);
+    }
+
+    private static void updateLastModified(Path snapshotsFolder) {
+        try {
+            val lastModifiedPath = snapshotsFolder.resolve(LAST_MODIFIED_FILE);
+            Files.writeString(lastModifiedPath, Instant.now().toString());
+        } catch (IOException e) {
+            CliLogger.exception("Failed to update " + LAST_MODIFIED_FILE + " in snapshots folder '" + snapshotsFolder + "'", e);
+        }
     }
 
     public static class $DateScrubber extends RegExScrubber {

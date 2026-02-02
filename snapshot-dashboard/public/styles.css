@@ -629,7 +629,7 @@ kbd {
 }
 
 .hold-spinner.green .hold-spinner-progress {
-  stroke: #4ec9b0; /* light green */
+  stroke: #2e8a73; /* darker green */
 }
 
 /* Red variant for reject */
@@ -638,6 +638,93 @@ kbd {
 }
 
 .hold-spinner.red .hold-spinner-progress {
-  stroke: #f48771; /* light red */
+  stroke: #c55a4a; /* darker red */
 }
 
+
+
+/* Help Button */
+.sidebar {
+  position: relative;
+}
+
+.help-btn {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  color: var(--color-success);
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.help-btn:hover {
+  background-color: var(--color-bg);
+  border-color: var(--color-success);
+  transform: scale(1.05);
+}
+
+.help-btn:active {
+  transform: scale(0.95);
+}
+
+/* Help Modal Content */
+.help-modal-content {
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.help-modal-content h2 {
+  margin-top: 0;
+  color: var(--color-success);
+}
+
+.help-section {
+  margin: 24px 0;
+  text-align: left;
+}
+
+.help-section h3 {
+  color: var(--color-text);
+  font-size: 16px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 8px;
+}
+
+.help-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  color: var(--color-text);
+}
+
+.help-item kbd {
+  flex-shrink: 0;
+}
+
+.help-item span:last-child {
+  flex: 1;
+}
+
+.help-note {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-style: italic;
+}
+
+.help-modal-content .btn {
+  margin-top: 24px;
+  width: 100%;
+}

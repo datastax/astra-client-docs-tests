@@ -42,6 +42,9 @@
         <div id="diff-groups-list" class="diff-groups-list">
           <!-- Populated by JavaScript -->
         </div>
+        <button id="help-btn" class="help-btn" title="Keyboard Shortcuts (?)">
+          <span>?</span>
+        </button>
       </aside>
 
       <!-- Main View -->
@@ -116,6 +119,63 @@
         <h2>❌ Error</h2>
         <p id="error-message"></p>
         <button id="error-close-btn" class="btn btn-primary">Close</button>
+      </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="help-modal" class="modal" style="display: none;">
+      <div class="modal-content help-modal-content">
+        <h2>⌨️ Keyboard Shortcuts</h2>
+        <div class="help-section">
+          <h3>Navigation</h3>
+          <div class="help-item">
+            <kbd>←</kbd> <kbd>→</kbd>
+            <span>Navigate between files</span>
+          </div>
+          <div class="help-item">
+            <kbd>↑</kbd> <kbd>↓</kbd>
+            <span>Navigate between diff groups</span>
+          </div>
+          <div class="help-item">
+            <kbd>0</kbd>-<kbd>9</kbd>
+            <span>Jump to specific diff group</span>
+          </div>
+        </div>
+        <div class="help-section">
+          <h3>Actions</h3>
+          <div class="help-item">
+            <kbd>a</kbd> <span class="help-note">(hold 0.5s)</span>
+            <span>Approve current file</span>
+          </div>
+          <div class="help-item">
+            <kbd>Shift</kbd>+<kbd>A</kbd>
+            <span>Approve immediately (bypass hold)</span>
+          </div>
+          <div class="help-item">
+            <kbd>r</kbd> <span class="help-note">(hold 0.5s)</span>
+            <span>Reject current file</span>
+          </div>
+          <div class="help-item">
+            <kbd>Shift</kbd>+<kbd>R</kbd>
+            <span>Reject immediately (bypass hold)</span>
+          </div>
+        </div>
+        <div class="help-section">
+          <h3>View Options</h3>
+          <div class="help-item">
+            <kbd>v</kbd>
+            <span>Toggle raw/unified view</span>
+          </div>
+          <div class="help-item">
+            <kbd>w</kbd>
+            <span>Toggle whitespace visibility</span>
+          </div>
+          <div class="help-item">
+            <kbd>?</kbd>
+            <span>Show this help</span>
+          </div>
+        </div>
+        <button id="help-close-btn" class="btn btn-primary">Close</button>
       </div>
     </div>
   </div>

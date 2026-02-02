@@ -78,7 +78,9 @@ Open your browser to: `http://localhost:3000`
 | `↓` | Next diff group |
 | `0-9` | Select diff group by number |
 | `a` (hold 0.5s) | Approve current file (all diff groups) - shows green progress spinner |
+| `Shift+A` | Approve immediately (bypasses hold-to-confirm) |
 | `r` (hold 0.5s) | Reject current file (all diff groups) - shows red progress spinner |
+| `Shift+R` | Reject immediately (bypasses hold-to-confirm) |
 | `v` | Toggle raw view |
 | `w` | Toggle whitespace in diff |
 | `F5` / `Cmd+R` / `Ctrl+R` | Refresh page |

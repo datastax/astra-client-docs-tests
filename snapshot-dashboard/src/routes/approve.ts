@@ -35,6 +35,50 @@ async function updateLastModified(snapshotsDir: string): Promise<string> {
 }
 
 /**
+ * Verify file contents match expected values
+ */
+async function verifyFileContents(
+  receivedFiles: string[],
+  approvedPath: string,
+  expectedReceivedContent: string,
+  expectedApprovedContent?: string
+): Promise<{ valid: boolean; reason?: string }> {
+  // Read and compare received file content
+  const actualReceivedContent = await fs.readFile(receivedFiles[0], 'utf-8');
+  
+  if (actualReceivedContent !== expectedReceivedContent) {
+    return {
+      valid: false,
+      reason: `Received file has been modified externally (${actualReceivedContent.length} bytes vs expected ${expectedReceivedContent.length} bytes). Please refresh.`
+    };
+  }
+  
+  // If approved file content was provided, verify it too
+  if (expectedApprovedContent !== undefined) {
+    try {
+      const actualApprovedContent = await fs.readFile(approvedPath, 'utf-8');
+      
+      if (actualApprovedContent !== expectedApprovedContent) {
+        return {
+          valid: false,
+          reason: `Approved file has been modified externally (${actualApprovedContent.length} bytes vs expected ${expectedApprovedContent.length} bytes). Please refresh.`
+        };
+      }
+    } catch (error) {
+      // Approved file doesn't exist - this is OK for new files
+      if (expectedApprovedContent !== null) {
+        return {
+          valid: false,
+          reason: 'Approved file was deleted. Please refresh.'
+        };
+      }
+    }
+  }
+  
+  return { valid: true };
+}
+
+/**
  * Parse approved file ID to extract filename and root name
  */
 function parseApprovedFileId(id: string): { filename: string; rootName: string } {
@@ -82,13 +126,18 @@ async function findReceivedFiles(
  */
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const { approvedFileId, lastModified: clientLastModified } = req.body as ApproveRequest;
+    const { 
+      approvedFileId, 
+      lastModified: clientLastModified,
+      expectedReceivedContent,
+      expectedApprovedContent
+    } = req.body as ApproveRequest;
     const snapshotsDir = process.env.SNAPSHOTS_DIR!;
     
-    if (!approvedFileId || !clientLastModified) {
+    if (!approvedFileId || !clientLastModified || !expectedReceivedContent) {
       return res.status(400).json({
         error: 'INVALID_REQUEST',
-        message: 'Missing required fields: approvedFileId, lastModified'
+        message: 'Missing required fields: approvedFileId, lastModified, expectedReceivedContent'
       });
     }
     
@@ -115,6 +164,23 @@ router.post('/', async (req: Request, res: Response) => {
         error: 'NOT_FOUND',
         message: `No received files found for ${approvedFileId}`
       });
+    }
+    
+    // Verify file contents match expected values
+    const contentVerification = await verifyFileContents(
+      receivedFiles,
+      approvedPath,
+      expectedReceivedContent,
+      expectedApprovedContent
+    );
+    
+    if (!contentVerification.valid) {
+      const response: StaleDataErrorResponse = {
+        error: 'STALE_DATA',
+        message: contentVerification.reason!,
+        currentLastModified: validation.currentLastModified
+      };
+      return res.status(409).json(response);
     }
     
     // Read content from first received file (they should all be identical for shared files)

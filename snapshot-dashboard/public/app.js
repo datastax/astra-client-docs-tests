@@ -33,7 +33,10 @@ const elements = {
   staleModal: document.getElementById('stale-modal'),
   errorModal: document.getElementById('error-modal'),
   errorMessage: document.getElementById('error-message'),
-  errorCloseBtn: document.getElementById('error-close-btn')
+  errorCloseBtn: document.getElementById('error-close-btn'),
+  helpBtn: document.getElementById('help-btn'),
+  helpModal: document.getElementById('help-modal'),
+  helpCloseBtn: document.getElementById('help-close-btn')
 };
 
 /**
@@ -419,6 +422,7 @@ function toggleWhitespace() {
  */
 async function approveCurrentFile() {
   const approvedFile = getCurrentApprovedFile();
+  const diffGroup = getCurrentDiffGroup();
   
   // Disable buttons during operation
   elements.approveBtn.disabled = true;
@@ -430,7 +434,9 @@ async function approveCurrentFile() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         approvedFileId: approvedFile.id,
-        lastModified: state.lastModified
+        lastModified: state.lastModified,
+        expectedReceivedContent: diffGroup.receivedContent,
+        expectedApprovedContent: diffGroup.approvedContent
       })
     });
     
@@ -464,6 +470,7 @@ async function approveCurrentFile() {
  */
 async function rejectCurrentFile() {
   const approvedFile = getCurrentApprovedFile();
+  const diffGroup = getCurrentDiffGroup();
   
   // Disable buttons during operation
   elements.approveBtn.disabled = true;
@@ -475,7 +482,8 @@ async function rejectCurrentFile() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         approvedFileId: approvedFile.id,
-        lastModified: state.lastModified
+        lastModified: state.lastModified,
+        expectedReceivedContent: diffGroup.receivedContent
       })
     });
     
@@ -645,11 +653,11 @@ function setupEventListeners() {
       return;
     }
     
-    // For letter keys, ignore if ANY modifier key is pressed
+    // For letter keys, ignore if Ctrl/Cmd/Alt is pressed (but allow Shift for Shift+A/R)
     // This prevents conflicts with browser shortcuts like Cmd+R, Ctrl+W, etc.
-    const hasModifier = e.ctrlKey || e.metaKey || e.altKey || e.shiftKey;
+    const hasDangerousModifier = e.ctrlKey || e.metaKey || e.altKey;
     
-    if (hasModifier && /^[a-z]$/i.test(e.key)) {
+    if (hasDangerousModifier && /^[a-z]$/i.test(e.key)) {
       return; // Let browser handle modified letter keys (Cmd+R, Ctrl+W, etc.)
     }
     
@@ -677,12 +685,22 @@ function setupEventListeners() {
         navigateNextGroup();
         break;
       case 'a':
+      case 'A':
         e.preventDefault();
-        startHoldConfirm('a', approveCurrentFile, 'green');
+        if (e.shiftKey) {
+          approveCurrentFile(); // Shift+A bypasses hold-to-confirm
+        } else {
+          startHoldConfirm('a', approveCurrentFile, 'green');
+        }
         break;
       case 'r':
+      case 'R':
         e.preventDefault();
-        startHoldConfirm('r', rejectCurrentFile, 'red');
+        if (e.shiftKey) {
+          rejectCurrentFile(); // Shift+R bypasses hold-to-confirm
+        } else {
+          startHoldConfirm('r', rejectCurrentFile, 'red');
+        }
         break;
       case 'v':
         e.preventDefault();
@@ -691,6 +709,10 @@ function setupEventListeners() {
       case 'w':
         e.preventDefault();
         toggleWhitespace();
+        break;
+      case '?':
+        e.preventDefault();
+        showHelp();
         break;
       case '0':
       case '1':
@@ -722,6 +744,15 @@ function setupEventListeners() {
   elements.toggleWhitespaceBtn.addEventListener('click', toggleWhitespace);
   elements.refreshBtn.addEventListener('click', () => window.location.reload());
   elements.errorCloseBtn.addEventListener('click', hideError);
+  
+  // Help modal
+  elements.helpBtn.addEventListener('click', showHelp);
+  elements.helpCloseBtn.addEventListener('click', hideHelp);
+  elements.helpModal.addEventListener('click', (e) => {
+    if (e.target === elements.helpModal) {
+      hideHelp();
+    }
+  });
 }
 
 /**
@@ -787,6 +818,20 @@ function showError(message) {
  */
 function hideError() {
   elements.errorModal.style.display = 'none';
+}
+
+/**
+ * Show help modal
+ */
+function showHelp() {
+  elements.helpModal.style.display = 'flex';
+}
+
+/**
+ * Hide help modal
+ */
+function hideHelp() {
+  elements.helpModal.style.display = 'none';
 }
 
 // Initialize on page load

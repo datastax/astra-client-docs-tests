@@ -1,4 +1,0 @@
----stdout---
-Matches '^(?:\d+|\{"status":\{"count":\d+}})$'
----stderr---
-Matches '^$'

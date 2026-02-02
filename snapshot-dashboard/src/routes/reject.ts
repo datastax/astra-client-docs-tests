@@ -35,6 +35,25 @@ async function updateLastModified(snapshotsDir: string): Promise<string> {
 }
 
 /**
+ * Verify received file content matches expected value
+ */
+async function verifyReceivedContent(
+  receivedFiles: string[],
+  expectedContent: string
+): Promise<{ valid: boolean; reason?: string }> {
+  const actualContent = await fs.readFile(receivedFiles[0], 'utf-8');
+  
+  if (actualContent !== expectedContent) {
+    return {
+      valid: false,
+      reason: `Received file has been modified externally (${actualContent.length} bytes vs expected ${expectedContent.length} bytes). Please refresh.`
+    };
+  }
+  
+  return { valid: true };
+}
+
+/**
  * Parse approved file ID to extract filename and root name
  */
 function parseApprovedFileId(id: string): { filename: string; rootName: string } {
@@ -82,13 +101,17 @@ async function findReceivedFiles(
  */
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const { approvedFileId, lastModified: clientLastModified } = req.body as RejectRequest;
+    const { 
+      approvedFileId, 
+      lastModified: clientLastModified,
+      expectedReceivedContent
+    } = req.body as RejectRequest;
     const snapshotsDir = process.env.SNAPSHOTS_DIR!;
     
-    if (!approvedFileId || !clientLastModified) {
+    if (!approvedFileId || !clientLastModified || !expectedReceivedContent) {
       return res.status(400).json({
         error: 'INVALID_REQUEST',
-        message: 'Missing required fields: approvedFileId, lastModified'
+        message: 'Missing required fields: approvedFileId, lastModified, expectedReceivedContent'
       });
     }
     
@@ -114,6 +137,21 @@ router.post('/', async (req: Request, res: Response) => {
         error: 'NOT_FOUND',
         message: `No received files found for ${approvedFileId}`
       });
+    }
+    
+    // Verify received file content matches expected value
+    const contentVerification = await verifyReceivedContent(
+      receivedFiles,
+      expectedReceivedContent
+    );
+    
+    if (!contentVerification.valid) {
+      const response: StaleDataErrorResponse = {
+        error: 'STALE_DATA',
+        message: contentVerification.reason!,
+        currentLastModified: validation.currentLastModified
+      };
+      return res.status(409).json(response);
     }
     
     // Delete all received files
