@@ -1,5 +1,6 @@
 package com.dtsx.docs;
 
+import com.dtsx.docs.commands.review.ReviewCmd;
 import com.dtsx.docs.commands.run.RunCmd;
 import com.dtsx.docs.commands.test.TestCmd;
 import com.dtsx.docs.lib.CliLogger;
@@ -18,6 +19,7 @@ import static com.dtsx.docs.lib.ColorUtils.ACCENT_COLOR;
     subcommands = {
         TestCmd.class,
         RunCmd.class,
+        ReviewCmd.class,
     }
 )
 public class HelperCli {

@@ -1,0 +1,166 @@
+package com.dtsx.docs.commands.review;
+
+import com.dtsx.docs.commands.BaseCmd;
+import com.dtsx.docs.core.runner.RunException;
+import com.dtsx.docs.lib.CliLogger;
+import lombok.Getter;
+import lombok.val;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
+
+import java.awt.*;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.URI;
+import java.nio.file.Files;
+import java.util.concurrent.TimeUnit;
+
+@Command(
+    name = "review",
+    description = "Start the snapshot review dashboard",
+    mixinStandardHelpOptions = true
+)
+public class ReviewCmd extends BaseCmd<ReviewCtx> {
+    @Mixin @Getter
+    private ReviewArgs $args;
+
+    @Override
+    public int run() {
+        CliLogger.println(false, "@|bold Starting snapshot review dashboard...|@");
+        CliLogger.println(false);
+
+        try {
+            ensureDependenciesInstalled();
+            startDashboard();
+            return 0;
+        } catch (Exception e) {
+            CliLogger.exception("Failed to start dashboard: " + e.getMessage(), e);
+            return 1;
+        }
+    }
+
+    private void ensureDependenciesInstalled() {
+        val nodeModules = ctx.dashboardFolder().resolve("node_modules");
+        
+        if (!Files.exists(nodeModules)) {
+            CliLogger.println(false, "@|bold Installing dashboard dependencies...|@");
+
+            CliLogger.loading("Installing", (_) -> {
+                val installProcess = new ProcessBuilder()
+                    .command("npm", "install")
+                    .directory(ctx.dashboardFolder().toFile())
+                    .redirectErrorStream(true)
+                    .start();
+
+                try (val reader = new BufferedReader(new InputStreamReader(installProcess.getInputStream()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        CliLogger.println(false, line);
+                    }
+                }
+
+                val exitCode = installProcess.waitFor();
+                if (exitCode != 0) {
+                    throw new RunException("npm install failed with exit code: " + exitCode);
+                }
+                return null;
+            });
+            
+            CliLogger.println(false);
+        }
+    }
+
+    private void startDashboard() throws Exception {
+        val processBuilder = new ProcessBuilder()
+            .command("npm", "run", "dev")
+            .directory(ctx.dashboardFolder().toFile());
+        
+        val env = processBuilder.environment();
+        env.put("SNAPSHOTS_DIR", ctx.snapshotsFolder().toAbsolutePath().toString());
+        env.put("PORT", String.valueOf(ctx.port()));
+        
+        if (ctx.detached()) {
+            startDetached(processBuilder);
+        } else {
+            startAttached(processBuilder);
+        }
+    }
+
+    private void startDetached(ProcessBuilder processBuilder) throws Exception {
+        val logFile = ctx.tmpFolder().resolve("dashboard.log").toFile();
+
+        processBuilder
+            .redirectOutput(ProcessBuilder.Redirect.appendTo(logFile))
+            .redirectError(ProcessBuilder.Redirect.appendTo(logFile));
+
+        val dashboardProcess = processBuilder.start();
+        
+        Thread.sleep(2000);
+        
+        if (!dashboardProcess.isAlive()) {
+            throw new Exception("Dashboard process failed to start");
+        }
+        
+        val url = "http://localhost:" + ctx.port();
+        
+        CliLogger.println(false, "@|bold Dashboard started in background|@");
+        CliLogger.println(false, "@!-!@ URL: @!@|cyan,underline " + url + "|@!@");
+        CliLogger.println(false, "@!-!@ PID: @!" + dashboardProcess.pid() + "!@");
+        CliLogger.println(false, "@!-!@ Logs: @!" + logFile.getAbsolutePath() + "!@");
+        CliLogger.println(false);
+        CliLogger.println(false, "@|bold To stop:|@");
+        CliLogger.println(false, "@!$!@ kill " + dashboardProcess.pid());
+        
+        if (ctx.openBrowser()) {
+            openBrowser(url);
+        }
+    }
+
+    private void startAttached(ProcessBuilder processBuilder) throws Exception {
+        processBuilder.inheritIO();
+
+        val dashboardProcess = processBuilder.start();
+        
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            if (dashboardProcess.isAlive()) {
+                CliLogger.println(false);
+                CliLogger.println(false, "@|bold Shutting down dashboard...|@");
+                dashboardProcess.destroy();
+                try {
+                    dashboardProcess.waitFor(5, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    dashboardProcess.destroyForcibly();
+                }
+            }
+        }));
+        
+        Thread.sleep(2000);
+        
+        val url = "http://localhost:" + ctx.port();
+        
+        CliLogger.println(false, "@|bold Dashboard running|@");
+        CliLogger.println(false, "@!-!@ URL: @!@|underline " + url + "|@!@");
+        CliLogger.println(false, "@!-!@ Snapshots: @!" + ctx.snapshotsFolder().toAbsolutePath() + "!@");
+        CliLogger.println(false);
+        CliLogger.println(false, "@|bold Press Ctrl+C to stop|@");
+        CliLogger.println(false);
+        
+        if (ctx.openBrowser()) {
+            openBrowser(url);
+        }
+        
+        val exitCode = dashboardProcess.waitFor();
+        
+        if (exitCode != 0 && exitCode != 143) {
+            throw new Exception("Dashboard process exited with code: " + exitCode);
+        }
+    }
+
+    private void openBrowser(String url) {
+        try {
+            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                Desktop.getDesktop().browse(new URI(url));
+            }
+        } catch (Exception _) {}
+    }
+}

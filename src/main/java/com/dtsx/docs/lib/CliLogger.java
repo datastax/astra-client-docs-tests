@@ -4,7 +4,9 @@ import com.dtsx.docs.config.ctx.BaseCtx;
 import com.dtsx.docs.lib.LoadingSpinner.LoadingSpinnerControls;
 import lombok.Cleanup;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.val;
+import org.apache.commons.lang3.function.FailableFunction;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -98,7 +100,8 @@ public class CliLogger {
     /// @param initialMsg the initial spinner message (supports color formatting)
     /// @param supplier function that performs work and optionally updates the message
     /// @return the result from the supplier
-    public static <T> T loading(@NonNull String initialMsg, Function<Consumer<String>, T> supplier) {
+    @SneakyThrows
+    public static <T> T loading(@NonNull String initialMsg, FailableFunction<Consumer<String>, T, Throwable> supplier) {
         val formattedMsg = ColorUtils.format(initialMsg);
 
         val controls = (spinnerEnabled)
