@@ -26,12 +26,12 @@ public class MetaYmlParser {
         }
 
         if (ctx.verifyMode() == COMPILE_ONLY) {
-            return new CompilesTestMeta(rep); // Dependent on the invariant that all snapshot tests can be run as compilation tests
+            return new CompilesTestMeta(ctx, rep); // Dependent on the invariant that all snapshot tests can be run as compilation tests
         }
 
         return switch (rep) {
             case SnapshotTestMetaRep m -> new SnapshotTestMeta(ctx, ymlFile.getParent(), m);
-            case CompilesTestMetaRep m -> new CompilesTestMeta(m);
+            case CompilesTestMetaRep m -> new CompilesTestMeta(ctx, m);
             default -> throw new RuntimeException(); // unreachable
         };
     }

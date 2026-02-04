@@ -24,10 +24,10 @@ public interface BaseMetaYml {
 
         record TestBlock(
             @NonNull TestType type,
-            @NonNull SkipConfig skipConfig
+            @NonNull Optional<Object> skipConfig
         ) {
             public static class SkipConfig extends PerLanguageToggle {
-                protected SkipConfig(Map<ClientLanguage, Boolean> languages) {
+                public SkipConfig(Map<ClientLanguage, Boolean> languages) {
                     super(languages);
                 }
 

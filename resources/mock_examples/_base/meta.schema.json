@@ -1,5 +1,30 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "clientLanguage": {
+      "type": "string",
+      "enum": ["JAVA", "PYTHON", "TYPESCRIPT", "CSHARP", "BASH"],
+      "description": "Supported client languages"
+    },
+    "perLanguageToggle": {
+      "oneOf": [
+        {
+          "type": "boolean",
+          "description": "Apply the same boolean value to all languages"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^(JAVA|PYTHON|TYPESCRIPT|CSHARP|BASH)$": {
+              "type": "boolean"
+            }
+          },
+          "description": "Per-language boolean configuration"
+        }
+      ]
+    }
+  },
   "type": "object",
   "required": ["$schema", "test"],
   "properties": {
@@ -17,9 +42,9 @@
           "enum": ["snapshot", "compiles"],
           "description": "The type of test to run"
         },
-        "skip": {
-          "type": "boolean",
-          "description": "Whether to skip this test"
+        "skipConfig": {
+          "$ref": "#/$defs/perLanguageToggle",
+          "description": "Whether to skip this test (boolean for all languages, or per-language object)"
         }
       },
       "additionalProperties": false
@@ -40,8 +65,8 @@
       "required": ["sources"],
       "properties": {
         "share": {
-          "type": "boolean",
-          "description": "Whether to share snapshots across languages"
+          "$ref": "#/$defs/perLanguageToggle",
+          "description": "Whether to share snapshots across languages (boolean for all languages, or per-language object)"
         },
         "sources": {
           "type": "object",
