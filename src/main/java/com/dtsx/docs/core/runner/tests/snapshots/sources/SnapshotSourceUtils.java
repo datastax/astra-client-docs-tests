@@ -59,20 +59,15 @@ public class SnapshotSourceUtils {
 
         return switch (obj) {
             case Map<?, ?> map -> {
-                yield map.entrySet().stream()
-                    .sorted(Comparator.comparing(e -> calcSortValue(e.getKey())))
-                    .collect(
-                        Collectors.toMap(
-                            Map.Entry::getKey,
-                            e -> mkJsonDeterministic(e.getValue()),
-                            (e1, _) -> e1,
-                            LinkedHashMap::new
-                        )
-                    );
+                var result = new LinkedHashMap<>();
+                map.entrySet().stream()
+                    .sorted(Comparator.comparing(e -> calcSortValue(e.getKey()), Comparator.nullsFirst(Integer::compareTo)))
+                    .forEach(e -> result.put(e.getKey(), mkJsonDeterministic(e.getValue())));
+                yield result;
             }
             case Collection<?> coll -> {
                 yield coll.stream()
-                    .sorted(Comparator.comparing(SnapshotSourceUtils::calcSortValue))
+                    .sorted(Comparator.comparing(SnapshotSourceUtils::calcSortValue, Comparator.nullsFirst(Integer::compareTo)))
                     .map(SnapshotSourceUtils::mkJsonDeterministic)
                     .toList();
             }
