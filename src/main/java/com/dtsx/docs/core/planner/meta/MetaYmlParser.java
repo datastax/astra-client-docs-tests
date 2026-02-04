@@ -1,14 +1,13 @@
 package com.dtsx.docs.core.planner.meta;
 
+import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.core.planner.PlanException;
 import com.dtsx.docs.core.planner.meta.compiles.CompilesTestMeta;
-import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMeta;
 import com.dtsx.docs.core.planner.meta.compiles.CompilesTestMetaRep;
+import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMeta;
 import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaRep;
-import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.lib.JacksonUtils;
 import lombok.val;
-import org.jetbrains.annotations.Nullable;
 import tools.jackson.core.JacksonException;
 
 import java.nio.file.Files;
@@ -17,7 +16,7 @@ import java.nio.file.Path;
 import static com.dtsx.docs.core.runner.tests.VerifyMode.COMPILE_ONLY;
 
 public class MetaYmlParser {
-    public static @Nullable BaseMetaYml parseMetaYml(TestCtx ctx, Path ymlFile) {
+    public static BaseMetaYml parseMetaYml(TestCtx ctx, Path ymlFile) {
         val rep = parseRep(ymlFile);
 
         validateSchemaPath(rep, ymlFile);
@@ -26,18 +25,14 @@ public class MetaYmlParser {
             throw new PlanException("'" + ymlFile + "' was parsed as a '" + rep.expectTestType() + "' test descriptor, but was actually a '" + rep.test().type() + "' test descriptor");
         }
 
-        if (rep.test().skip().orElse(false)) {
-            return null;
-        }
-
         if (ctx.verifyMode() == COMPILE_ONLY) {
-            return new CompilesTestMeta(); // Dependent on the invariant that all snapshot tests can be run as compilation tests
+            return new CompilesTestMeta(rep); // Dependent on the invariant that all snapshot tests can be run as compilation tests
         }
 
         return switch (rep) {
             case SnapshotTestMetaRep m -> new SnapshotTestMeta(ctx, ymlFile.getParent(), m);
-            case CompilesTestMetaRep _ -> new CompilesTestMeta();
-            default ->  null; // unreachable
+            case CompilesTestMetaRep m -> new CompilesTestMeta(m);
+            default -> throw new RuntimeException(); // unreachable
         };
     }
 

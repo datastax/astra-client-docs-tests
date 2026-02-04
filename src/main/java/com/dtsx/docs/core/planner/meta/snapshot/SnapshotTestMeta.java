@@ -6,6 +6,7 @@ import com.dtsx.docs.core.planner.fixtures.JSFixture;
 import com.dtsx.docs.core.planner.fixtures.JSFixtureImpl;
 import com.dtsx.docs.core.planner.fixtures.NoopFixture;
 import com.dtsx.docs.core.planner.meta.BaseMetaYml;
+import com.dtsx.docs.core.planner.meta.BaseMetaYml.BaseMetaYmlRep.TestBlock.SkipConfig;
 import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaRep.FixturesConfig;
 import com.dtsx.docs.core.planner.meta.snapshot.sources.SnapshotSourcesParser;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.SnapshotSource;
@@ -23,16 +24,18 @@ import static com.dtsx.docs.lib.Constants.FIXTURES_DIR;
 
 @Getter
 public final class SnapshotTestMeta implements BaseMetaYml {
+    private final SkipConfig skipConfig;
     private final JSFixture baseFixture;
     private final JSFixture testFixture;
     private final TreeSet<SnapshotSource> snapshotSources;
     private final SnapshotsShareConfig shareConfig;
 
     public SnapshotTestMeta(TestCtx ctx, Path testRoot, SnapshotTestMetaRep meta) {
+        this.skipConfig = meta.test().skipConfig();
         this.baseFixture = resolveBaseFixture(ctx, meta.fixtures().flatMap(FixturesConfig::base));
         this.testFixture = resolveTestFixture(ctx, testRoot);
         this.snapshotSources = SnapshotSourcesParser.parseSources(meta.snapshots());
-        this.shareConfig = SnapshotsShareConfig.parse(ctx, meta.snapshots().share());
+        this.shareConfig = SnapshotsShareConfig.parse(SnapshotsShareConfig::new, ctx, meta.snapshots().share());
     }
 
     /// Resolves a base fixture from the `_fixtures/` directory.

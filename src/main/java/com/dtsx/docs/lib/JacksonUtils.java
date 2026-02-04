@@ -70,11 +70,11 @@ public class JacksonUtils {
     }
 
     @SneakyThrows
-    public static <T> T convertValue(Object fromValue, TypeReference<T> toValueType) {
+    public static <T> T convertValue(Object fromValue, TypeReference<T> ref) {
         try {
-            return JSON.convertValue(fromValue, toValueType);
+            return JSON.convertValue(fromValue, ref);
         } catch (Exception e) {
-            throw new RunException("Failed to convert value to " + toValueType.getType().getTypeName() + ": " + e.getMessage() + "\nValue:\n" + printJson(fromValue), e);
+            throw new RunException("Failed to convert value to " + ref.getType().getTypeName() + ": " + e.getMessage() + "\nValue:\n" + printJson(fromValue), e);
         }
     }
 

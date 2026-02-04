@@ -2,6 +2,7 @@ package com.dtsx.docs.core.planner;
 
 import com.dtsx.docs.core.planner.TestPlan.Builder;
 import com.dtsx.docs.core.planner.fixtures.JSFixture;
+import com.dtsx.docs.core.planner.meta.BaseMetaYml.BaseMetaYmlRep.TestBlock.SkipConfig;
 import com.dtsx.docs.core.planner.meta.MetaYmlParser;
 import com.dtsx.docs.core.planner.meta.compiles.CompilesTestMeta;
 import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMeta;
@@ -138,11 +139,7 @@ public class TestPlanBuilder {
     private static Optional<Pair<JSFixture, TestRoot>> mkTestRoot(TestCtx ctx, Path rootPath) {
         val meta = MetaYmlParser.parseMetaYml(ctx, rootPath.resolve(META_FILE));
 
-        if (meta == null) {
-            return Optional.empty();
-        }
-
-        val filesToTest = findFilesToTestInRoot(rootPath, ctx);
+        val filesToTest = findFilesToTestInRoot(rootPath, ctx, meta.skipConfig());
 
         if (filesToTest.isEmpty()) {
             return Optional.empty();
@@ -151,7 +148,7 @@ public class TestPlanBuilder {
         val strategy = switch (meta) {
             case SnapshotTestMeta m -> new SnapshotTestStrategy(ctx, m);
             case CompilesTestMeta _ -> new CompilesTestStrategy(ctx);
-            default ->  null; // unreachable
+            default -> throw new RuntimeException(); // unreachable
         };
 
         val testMetadata = new TestRoot(
@@ -176,13 +173,14 @@ public class TestPlanBuilder {
     ///   java/
     ///     src/main/java/
     ///       Example.java   <- found for Java (example.java at any depth)
-    /// ```
+    ///```
     ///
-    /// @param root the test root directory to search
-    /// @param ctx the verifier context containing language configuration
+    /// @param root       the test root directory to search
+    /// @param ctx        the verifier context containing language configuration
+    /// @param skipConfig
     /// @return map of client languages to their example file paths
     /// @throws PlanException if traversal fails
-    private static TreeMap<ClientLanguage, Set<Path>> findFilesToTestInRoot(Path root, TestCtx ctx) {
+    private static TreeMap<ClientLanguage, Set<Path>> findFilesToTestInRoot(Path root, TestCtx ctx, SkipConfig skipConfig) {
         val ret = new TreeMap<ClientLanguage, Set<Path>>();
 
         try (val children = Files.walk(root).skip(1)) {
@@ -191,19 +189,26 @@ public class TestPlanBuilder {
                     return;
                 }
 
-                val fileName = child.getFileName().toString();
-
-                for (val lang : ctx.languages()) {
-                    if (fileName.endsWith(lang.extension()) && ctx.filter().test(child)) {
-                        ret.computeIfAbsent(lang, _ -> new HashSet<>()).add(child);
-                        return;
-                    }
-                }
+                tryAppendChild(ctx, skipConfig, child, ret);
             });
         } catch (IOException e) {
             throw new PlanException("Failed to traverse test root '" + root + "' to find example files", e);
         }
 
         return ret;
+    }
+
+    private static void tryAppendChild(TestCtx ctx, SkipConfig skipConfig, Path child, TreeMap<ClientLanguage, Set<Path>> ret) {
+        val fileName = child.getFileName().toString();
+
+        for (val lang : ctx.languages()) {
+            if (fileName.endsWith(lang.extension()) && ctx.filter().test(child)) {
+                if (skipConfig.isSkipped(lang)) {
+                    return;
+                }
+                ret.computeIfAbsent(lang, _ -> new HashSet<>()).add(child);
+                return;
+            }
+        }
     }
 }
