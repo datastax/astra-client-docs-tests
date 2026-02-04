@@ -46,7 +46,10 @@ public class BashDriver extends ClientDriver {
 
     @Override
     public List<?> preprocessToJson(BaseScriptRunnerCtx ctx, OutputJsonifySourceMeta meta, String content) {
-        return JacksonUtils.parseJsonRoots(runJq(ctx, content, meta.jqBash()), Object.class);
+        if (meta.jqBash().isPresent()) {
+            content = runJq(ctx, content, meta.jqBash().get());
+        }
+        return JacksonUtils.parseJsonRoots(content, Object.class);
     }
 
     @Override

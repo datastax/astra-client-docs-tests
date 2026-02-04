@@ -5,4 +5,7 @@ import lombok.NonNull;
 
 import java.util.Optional;
 
-public record OutputJsonifySourceMeta(@NonNull Optional<String> jq, @NonNull @JsonProperty("jq-bash") String jqBash) {}
+public record OutputJsonifySourceMeta(
+    @NonNull Optional<String> jq,
+    @NonNull @JsonProperty("jq-bash") Optional<String> jqBash
+) {}
