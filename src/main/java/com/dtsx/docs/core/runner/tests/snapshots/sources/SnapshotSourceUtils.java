@@ -66,7 +66,7 @@ public class SnapshotSourceUtils {
                 yield result;
             }
             case Collection<?> coll -> {
-                if (coll instanceof List<?> list) {
+                if (coll instanceof List<?> list && !list.isEmpty()) {
                     if (list.stream().allMatch(e -> e instanceof Double)) {
                         yield "vector_or_binary";
                     }
