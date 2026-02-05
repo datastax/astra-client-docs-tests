@@ -1,3 +1,0 @@
-$schema: "../_base/meta.schema.json"
-test:
-  type: compiles

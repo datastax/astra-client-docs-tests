@@ -1,0 +1,68 @@
+name: 'Test Execution'
+description: 'Runs full execution tests with snapshot verification against a live database'
+
+inputs:
+  clients:
+    description: 'Comma-separated list of client drivers to test (e.g., java,typescript,python) or "all" for all clients'
+    required: true
+  docs-repo:
+    description: 'Documentation repository in format [org/repo][#branch] (both the org/repo and branch are optional)'
+    required: false
+    default: 'riptano/astra-vector-docs#main'
+  examples-path:
+    description: 'Path to examples folder within the docs repository (defaults to modules/api-reference/examples)'
+    required: false
+    default: 'modules/api-reference/examples'
+  snapshots-path:
+    description: 'Path to snapshots folder within the docs repository (defaults to ${examples-path}/snapshots)'
+    required: false
+    default: '' # I don't know if it automatically defaults to '' and I'm too lazy to find out
+  token:
+    description: 'Astra token for authentication'
+    required: true
+  api-endpoint:
+    description: 'API endpoint for testing'
+    required: true
+  args:
+    description: 'Additional arguments to pass to dh'
+    required: false
+    default: ''
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup dh
+      id: setup-dh
+      uses: ./actions/_common/setup-dh
+      with:
+        docs-repo: ${{ inputs.docs-repo }}
+        examples-path: ${{ inputs.examples-path }}
+        snapshots-path: ${{ inputs.snapshots-path }}
+        setup-languages: ${{ inputs.clients }},typescript # always need typescript for execution tests
+        setup-jq: 'true'
+
+    - name: Run execution tests
+      shell: bash
+      env:
+        CLIENT_DRIVERS: ${{ inputs.clients }}
+        ASTRA_TOKEN: ${{ inputs.token }}
+        API_ENDPOINT: ${{ inputs.api-endpoint }}
+      run: |
+        echo "Running execution tests for: ${{ inputs.clients }}"
+        
+        java --enable-native-access=ALL-UNNAMED \
+          -jar "${{ steps.setup-dh.outputs.dh-cli-path }}" \
+          test \
+          --verify-mode "${{ inputs.verify-mode }}" \
+          ${{ inputs.clients }} \
+          ${{ inputs.args }}
+
+    - name: Upload failure artifacts
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-${{ inputs.client }}-${{ github.run_id }}
+        path: |
+          ${{ steps.setup-dh.outputs.snapshots-folder }}/**/*.received.txt
+          logs/
+        if-no-files-found: ignore

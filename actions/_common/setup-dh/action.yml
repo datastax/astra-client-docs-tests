@@ -1,0 +1,200 @@
+name: 'setup-dh'
+description: 'Builds the `dh` cli + installs any required dependencies'
+
+inputs:
+  docs-repo:
+    description: 'Documentation repository in format [org/repo][#branch] (both the org/repo and branch are optional)'
+    required: true
+  examples-path:
+    description: 'Path to examples folder within the docs repository (defaults to modules/api-reference/examples)'
+    required: true
+  snapshots-path:
+    description: 'Path to snapshots folder within the docs repository (defaults to ${examples-path}/snapshots)'
+    required: true
+  setup-languages:
+    description: 'Comma-separated list of languages to setup (e.g., java,typescript,python,csharp) or "all" for all languages'
+    required: true
+  setup-jq:
+    description: 'Install jq'
+    required: false
+    default: 'false'
+
+outputs:
+  dh-cli-path:
+    description: 'Path to the built dh jar file'
+    value: ${{ steps.build-cli.outputs.dh-cli-path }}
+  snapshots-folder:
+    description: 'Path to the snapshots folder in the docs repo'
+    value: ${{ steps.setup-docs.outputs.snapshots-folder }}
+
+runs:
+  using: composite
+  steps:
+    - name: Parse docs-repo input
+      id: parse-repo
+      shell: bash
+      run: |
+        REPO_PATH="riptano/astra-vector-docs"
+        BRANCH="main"
+
+        REPO_INPUT="${{ inputs.docs-repo }}"
+        
+        if [[ -n "$REPO_INPUT" ]]; then
+          if [[ "$REPO_INPUT" == *"#"* ]]; then
+            LEFT="${REPO_INPUT%%#*}"
+            RIGHT="${REPO_INPUT#*#}"
+        
+            [[ -n "$LEFT" ]] && REPO_PATH="$LEFT"
+            [[ -n "$RIGHT" ]] && BRANCH="$RIGHT"
+          else
+            REPO_PATH="$REPO_INPUT"
+          fi
+        fi
+        
+        EXAMPLES_PATH="${{ inputs.examples-path }}"
+
+        if [ -n "${{ inputs.snapshots-path }}" ]; then
+          SNAPSHOTS_PATH="${{ inputs.snapshots-path }}"
+        else
+          SNAPSHOTS_PATH="$EXAMPLES_PATH/snapshots"
+        fi
+        
+        echo "repo-path=$REPO_PATH" >> $GITHUB_OUTPUT
+        echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+        echo "examples-path=$EXAMPLES_PATH" >> $GITHUB_OUTPUT
+        echo "snapshots-path=$SNAPSHOTS_PATH" >> $GITHUB_OUTPUT
+        
+        echo "Repository: '$REPO_PATH'"
+        echo "Branch: '$BRANCH'"
+        echo "Examples path: '$EXAMPLES_PATH'"
+        echo "Snapshots path: '$SNAPSHOTS_PATH'"
+
+    # --- java ---
+    - name: Setup java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '25'
+
+    - name: Verify java
+      shell: bash
+      run: |
+        echo "Java version:"
+        java --version
+
+    - name: Build dh
+      id: build-cli
+      shell: bash
+      run: |
+        ./gradlew fatJar
+
+        JAR_PATH="${{ github.workspace }}/build/libs/verifier.jar"
+
+        if [ ! -f "$JAR_PATH" ]; then
+          echo "ERROR: Failed to build dh (verifier.jar not found)"
+          exit 1
+        fi
+
+        echo "dh-cli-path=$JAR_PATH" >> $GITHUB_OUTPUT
+        echo "SPINNER=false" >> $GITHUB_ENV
+        
+        echo "dh built successfully: $JAR_PATH"
+
+    - name: Clone docs repo
+      uses: actions/checkout@v4
+      with:
+        sparse-checkout: |
+          ${{ steps.parse-repo.outputs.examples-path }}
+          ${{ steps.parse-repo.outputs.snapshots-path }}
+        repository: ${{ steps.parse-repo.outputs.repo-path }}
+        ref: ${{ steps.parse-repo.outputs.branch }}
+        path: docs-repo
+
+    - name: Setup docs repo
+      id: setup-docs
+      shell: bash
+      run: |
+        set -ex
+        
+        DOCS_PATH="${{ github.workspace }}/docs-repo"
+        EXAMPLES_FOLDER="$DOCS_PATH/${{ steps.parse-repo.outputs.examples-path }}"
+        SNAPSHOTS_FOLDER="$DOCS_PATH/${{ steps.parse-repo.outputs.snapshots-path }}"
+        
+        if [ ! -d "$EXAMPLES_FOLDER" ]; then
+          echo "ERROR: Examples folder not found: $EXAMPLES_FOLDER"
+          exit 1
+        fi
+        
+        echo "EXAMPLES_FOLDER=$EXAMPLES_FOLDER" >> $GITHUB_ENV
+        echo "SNAPSHOTS_FOLDER=$SNAPSHOTS_FOLDER" >> $GITHUB_ENV
+        
+        echo "snapshots-folder=$SNAPSHOTS_FOLDER" >> $GITHUB_OUTPUT
+        
+        echo "Documentation cloned to: $DOCS_PATH"
+        echo "Examples folder: $EXAMPLES_FOLDER"
+        echo "Snapshots folder: $SNAPSHOTS_FOLDER"
+
+    # --- typescript ---
+    - name: Setup node
+      if: inputs.setup-languages == 'all' || contains(inputs.setup-languages, 'typescript')
+      uses: actions/setup-node@v4
+      with:
+        node-version: 'lts/*'
+
+    - name: Setup tsx
+      if: inputs.setup-languages == 'all' || contains(inputs.setup-languages, 'typescript')
+      shell: bash
+      run: |
+        echo "Installing tsx..."
+        npm install -g tsx
+        echo "tsx installed:"
+        tsx --version
+
+    - name: Verify node + tsx
+      if: inputs.setup-languages == 'all' || contains(inputs.setup-languages, 'typescript')
+      shell: bash
+      run: |
+        echo "Node.js version:"
+        node --version
+        echo "npm version:"
+        npm --version
+        echo "tsx version:"
+        npx tsx --version
+
+    # --- python ---
+    - name: Setup python
+      if: inputs.setup-languages == 'all' || contains(inputs.setup-languages, 'python')
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+
+    - name: Verify python
+      if: inputs.setup-languages == 'all' || contains(inputs.setup-languages, 'python')
+      shell: bash
+      run: |
+        echo "Python version:"
+        python3 --version
+
+    # --- dotnet ---
+    - name: Setup dotnet
+      if: inputs.setup-languages == 'all' || contains(inputs.setup-languages, 'csharp')
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.x'
+
+    - name: Verify dotnet
+      if: inputs.setup-languages == 'all' || contains(inputs.setup-languages, 'csharp')
+      shell: bash
+      run: |
+        echo ".NET version:"
+        dotnet --version
+
+    # --- jq ---
+    - name: Setup + verify jq
+      if: inputs.setup-jq == 'true'
+      shell: bash
+      run: |
+        echo "Installing jq..."
+        sudo apt-get update && sudo apt-get install -y jq
+        echo "jq installed:"
+        jq --version
