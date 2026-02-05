@@ -19,7 +19,11 @@ public abstract class PerLanguageToggle {
     protected final Map<ClientLanguage, Boolean> languages;
 
     public static <T extends PerLanguageToggle> T parse(Function<Map<ClientLanguage, Boolean>, T> cons, TestCtx ctx, Optional<Object> maybeRaw) {
-        val raw = maybeRaw.orElse(true);
+        if (maybeRaw.isEmpty()) {
+            return cons.apply(Map.of());
+        }
+
+        val raw = maybeRaw.get();
 
         if (raw instanceof Boolean bool) {
             return cons.apply(
