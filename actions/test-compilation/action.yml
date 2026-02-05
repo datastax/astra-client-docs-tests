@@ -1,5 +1,5 @@
-name: 'Test Compilation'
-description: 'Runs compilation-only tests to verify that code examples compile without syntax errors'
+name: 'test-compilation'
+description: 'Runs compilation tests'
 
 inputs:
   clients:
@@ -35,7 +35,8 @@ runs:
       env:
         CLIENT_DRIVERS: ${{ inputs.clients }}
       run: |
-        echo "Running compilation tests for: ${{ inputs.clients }}"
+        export ASTRA_TOKEN="dummy-token"
+        export API_ENDPOINT="dummy-endpoint"
         
         java --enable-native-access=ALL-UNNAMED \
           -jar "${{ steps.setup-dh.outputs.dh-cli-path }}" \

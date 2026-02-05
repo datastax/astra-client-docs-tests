@@ -1,5 +1,5 @@
-name: 'Test Execution'
-description: 'Runs full execution tests with snapshot verification against a live database'
+name: 'test-execution'
+description: 'Runs full snapshot tests'
 
 inputs:
   clients:
@@ -48,8 +48,6 @@ runs:
         ASTRA_TOKEN: ${{ inputs.token }}
         API_ENDPOINT: ${{ inputs.api-endpoint }}
       run: |
-        echo "Running execution tests for: ${{ inputs.clients }}"
-        
         java --enable-native-access=ALL-UNNAMED \
           -jar "${{ steps.setup-dh.outputs.dh-cli-path }}" \
           test \

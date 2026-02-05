@@ -34,6 +34,8 @@ runs:
       id: parse-repo
       shell: bash
       run: |
+        set -ex
+        
         REPO_PATH="riptano/astra-vector-docs"
         BRANCH="main"
 
@@ -76,16 +78,28 @@ runs:
         distribution: 'temurin'
         java-version: '25'
 
+    - name: Cache Gradle dependencies
+      uses: actions/cache@v5
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+
     - name: Verify java
       shell: bash
       run: |
-        echo "Java version:"
+        set -ex
         java --version
 
     - name: Build dh
       id: build-cli
       shell: bash
       run: |
+        set -ex
+        
         ./gradlew fatJar
 
         JAR_PATH="${{ github.workspace }}/build/libs/verifier.jar"
@@ -141,24 +155,30 @@ runs:
       with:
         node-version: 'lts/*'
 
-    - name: Setup tsx
+    - name: Cache npm global packages
       if: inputs.setup-languages == 'all' || contains(inputs.setup-languages, 'typescript')
-      shell: bash
-      run: |
-        echo "Installing tsx..."
-        npm install -g tsx
-        echo "tsx installed:"
-        tsx --version
+      uses: actions/cache@v4
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-npm-global-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-npm-global-
 
-    - name: Verify node + tsx
+    - name: Verify node
       if: inputs.setup-languages == 'all' || contains(inputs.setup-languages, 'typescript')
       shell: bash
       run: |
-        echo "Node.js version:"
+        set -ex
         node --version
-        echo "npm version:"
         npm --version
-        echo "tsx version:"
+        npx tsx --version
+
+    - name: Setup + verify tsx
+      if: inputs.setup-languages == 'all' || contains(inputs.setup-languages, 'typescript')
+      shell: bash
+      run: |
+        set -ex
+        npm install -g tsx
         npx tsx --version
 
     # --- python ---
@@ -172,7 +192,7 @@ runs:
       if: inputs.setup-languages == 'all' || contains(inputs.setup-languages, 'python')
       shell: bash
       run: |
-        echo "Python version:"
+        set -ex
         python3 --version
 
     # --- dotnet ---
@@ -186,7 +206,7 @@ runs:
       if: inputs.setup-languages == 'all' || contains(inputs.setup-languages, 'csharp')
       shell: bash
       run: |
-        echo ".NET version:"
+        set -ex
         dotnet --version
 
     # --- jq ---
@@ -194,7 +214,6 @@ runs:
       if: inputs.setup-jq == 'true'
       shell: bash
       run: |
-        echo "Installing jq..."
+        set -ex
         sudo apt-get update && sudo apt-get install -y jq
-        echo "jq installed:"
         jq --version
