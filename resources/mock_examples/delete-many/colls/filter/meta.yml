@@ -8,4 +8,4 @@ snapshots:
   sources:
     stdout::matches:
       regex: .*2.*
-    documents:
+    collection::documents:

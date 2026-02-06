@@ -16,7 +16,7 @@
           "type": "object",
           "additionalProperties": false,
           "patternProperties": {
-            "^(JAVA|PYTHON|TYPESCRIPT|CSHARP|BASH)$": {
+            "(?i)^(JAVA|PYTHON|TYPESCRIPT|CSHARP|BASH)$": {
               "type": "boolean"
             }
           },
@@ -149,7 +149,7 @@
               "additionalProperties": false,
               "description": "Parse and format stderr output as JSON"
             },
-            "documents": {
+            "collection::documents": {
               "type": [
                 "object",
                 "null"
@@ -167,7 +167,21 @@
               "additionalProperties": false,
               "description": "Capture documents from a collection"
             },
-            "rows": {
+            "collection::definition": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "description": "Capture collection definition/schema"
+            },
+            "collection::names": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "description": "Capture collection names"
+            },
+            "table::rows": {
               "type": [
                 "object",
                 "null"
@@ -184,6 +198,34 @@
               },
               "additionalProperties": false,
               "description": "Capture rows from a table"
+            },
+            "table::definition": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "description": "Capture table definition/schema"
+            },
+            "table::names": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "description": "Capture table names"
+            },
+            "udt::names": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "description": "Capture user-defined type names"
+            },
+            "udt::definitions": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "description": "Capture user-defined type definitions"
             }
           },
           "additionalProperties": false

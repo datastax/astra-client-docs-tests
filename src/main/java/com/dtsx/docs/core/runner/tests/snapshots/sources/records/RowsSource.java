@@ -3,7 +3,8 @@ package com.dtsx.docs.core.runner.tests.snapshots.sources.records;
 import com.datastax.astra.client.tables.commands.options.TableFindOptions;
 import com.datastax.astra.client.tables.definition.rows.Row;
 import com.dtsx.docs.commands.test.TestCtx;
-import com.dtsx.docs.core.planner.meta.snapshot.sources.RecordSourceMeta;
+import com.dtsx.docs.core.planner.meta.snapshot.meta.RecordSourceMeta;
+import com.dtsx.docs.core.planner.meta.snapshot.meta.RecordSourceMeta.RowsSourceMeta;
 import com.dtsx.docs.core.runner.Placeholders;
 import com.dtsx.docs.lib.DataAPIUtils;
 import lombok.val;
@@ -14,7 +15,7 @@ import java.util.stream.Stream;
 
 /// Implementation of [RecordSource] that captures rows from a table.
 public final class RowsSource extends RecordSource {
-    public RowsSource(String name, RecordSourceMeta meta) {
+    public RowsSource(String name, RowsSourceMeta meta) {
         super(name, meta);
     }
 
@@ -24,10 +25,10 @@ public final class RowsSource extends RecordSource {
     }
 
     @Override
-    public Stream<Map<String, Object>> streamRecords(TestCtx ctx, String name) {
-        val table = DataAPIUtils.getTable(ctx.connectionInfo(), name);
-        val options = new TableFindOptions();
+    public Stream<Map<String, Object>> streamRecords(TestCtx ctx, String name, String keyspace) {
+        val table = DataAPIUtils.getTable(ctx.connectionInfo(), name, keyspace);
 
+        val options = new TableFindOptions();
         projection.ifPresent(options::projection);
 
         return table.find(filter.orElse(null), options).stream().map(Row::getColumnMap);

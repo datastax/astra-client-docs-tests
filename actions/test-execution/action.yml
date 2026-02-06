@@ -14,7 +14,7 @@ inputs:
     required: false
     default: 'modules/api-reference/examples'
   snapshots-path:
-    description: 'Path to snapshots folder within the docs repository (defaults to ${examples-path}/snapshots)'
+    description: 'Path to snapshots folder within the docs repository (defaults to ${examples-path}/_snapshots)'
     required: false
     default: '' # I don't know if it automatically defaults to '' and I'm too lazy to find out
   token:

@@ -8,15 +8,14 @@ import com.dtsx.docs.core.planner.fixtures.NoopFixture;
 import com.dtsx.docs.core.planner.meta.BaseMetaYml;
 import com.dtsx.docs.core.planner.meta.BaseMetaYml.BaseMetaYmlRep.TestBlock.SkipConfig;
 import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaRep.FixturesConfig;
-import com.dtsx.docs.core.planner.meta.snapshot.sources.SnapshotSourcesParser;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.SnapshotSource;
 import lombok.Getter;
 import lombok.val;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
-import java.util.TreeSet;
 
 import static com.dtsx.docs.core.runner.tests.VerifyMode.DRY_RUN;
 import static com.dtsx.docs.lib.Constants.DEFAULT_TEST_FIXTURE;
@@ -27,7 +26,7 @@ public final class SnapshotTestMeta implements BaseMetaYml {
     private final SkipConfig skipConfig;
     private final JSFixture baseFixture;
     private final JSFixture testFixture;
-    private final TreeSet<SnapshotSource> snapshotSources;
+    private final List<SnapshotSource> snapshotSources;
     private final SnapshotsShareConfig shareConfig;
 
     public SnapshotTestMeta(TestCtx ctx, Path testRoot, SnapshotTestMetaRep meta) {

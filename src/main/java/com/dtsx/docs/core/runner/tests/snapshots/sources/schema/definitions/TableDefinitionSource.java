@@ -1,0 +1,30 @@
+package com.dtsx.docs.core.runner.tests.snapshots.sources.schema.definitions;
+
+import com.dtsx.docs.commands.test.TestCtx;
+import com.dtsx.docs.core.planner.PlanException;
+import com.dtsx.docs.core.planner.meta.snapshot.meta.WithNameAndKeyspace;
+import com.dtsx.docs.core.runner.Placeholders;
+import com.dtsx.docs.core.runner.drivers.ClientDriver;
+import com.dtsx.docs.core.runner.tests.snapshots.sources.SnapshotSource;
+import com.dtsx.docs.lib.DataAPIUtils;
+import com.dtsx.docs.lib.ExternalPrograms.RunResult;
+import com.dtsx.docs.lib.JacksonUtils;
+import lombok.val;
+
+import java.util.Optional;
+
+public class TableDefinitionSource extends SchemaObjectDefinitionSource {
+    public TableDefinitionSource(String name, WithNameAndKeyspace.TableImpl nameAndKeyspace) {
+        super(name, nameAndKeyspace);
+    }
+
+    @Override
+    protected Optional<String> extractSchemaObjectName(Placeholders placeholders) {
+        return placeholders.tableName();
+    }
+
+    @Override
+    protected Object getDefinition(TestCtx ctx, String name, String keyspace) {
+        return DataAPIUtils.getTable(ctx.connectionInfo(), name, keyspace).getDefinition();
+    }
+}

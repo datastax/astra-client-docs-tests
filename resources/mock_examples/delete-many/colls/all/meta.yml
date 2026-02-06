@@ -8,4 +8,4 @@ snapshots:
   sources:
     stderr::matches:
       regex: ^$
-    documents:
+    collection::documents:

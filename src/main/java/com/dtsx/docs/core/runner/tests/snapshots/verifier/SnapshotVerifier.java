@@ -46,7 +46,7 @@ public class SnapshotVerifier {
     ));
 
     private final TestCtx ctx;
-    private final TreeSet<SnapshotSource> snapshotSources;
+    private final List<SnapshotSource> snapshotSources;
     private final SnapshotsShareConfig shareConfig;
 
     public TestOutcome verify(ClientDriver driver, TestRoot testRoot, Placeholders placeholders, Set<Path> filesForLang, Function<Path, RunResult> result) {

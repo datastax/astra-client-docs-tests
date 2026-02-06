@@ -1,13 +1,19 @@
-package com.dtsx.docs.core.planner.meta.snapshot.sources;
+package com.dtsx.docs.core.planner.meta.snapshot;
 
 import com.dtsx.docs.core.planner.PlanException;
 import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaRep.SnapshotsConfig;
+import com.dtsx.docs.core.runner.tests.snapshots.sources.SnapshotSource;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.output.OutputCaptureSource;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.output.OutputJsonifySource;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.output.OutputMatchesSource;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.records.DocumentsSource;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.records.RowsSource;
-import com.dtsx.docs.core.runner.tests.snapshots.sources.SnapshotSource;
+import com.dtsx.docs.core.runner.tests.snapshots.sources.schema.definitions.CollectionDefinitionSource;
+import com.dtsx.docs.core.runner.tests.snapshots.sources.schema.definitions.TableDefinitionSource;
+import com.dtsx.docs.core.runner.tests.snapshots.sources.schema.definitions.UdtDefinitionsSource;
+import com.dtsx.docs.core.runner.tests.snapshots.sources.schema.names.CollectionNamesSource;
+import com.dtsx.docs.core.runner.tests.snapshots.sources.schema.names.TableNamesSource;
+import com.dtsx.docs.core.runner.tests.snapshots.sources.schema.names.UdtNamesSource;
 import com.dtsx.docs.lib.JacksonUtils;
 import lombok.val;
 import tools.jackson.core.type.TypeReference;
@@ -22,12 +28,24 @@ public class SnapshotSourcesParser {
             put(stream + "::matches", mk(OutputMatchesSource::new, new TypeReference<>() {}));
             put(stream + "::jsonify", mk(OutputJsonifySource::new, new TypeReference<>() {}));
         }
-        put("documents", mk(DocumentsSource::new, new TypeReference<>() {}));
-        put("rows", mk(RowsSource::new, new TypeReference<>() {}));
+        {
+            put("collection::documents", mk(DocumentsSource::new, new TypeReference<>() {}));
+            put("collection::definition", mk(CollectionDefinitionSource::new, new TypeReference<>() {}));
+            put("collection::names", mk(CollectionNamesSource::new, new TypeReference<>() {}));
+        }
+        {
+            put("table::rows", mk(RowsSource::new, new TypeReference<>() {}));
+            put("table::definition", mk(TableDefinitionSource::new, new TypeReference<>() {}));
+            put("table::names", mk(TableNamesSource::new, new TypeReference<>() {}));
+        }
+        {
+            put("udt::names", mk(UdtNamesSource::new, new TypeReference<>() {}));
+            put("udt::definitions", mk(UdtDefinitionsSource::new, new TypeReference<>() {}));
+        }
     }};
 
-    public static TreeSet<SnapshotSource> parseSources(SnapshotsConfig config) {
-        val sources = new TreeSet<SnapshotSource>();
+    public static List<SnapshotSource> parseSources(SnapshotsConfig config) {
+        val sources = new ArrayList<SnapshotSource>();
 
         for (val rawSource : config.sources().entrySet()) {
             val source = rawSource.getKey();

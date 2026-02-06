@@ -32,27 +32,7 @@ public class SnapshotSourceUtils {
         return (List<?>) mkJsonDeterministic((Object) records);
     }
 
-    public static void recursivelyPrintTypes(Object obj, String indent) {
-        if (obj instanceof Map<?, ?> map) {
-            System.out.println(indent + "Map:");
-            for (var entry : map.entrySet()) {
-                System.out.print(indent + "  Key (" + entry.getKey().getClass().getSimpleName() + "): ");
-                recursivelyPrintTypes(entry.getKey(), indent + "    ");
-                System.out.print(indent + "  Value (" + entry.getValue().getClass().getSimpleName() + "): ");
-                recursivelyPrintTypes(entry.getValue(), indent + "    ");
-            }
-        } else if (obj instanceof List<?> list) {
-            System.out.println(indent + "List:");
-            for (var item : list) {
-                System.out.print(indent + "  Item (" + item.getClass().getSimpleName() + "): ");
-                recursivelyPrintTypes(item, indent + "    ");
-            }
-        } else {
-            System.out.println(indent + obj.getClass().getSimpleName() + ": " + obj);
-        }
-    }
-
-    private static Object mkJsonDeterministic(Object obj) {
+    public static Object mkJsonDeterministic(Object obj) {
         if (obj == null) {
             return null;
         }
@@ -81,6 +61,26 @@ public class SnapshotSourceUtils {
                 yield obj;
             }
         };
+    }
+
+    public static void recursivelyPrintTypes(Object obj, String indent) {
+        if (obj instanceof Map<?, ?> map) {
+            System.out.println(indent + "Map:");
+            for (var entry : map.entrySet()) {
+                System.out.print(indent + "  Key (" + entry.getKey().getClass().getSimpleName() + "): ");
+                recursivelyPrintTypes(entry.getKey(), indent + "    ");
+                System.out.print(indent + "  Value (" + entry.getValue().getClass().getSimpleName() + "): ");
+                recursivelyPrintTypes(entry.getValue(), indent + "    ");
+            }
+        } else if (obj instanceof List<?> list) {
+            System.out.println(indent + "List:");
+            for (var item : list) {
+                System.out.print(indent + "  Item (" + item.getClass().getSimpleName() + "): ");
+                recursivelyPrintTypes(item, indent + "    ");
+            }
+        } else {
+            System.out.println(indent + obj.getClass().getSimpleName() + ": " + obj);
+        }
     }
 
     private static int calcSortValue(Object obj) {

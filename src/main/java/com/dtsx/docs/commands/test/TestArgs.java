@@ -8,6 +8,7 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 import java.util.List;
+import java.util.Optional;
 
 @ToString
 public class TestArgs extends BaseScriptRunnerArgs<TestCtx> {
@@ -24,10 +25,10 @@ public class TestArgs extends BaseScriptRunnerArgs<TestCtx> {
     @Option(
         names = { "-sf", "--snapshots-folder" },
         description = "Path to the folder containing snapshots.",
-        defaultValue = "${SNAPSHOTS_FOLDER:-snapshots}",
+        defaultValue = "${SNAPSHOTS_FOLDER:" + Option.NULL_VALUE + "}",
         paramLabel = "FOLDER"
     )
-    public String $snapshotsFolder;
+    public Optional<String> $snapshotsFolder;
 
     @Option(
         names = { "-r", "--test-reporter" },

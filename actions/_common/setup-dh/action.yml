@@ -9,7 +9,7 @@ inputs:
     description: 'Path to examples folder within the docs repository (defaults to modules/api-reference/examples)'
     required: true
   snapshots-path:
-    description: 'Path to snapshots folder within the docs repository (defaults to ${examples-path}/snapshots)'
+    description: 'Path to snapshots folder within the docs repository (defaults to ${examples-path}/_snapshots)'
     required: true
   setup-languages:
     description: 'Comma-separated list of languages to setup (e.g., java,typescript,python,csharp) or "all" for all languages'
@@ -58,7 +58,7 @@ runs:
         if [ -n "${{ inputs.snapshots-path }}" ]; then
           SNAPSHOTS_PATH="${{ inputs.snapshots-path }}"
         else
-          SNAPSHOTS_PATH="$EXAMPLES_PATH/snapshots"
+          SNAPSHOTS_PATH="$EXAMPLES_PATH/_snapshots"
         fi
         
         echo "repo-path=$REPO_PATH" >> $GITHUB_OUTPUT

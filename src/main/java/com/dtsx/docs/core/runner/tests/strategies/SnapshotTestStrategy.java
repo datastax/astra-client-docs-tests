@@ -1,17 +1,14 @@
 package com.dtsx.docs.core.runner.tests.strategies;
 
 import com.dtsx.docs.commands.test.TestCtx;
-import com.dtsx.docs.core.planner.fixtures.JSFixture.Resetter;
-import com.dtsx.docs.core.planner.meta.snapshot.SnapshotsShareConfig;
-import com.dtsx.docs.core.runner.ExecutionEnvironment.TestFileModifiers;
-import com.dtsx.docs.core.runner.tests.snapshots.sources.output.OutputJsonifySource;
-import com.dtsx.docs.lib.CliLogger;
-import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.core.planner.TestRoot;
 import com.dtsx.docs.core.planner.fixtures.JSFixture;
+import com.dtsx.docs.core.planner.fixtures.JSFixture.Resetter;
 import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMeta;
+import com.dtsx.docs.core.planner.meta.snapshot.SnapshotsShareConfig;
 import com.dtsx.docs.core.runner.ExecutionEnvironment;
 import com.dtsx.docs.core.runner.ExecutionEnvironment.ExecutionEnvironments;
+import com.dtsx.docs.core.runner.ExecutionEnvironment.TestFileModifiers;
 import com.dtsx.docs.core.runner.PlaceholderResolver;
 import com.dtsx.docs.core.runner.Placeholders;
 import com.dtsx.docs.core.runner.drivers.ClientDriver;
@@ -19,15 +16,18 @@ import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import com.dtsx.docs.core.runner.tests.results.TestOutcome;
 import com.dtsx.docs.core.runner.tests.results.TestRootResults;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.SnapshotSource;
+import com.dtsx.docs.core.runner.tests.snapshots.sources.output.OutputJsonifySource;
 import com.dtsx.docs.core.runner.tests.snapshots.verifier.SnapshotVerifier;
+import com.dtsx.docs.lib.CliLogger;
+import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import lombok.Getter;
 import lombok.val;
 
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
 import static java.util.stream.Collectors.toMap;
 
@@ -37,7 +37,7 @@ public final class SnapshotTestStrategy extends TestStrategy {
     private final JSFixture testFixture;
 
     /// The set of snapshot sources configured for this test root.
-    private final TreeSet<SnapshotSource> snapshotSources;
+    private final List<SnapshotSource> snapshotSources;
 
     /// Whether snapshots are shared across all client languages within this test root.
     ///

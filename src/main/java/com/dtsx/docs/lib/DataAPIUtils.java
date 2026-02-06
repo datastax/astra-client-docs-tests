@@ -10,19 +10,23 @@ import com.datastax.astra.client.tables.definition.rows.Row;
 import com.dtsx.docs.config.ConnectionInfo;
 
 public class DataAPIUtils {
-    public static Collection<Document> getCollection(ConnectionInfo info, String name) {
-        return mkDb(info).getCollection(name);
+    public static Collection<Document> getCollection(ConnectionInfo info, String name, String keyspace) {
+        return mkDb(info, keyspace).getCollection(name);
     }
 
-    public static Table<Row> getTable(ConnectionInfo info, String name) {
-        return mkDb(info).getTable(name);
+    public static Table<Row> getTable(ConnectionInfo info, String name, String keyspace) {
+        return mkDb(info, keyspace).getTable(name);
+    }
+
+    public static Database getDatabase(ConnectionInfo info, String keyspace) {
+        return mkDb(info, keyspace);
     }
 
     private static DataAPIClient mkClient(ConnectionInfo info) {
         return new DataAPIClient(info.token(), new DataAPIClientOptions().destination(info.destination()));
     }
 
-    private static Database mkDb(ConnectionInfo info) {
-        return mkClient(info).getDatabase(info.endpoint());
+    private static Database mkDb(ConnectionInfo info, String keyspace) {
+        return mkClient(info).getDatabase(info.endpoint(), keyspace);
     }
 }

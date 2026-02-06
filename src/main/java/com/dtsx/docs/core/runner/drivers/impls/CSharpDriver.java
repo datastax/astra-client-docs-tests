@@ -2,7 +2,7 @@ package com.dtsx.docs.core.runner.drivers.impls;
 
 import com.dtsx.docs.config.ctx.BaseCtx;
 import com.dtsx.docs.config.ctx.BaseScriptRunnerCtx;
-import com.dtsx.docs.core.planner.meta.snapshot.sources.OutputJsonifySourceMeta;
+import com.dtsx.docs.core.planner.meta.snapshot.meta.OutputJsonifySourceMeta;
 import com.dtsx.docs.core.runner.ExecutionEnvironment;
 import com.dtsx.docs.core.runner.ExecutionEnvironment.TestFileModifierFlags;
 import com.dtsx.docs.core.runner.RunException;

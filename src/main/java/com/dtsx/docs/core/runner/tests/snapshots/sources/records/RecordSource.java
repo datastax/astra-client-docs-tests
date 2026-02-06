@@ -5,7 +5,8 @@ import com.datastax.astra.client.core.query.Projection;
 import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.core.planner.PlanException;
 import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaRep;
-import com.dtsx.docs.core.planner.meta.snapshot.sources.RecordSourceMeta;
+import com.dtsx.docs.core.planner.meta.snapshot.meta.RecordSourceMeta;
+import com.dtsx.docs.core.planner.meta.snapshot.meta.WithNameAndKeyspace;
 import com.dtsx.docs.core.runner.Placeholders;
 import com.dtsx.docs.core.runner.drivers.ClientDriver;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.SnapshotSource;
@@ -50,11 +51,15 @@ import static com.dtsx.docs.core.runner.tests.snapshots.sources.SnapshotSourceUt
 public abstract class RecordSource extends SnapshotSource {
     protected final Optional<Filter> filter;
     protected final Optional<Projection[]> projection;
+    protected final Optional<String> overrideName;
+    protected final Optional<String> overrideKeyspace;
 
     public RecordSource(String name, RecordSourceMeta meta) {
         super(name);
         this.filter = meta.filter().map(Filter::new);
         this.projection = meta.projection().map(this::buildProjection);
+        this.overrideName = meta.name();
+        this.overrideKeyspace = meta.keyspace();
     }
 
     private Projection[] buildProjection(Map<String, Object> projectionMap) {
@@ -98,16 +103,20 @@ public abstract class RecordSource extends SnapshotSource {
     }
 
     protected abstract Optional<String> extractSchemaObjectName(Placeholders placeholders);
-    protected abstract Stream<Map<String, Object>> streamRecords(TestCtx ctx, String name);
+    protected abstract Stream<Map<String, Object>> streamRecords(TestCtx ctx, String name, String keyspace);
 
     @Override
     public String mkSnapshot(TestCtx ctx, ClientDriver driver, RunResult res, Placeholders placeholders) {
         // error should never be thrown since it would've been caught earlier in PlaceholderResolver.resolvePlaceholders
         // since the snapshot shouldn't be depending on a collection/table that the example file doesn't explicitly use anyway
-        val schemaObjName = extractSchemaObjectName(placeholders).orElseThrow(() -> new PlanException("Could not determine schema object name from fixture metadata"));
+        val schemaObjName = overrideName
+            .or(() -> extractSchemaObjectName(placeholders))
+            .orElseThrow(() -> new PlanException("Could not determine schema object name from fixture metadata or override for source: " + name));
+
+        val schemaObjKeyspace = overrideKeyspace.orElse(placeholders.keyspaceName());
 
         return JacksonUtils.prettyPrintJson(
-            mkJsonDeterministic(streamRecords(ctx, schemaObjName).toList())
+            mkJsonDeterministic(streamRecords(ctx, schemaObjName, schemaObjKeyspace).toList())
         );
     }
 }

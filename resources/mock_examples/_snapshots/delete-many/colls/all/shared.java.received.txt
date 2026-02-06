@@ -1,0 +1,4 @@
+---stderr::matches---
+Matches '^$'
+---collection::documents---
+[ ]

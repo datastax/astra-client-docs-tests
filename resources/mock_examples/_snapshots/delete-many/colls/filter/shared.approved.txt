@@ -1,4 +1,4 @@
----documents---
+---collection::documents---
 [
   {
     "_id" : "guid_1",

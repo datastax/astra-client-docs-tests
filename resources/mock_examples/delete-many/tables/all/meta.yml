@@ -6,4 +6,4 @@ fixtures:
 snapshots:
   share: true
   sources:
-    rows:
+    table::rows:

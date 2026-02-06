@@ -86,7 +86,10 @@ public class TestCtx extends BaseScriptRunnerCtx {
         this.filter = mkFilter(args.$filters, args.$inverseFilters);
 
         if (this.verifyMode != COMPILE_ONLY) {
-            this.snapshotsFolder = ArgUtils.requirePath(cmd, args.$snapshotsFolder, "snapshots folder", "-sf", "SNAPSHOTS_FOLDER");
+            val snapshotsFolder = args.$snapshotsFolder
+                .orElse(examplesFolder().resolve("_snapshots").toAbsolutePath().toString());
+
+            this.snapshotsFolder = ArgUtils.requirePath(cmd, snapshotsFolder, "snapshots folder", "-sf", "SNAPSHOTS_FOLDER");
         } else {
             this.snapshotsFolder = null; // may or may not find a more elegant way to handle this later
         }

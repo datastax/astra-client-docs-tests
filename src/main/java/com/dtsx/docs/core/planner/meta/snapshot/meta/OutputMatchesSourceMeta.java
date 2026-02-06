@@ -1,4 +1,4 @@
-package com.dtsx.docs.core.planner.meta.snapshot.sources;
+package com.dtsx.docs.core.planner.meta.snapshot.meta;
 
 import lombok.NonNull;
 
