@@ -89,6 +89,43 @@ public class JavaDriver extends ClientDriver {
         if (content.startsWith("Optional[")) {
             content = content.substring(9, content.length() - 1);
         }
+
+        // Handle Java array toString() format: [item1, item2, item3]
+        // Convert to proper JSON: ["item1", "item2", "item3"]
+        content = content.trim();
+        if (content.startsWith("[") && content.endsWith("]") && !content.contains("\"")) {
+            // Extract the content between brackets
+            String innerContent = content.substring(1, content.length() - 1).trim();
+
+            if (!innerContent.isEmpty()) {
+                // Split by comma and quote each item
+                String[] items = innerContent.split("\\s*,\\s*");
+                StringBuilder jsonArray = new StringBuilder("[");
+
+                for (int i = 0; i < items.length; i++) {
+                    String item = items[i].trim();
+
+                    // Check if item is already a number, boolean, null, or nested structure
+                    if (item.matches("^-?\\d+(\\.\\d+)?$") || // number
+                        item.equals("true") || item.equals("false") || // boolean
+                        item.equals("null") || // null
+                        item.startsWith("{") || item.startsWith("[")) { // nested object/array
+                        jsonArray.append(item);
+                    } else {
+                        // Quote string values
+                        jsonArray.append("\"").append(item).append("\"");
+                    }
+
+                    if (i < items.length - 1) {
+                        jsonArray.append(",");
+                    }
+                }
+
+                jsonArray.append("]");
+                content = jsonArray.toString();
+            }
+        }
+
         return JacksonUtils.parseJsonRoots(content, Object.class);
     }
 
