@@ -162,6 +162,14 @@
                 "projection": {
                   "type": "object",
                   "description": "Data API projection to apply when capturing documents"
+                },
+                "collection": {
+                  "type": "string",
+                  "description": "Optional collection name override"
+                },
+                "keyspace": {
+                  "type": "string",
+                  "description": "Optional keyspace name override"
                 }
               },
               "additionalProperties": false,
@@ -172,6 +180,17 @@
                 "object",
                 "null"
               ],
+              "properties": {
+                "collection": {
+                  "type": "string",
+                  "description": "Optional collection name override"
+                },
+                "keyspace": {
+                  "type": "string",
+                  "description": "Optional keyspace name override"
+                }
+              },
+              "additionalProperties": false,
               "description": "Capture collection definition/schema"
             },
             "collection::names": {
@@ -179,6 +198,13 @@
                 "object",
                 "null"
               ],
+              "properties": {
+                "keyspace": {
+                  "type": "string",
+                  "description": "Optional keyspace name override"
+                }
+              },
+              "additionalProperties": false,
               "description": "Capture collection names"
             },
             "table::rows": {
@@ -194,6 +220,14 @@
                 "projection": {
                   "type": "object",
                   "description": "Data API projection to apply when capturing rows"
+                },
+                "table": {
+                  "type": "string",
+                  "description": "Optional table name override"
+                },
+                "keyspace": {
+                  "type": "string",
+                  "description": "Optional keyspace name override"
                 }
               },
               "additionalProperties": false,
@@ -204,6 +238,17 @@
                 "object",
                 "null"
               ],
+              "properties": {
+                "table": {
+                  "type": "string",
+                  "description": "Optional table name override"
+                },
+                "keyspace": {
+                  "type": "string",
+                  "description": "Optional keyspace name override"
+                }
+              },
+              "additionalProperties": false,
               "description": "Capture table definition/schema"
             },
             "table::names": {
@@ -211,6 +256,13 @@
                 "object",
                 "null"
               ],
+              "properties": {
+                "keyspace": {
+                  "type": "string",
+                  "description": "Optional keyspace name override"
+                }
+              },
+              "additionalProperties": false,
               "description": "Capture table names"
             },
             "udt::names": {
@@ -218,6 +270,13 @@
                 "object",
                 "null"
               ],
+              "properties": {
+                "keyspace": {
+                  "type": "string",
+                  "description": "Optional keyspace name override"
+                }
+              },
+              "additionalProperties": false,
               "description": "Capture user-defined type names"
             },
             "udt::definitions": {
@@ -225,6 +284,23 @@
                 "object",
                 "null"
               ],
+              "required": [
+                "types"
+              ],
+              "properties": {
+                "types": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "List of UDT type names to capture definitions for"
+                },
+                "keyspace": {
+                  "type": "string",
+                  "description": "Optional keyspace name override"
+                }
+              },
+              "additionalProperties": false,
               "description": "Capture user-defined type definitions"
             }
           },
