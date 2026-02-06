@@ -73,12 +73,61 @@ public class PythonDriver extends ClientDriver {
                 deserializer_by_udt={}
             )
             
+            # Helper function to convert objects to serializable format
+            def _convert_to_serializable(obj):
+                # Try to_dict() method first
+                if hasattr(obj, 'to_dict') and callable(getattr(obj, 'to_dict')):
+                    return _convert_to_serializable(obj.to_dict())
+                # Try as_dict() method
+                elif hasattr(obj, 'as_dict') and callable(getattr(obj, 'as_dict')):
+                    return _convert_to_serializable(obj.as_dict())
+                # Handle lists
+                elif isinstance(obj, list):
+                    return [_convert_to_serializable(item) for item in obj]
+                # Handle tuples
+                elif isinstance(obj, tuple):
+                    return tuple(_convert_to_serializable(item) for item in obj)
+                # Handle dicts
+                elif isinstance(obj, dict):
+                    return {k: _convert_to_serializable(v) for k, v in obj.items()}
+                # For custom objects with __dict__, convert to dict
+                elif hasattr(obj, '__dict__') and not isinstance(obj, type) and not callable(obj):
+                    # Check if it's a custom class instance (not a built-in type)
+                    if type(obj).__module__ not in ('builtins', '__builtin__'):
+                        obj_dict = {}
+                        for key, value in obj.__dict__.items():
+                            if not key.startswith('_'):
+                                obj_dict[key] = _convert_to_serializable(value)
+                        return obj_dict
+                return obj
+            
+            # Helper to ensure options field exists in definitions
+            def _ensure_options_field(obj):
+                if isinstance(obj, list):
+                    return [_ensure_options_field(item) for item in obj]
+                elif isinstance(obj, dict):
+                    result = {}
+                    for k, v in obj.items():
+                        result[k] = _ensure_options_field(v)
+                    # If this is a definition dict without options, add empty options
+                    if 'definition' in result and isinstance(result['definition'], dict):
+                        if 'options' not in result['definition']:
+                            result['definition']['options'] = {}
+                    return result
+                return obj
+            
             # Override print to automatically preprocess Data API types
             _original_print = print
             def print(*args, **kwargs):
                 json_args = []
                 for arg in args:
-                    json_args.append(_json_module.dumps(preprocess_table_payload(arg, _serdes_options, None), separators=(',', ':')))
+                    # First convert objects to serializable format
+                    converted_arg = _convert_to_serializable(arg)
+                    # Then preprocess for Data API types
+                    preprocessed_arg = preprocess_table_payload(converted_arg, _serdes_options, None)
+                    # Ensure options field exists in all definitions
+                    final_arg = _ensure_options_field(preprocessed_arg)
+                    json_args.append(_json_module.dumps(final_arg, separators=(',', ':')))
                 _original_print(*json_args, **kwargs)
             """ + content;
         }
