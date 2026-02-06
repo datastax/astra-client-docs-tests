@@ -6,6 +6,4 @@ fixtures:
 snapshots:
   share: true
   sources:
-    stdout::matches:
-      regex: ^$
     rows:

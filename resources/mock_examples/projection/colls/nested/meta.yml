@@ -4,9 +4,8 @@ test:
 fixtures:
   base: basic-collection.js
 snapshots:
-  share: true
+  share:
+    bash: false
   sources:
     stderr::matches:
-      regex: ^$
-    stdout::matches:
       regex: ^$

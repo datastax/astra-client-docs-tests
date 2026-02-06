@@ -7,5 +7,5 @@ snapshots:
   share: true
   sources:
     stdout::matches:
-      regex: ^$
+      regex: .*2.*
     documents:

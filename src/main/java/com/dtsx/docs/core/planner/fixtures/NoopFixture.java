@@ -28,7 +28,12 @@ public final class NoopFixture extends JSFixture {
     }
 
     @Override
-    protected void reset(ExternalProgram tsx, Placeholders placeholders) {
+    protected void beforeEach(ExternalProgram tsx, Placeholders placeholders) {
+        // noop
+    }
+
+    @Override
+    protected void afterEach(ExternalProgram tsx, Placeholders placeholders) {
         // noop
     }
 

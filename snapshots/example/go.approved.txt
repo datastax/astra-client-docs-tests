@@ -1,4 +1,0 @@
----stdout::capture---
-Hello, World!
-
-Haskell is the best language!

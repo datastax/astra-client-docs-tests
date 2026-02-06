@@ -10,6 +10,7 @@ import com.dtsx.docs.core.runner.PlaceholderResolver;
 import com.dtsx.docs.core.runner.Placeholders;
 import com.dtsx.docs.core.runner.RunException;
 import lombok.EqualsAndHashCode;
+import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.jetbrains.annotations.NotNull;
 
@@ -86,7 +87,8 @@ public sealed abstract class JSFixture implements Comparable<JSFixture> permits 
     public abstract Placeholders meta(ExternalProgram tsx);
 
     protected abstract void setup(ExternalProgram tsx, Placeholders placeholders);
-    protected abstract void reset(ExternalProgram tsx, Placeholders placeholders);
+    protected abstract void beforeEach(ExternalProgram tsx, Placeholders placeholders);
+    protected abstract void afterEach(ExternalProgram tsx, Placeholders placeholders);
     protected abstract void teardown(ExternalProgram tsx, Placeholders placeholders);
 
     /// Executes a consumer for each item in an iterable, resetting the fixture state before each iteration.
@@ -109,15 +111,47 @@ public sealed abstract class JSFixture implements Comparable<JSFixture> permits 
     /// @param tsx the TypeScript executor program
     /// @param ts the iterable of items to process
     /// @param consumer the consumer to execute for each item
-    public <T> void useResetting(ExternalProgram tsx, Placeholders placeholders, Iterable<T> ts, BiConsumer<T, Runnable> consumer) {
+    public <T> void useResetting(ExternalProgram tsx, Placeholders placeholders, Iterable<T> ts, BiConsumer<T, Resetter> consumer) {
         setup(tsx, placeholders);
         try {
             for (val item : ts) {
-                reset(tsx, placeholders);
-                consumer.accept(item, () -> reset(tsx, placeholders));
+                val resetter = new Resetter(() -> beforeEach(tsx, placeholders), () -> afterEach(tsx, placeholders));
+
+                beforeEach(tsx, placeholders);
+                consumer.accept(item, resetter);
+
+                if (!resetter.afterEachCalled()) {
+                    afterEach(tsx, placeholders);
+                }
             }
         } finally {
             teardown(tsx, placeholders);
+        }
+    }
+
+    @RequiredArgsConstructor
+    public static class Resetter {
+        private final Runnable beforeEach; // really don't like this, will fix later
+        private boolean beforeEachCalled = false;
+
+        private final Runnable afterEach;
+        private boolean afterEachCalled = false;
+
+        public void beforeEach() {
+            if (beforeEachCalled) {
+                return;
+            }
+            beforeEachCalled = true;
+            beforeEach.run();
+        }
+
+        public void afterEach() {
+            afterEachCalled = true;
+            afterEach.run();
+        }
+
+        public boolean afterEachCalled() {
+            return afterEachCalled;
         }
     }
 

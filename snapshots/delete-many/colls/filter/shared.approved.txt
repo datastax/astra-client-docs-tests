@@ -12,6 +12,4 @@
   }
 ]
 ---stdout::matches---
-Failed to match '^$':
-
-{"status":{"deletedCount":2}}
+Matches '.*2.*'

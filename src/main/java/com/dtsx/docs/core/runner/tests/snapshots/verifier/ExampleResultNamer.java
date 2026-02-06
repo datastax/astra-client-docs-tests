@@ -10,6 +10,7 @@ import org.approvaltests.Approvals;
 import org.approvaltests.approvers.ApprovalTracker;
 import org.approvaltests.approvers.FileApprover;
 import org.approvaltests.namer.ApprovalNamer;
+import org.approvaltests.namer.ApprovalResults;
 import org.approvaltests.writers.Writer;
 
 import java.io.File;
@@ -48,7 +49,7 @@ public class ExampleResultNamer implements ApprovalNamer {
 
     @Override
     public File getReceivedFile(String extensionWithDot) {
-        val lang = getApprovalName().equals("shared")
+        val lang = groupName.equals("shared")
             ? "." + language.name().toLowerCase()
             : "";
 
