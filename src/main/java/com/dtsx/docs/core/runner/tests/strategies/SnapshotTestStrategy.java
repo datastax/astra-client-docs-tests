@@ -93,24 +93,24 @@ public final class SnapshotTestStrategy extends TestStrategy {
         }
 
         private TestOutcome runTestsForLanguage(Resetter resetter, ClientDriver driver, Set<Path> filesForLang, ExecutionEnvironment execEnv) {
-            return verifier.verify(driver, testRoot, placeholders, filesForLang, (path) -> {
-                resetter.beforeEach();
+            resetter.beforeEach();
 
+            val res = verifier.verify(driver, testRoot, placeholders, filesForLang, (path) -> {
                 val testFileModifiers = (snapshotSources.stream().anyMatch(OutputJsonifySource.class::isInstance))
                     ? TestFileModifiers.JSONIFY_OUTPUT
                     : TestFileModifiers.NONE;
 
-                val res =  execEnv.withTestFileCopied(driver, path, placeholders, testFileModifiers, () -> {
+                return execEnv.withTestFileCopied(driver, path, placeholders, testFileModifiers, () -> {
                     val displayPath = testRoot.displayPath(path);
 
                     return CliLogger.loading("Verifying @!%s!@".formatted(displayPath), (_) -> {
                         return driver.executeScript(ctx, execEnv, envVars);
                     });
                 });
-
-                resetter.afterEach();
-                return res;
             });
+
+            resetter.afterEach();
+            return res;
         }
     }
 }
