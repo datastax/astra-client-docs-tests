@@ -3,9 +3,7 @@ package com.dtsx.docs.core.runner;
 import com.dtsx.docs.config.ctx.BaseScriptRunnerCtx;
 import lombok.val;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,6 +25,15 @@ public class PlaceholderResolver {
 
     private static final Pattern PLACEHOLDER = Pattern.compile("\\*\\*(\\w+)\\*\\*");
 
+    private static final Map<String, String> VECTORS = Map.of(
+        "0.08, -0.62, 0.31", randomVectorArray("vec1"),
+        "0.08f, -0.62f, 0.31f", randomVectorArray("vec1"),
+        "0.12, 0.53, 0.32", randomVectorArray("vec2"),
+        "0.12f, 0.53f, 0.32f", randomVectorArray("vec2"),
+        "PaPXCr8euFI+x64U", randomVectorBinary("bin1"),
+        "PfXCjz8HrhQ+o9cK", randomVectorBinary("bin2")
+    );
+
     public static String replacePlaceholders(BaseScriptRunnerCtx ctx, Placeholders placeholders, String src) {
         val m = PLACEHOLDER.matcher(src);
         val out = new StringBuilder(src.length());
@@ -44,6 +51,15 @@ public class PlaceholderResolver {
         }
 
         m.appendTail(out);
+
+        VECTORS.forEach((vector, replacement) -> {
+            val index = out.indexOf(vector);
+
+            if (index >= 0) {
+                out.replace(index, index + vector.length(), replacement);
+            }
+        });
+
         return out.toString();
     }
 
@@ -55,5 +71,28 @@ public class PlaceholderResolver {
         }
 
         return envVars;
+    }
+
+    private static String randomVectorArray(String seed) {
+        val random = new Random(seed.hashCode());
+        val sb = new StringBuilder();
+        sb.append("[");
+
+        for (int i = 0; i < 1024; i++) {
+            sb.append(random.nextFloat());
+            if (i < 1023) {
+                sb.append(", ");
+            }
+        }
+
+        sb.append("]");
+        return sb.toString();
+    }
+
+    private static String randomVectorBinary(String seed) {
+        val random = new Random(seed.hashCode());
+        val bytes = new byte[1024 * Float.BYTES];
+        random.nextBytes(bytes);
+        return Base64.getEncoder().encodeToString(bytes);
     }
 }
