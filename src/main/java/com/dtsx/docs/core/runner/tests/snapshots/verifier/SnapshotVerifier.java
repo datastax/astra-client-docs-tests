@@ -2,6 +2,7 @@ package com.dtsx.docs.core.runner.tests.snapshots.verifier;
 
 import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.core.planner.TestRoot;
+import com.dtsx.docs.core.planner.fixtures.JSFixture.Resetter;
 import com.dtsx.docs.core.planner.meta.snapshot.SnapshotsShareConfig;
 import com.dtsx.docs.core.runner.Placeholders;
 import com.dtsx.docs.core.runner.drivers.ClientDriver;
@@ -49,7 +50,7 @@ public class SnapshotVerifier {
     private final List<SnapshotSource> snapshotSources;
     private final SnapshotsShareConfig shareConfig;
 
-    public TestOutcome verify(ClientDriver driver, TestRoot testRoot, Placeholders placeholders, Set<Path> filesForLang, Function<Path, RunResult> result) {
+    public TestOutcome verify(ClientDriver driver, Resetter resetter, TestRoot testRoot, Placeholders placeholders, Set<Path> filesForLang, Function<Path, RunResult> result) {
         if (ctx.verifyMode() == DRY_RUN) {
             return TestOutcome.DryPassed.INSTANCE;
         }
@@ -57,9 +58,11 @@ public class SnapshotVerifier {
         val snapshots = new HashMap<String, Set<Path>>();
 
         for (val filePath : filesForLang) {
+            resetter.beforeEach();
             val runResult = result.apply(filePath);
             val fileSnapshot = mkSnapshot(driver, placeholders, runResult);
             snapshots.computeIfAbsent(fileSnapshot, _ -> new HashSet<>()).add(filePath);
+            resetter.afterEach();
         }
 
         if (snapshots.size() > 1) {

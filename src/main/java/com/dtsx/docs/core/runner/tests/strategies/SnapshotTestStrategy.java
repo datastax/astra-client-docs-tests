@@ -83,7 +83,7 @@ public final class SnapshotTestStrategy extends TestStrategy {
                 val language = e.getKey();
                 val filesForLang = e.getValue();
 
-                val result = runTestsForLanguage(resetter, ctx.drivers().get(language), filesForLang, execEnvs.forLanguage(language));
+                val result = runTestsForLanguage(ctx.drivers().get(language), resetter, filesForLang, execEnvs.forLanguage(language));
 
                 val outcomesProduct = filesForLang.stream().collect(toMap(path -> path, _ -> result));
                 outcomes.put(language, outcomesProduct);
@@ -92,10 +92,8 @@ public final class SnapshotTestStrategy extends TestStrategy {
             return new TestRootResults(testRoot, outcomes);
         }
 
-        private TestOutcome runTestsForLanguage(Resetter resetter, ClientDriver driver, Set<Path> filesForLang, ExecutionEnvironment execEnv) {
-            resetter.beforeEach();
-
-            val res = verifier.verify(driver, testRoot, placeholders, filesForLang, (path) -> {
+        private TestOutcome runTestsForLanguage(ClientDriver driver, Resetter resetter, Set<Path> filesForLang, ExecutionEnvironment execEnv) {
+            return verifier.verify(driver, resetter, testRoot, placeholders, filesForLang, (path) -> {
                 val testFileModifiers = (snapshotSources.stream().anyMatch(OutputJsonifySource.class::isInstance))
                     ? TestFileModifiers.JSONIFY_OUTPUT
                     : TestFileModifiers.NONE;
@@ -108,9 +106,6 @@ public final class SnapshotTestStrategy extends TestStrategy {
                     });
                 });
             });
-
-            resetter.afterEach();
-            return res;
         }
     }
 }

@@ -138,10 +138,10 @@ public sealed abstract class JSFixture implements Comparable<JSFixture> permits 
         private boolean afterEachCalled = false;
 
         public void beforeEach() {
-            if (beforeEachCalled) {
+            if (!beforeEachCalled) {
+                beforeEachCalled = true;
                 return;
             }
-            beforeEachCalled = true;
             beforeEach.run();
         }
 

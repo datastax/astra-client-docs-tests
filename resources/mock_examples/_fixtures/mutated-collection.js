@@ -27,5 +27,5 @@ export async function Setup() {
 }
 
 export async function Teardown() {
-  // await mutatedCollection.drop();
+  await mutatedCollection.drop();
 }
