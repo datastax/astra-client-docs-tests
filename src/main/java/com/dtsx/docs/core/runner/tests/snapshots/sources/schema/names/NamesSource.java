@@ -22,7 +22,7 @@ public abstract class NamesSource extends SnapshotSource {
         this.keyspace = keyspace.keyspace();
     }
 
-    public abstract List<String> names(Database db);
+    public abstract List<String> names(Database db, Placeholders placeholders);
 
     @Override
     public String mkSnapshot(TestCtx ctx, ClientDriver driver, RunResult res, Placeholders placeholders) {
@@ -32,7 +32,7 @@ public abstract class NamesSource extends SnapshotSource {
         );
 
         return JacksonUtils.prettyPrintJson(
-            names(db).stream()
+            names(db, placeholders).stream()
                 .sorted()
                 .toList()
         );

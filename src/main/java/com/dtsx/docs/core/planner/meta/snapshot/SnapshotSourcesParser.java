@@ -10,8 +10,10 @@ import com.dtsx.docs.core.runner.tests.snapshots.sources.records.DocumentsSource
 import com.dtsx.docs.core.runner.tests.snapshots.sources.records.RowsSource;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.schema.definitions.CollectionDefinitionSource;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.schema.definitions.TableDefinitionSource;
+import com.dtsx.docs.core.runner.tests.snapshots.sources.schema.definitions.TableIndexDefinitionsSource;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.schema.definitions.UdtDefinitionsSource;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.schema.names.CollectionNamesSource;
+import com.dtsx.docs.core.runner.tests.snapshots.sources.schema.names.TableIndexNamesSource;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.schema.names.TableNamesSource;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.schema.names.UdtNamesSource;
 import com.dtsx.docs.lib.JacksonUtils;
@@ -37,6 +39,10 @@ public class SnapshotSourcesParser {
             put("table::rows", mk(RowsSource::new, new TypeReference<>() {}));
             put("table::definition", mk(TableDefinitionSource::new, new TypeReference<>() {}));
             put("table::names", mk(TableNamesSource::new, new TypeReference<>() {}));
+        }
+        {
+            put("table::index::names", mk(TableIndexNamesSource::new, new TypeReference<>() {}));
+            put("table::index::definitions", mk(TableIndexDefinitionsSource::new, new TypeReference<>() {}));
         }
         {
             put("udt::names", mk(UdtNamesSource::new, new TypeReference<>() {}));

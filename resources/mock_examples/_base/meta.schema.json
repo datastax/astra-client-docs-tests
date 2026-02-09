@@ -302,6 +302,52 @@
               },
               "additionalProperties": false,
               "description": "Capture user-defined type definitions"
+            },
+            "table::index::names": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Optional table name override"
+                },
+                "keyspace": {
+                  "type": "string",
+                  "description": "Optional keyspace name override"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Capture table index names"
+            },
+            "table::index::definitions": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "required": [
+                "indexes"
+              ],
+              "properties": {
+                "indexes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "List of index names to capture definitions for"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Optional table name override"
+                },
+                "keyspace": {
+                  "type": "string",
+                  "description": "Optional keyspace name override"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Capture table index definitions"
             }
           },
           "additionalProperties": false
