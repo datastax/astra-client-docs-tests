@@ -6,7 +6,6 @@ import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import lombok.experimental.UtilityClass;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @UtilityClass
 public class SnapshotSourceUtils {

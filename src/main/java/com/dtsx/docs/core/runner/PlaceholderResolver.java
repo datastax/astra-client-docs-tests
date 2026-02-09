@@ -79,6 +79,7 @@ public class PlaceholderResolver {
         val sb = new StringBuilder();
 
         for (int i = 0; i < 1024; i++) {
+            sb.append('0');
             sb.append('.');
             sb.append(random.nextInt(1, 10));
             if (appendF) {
@@ -95,7 +96,11 @@ public class PlaceholderResolver {
     private static String randomVectorBinary(String seed) {
         val random = new Random(seed.hashCode());
         val bytes = new byte[1024 * Float.BYTES];
-        random.nextBytes(bytes);
+
+        for (int i = 0; i < bytes.length; i++) {
+            bytes[i] = (byte) random.nextInt(40, 60); // random bounds that don't seem to cause issues
+        }
+
         return Base64.getEncoder().encodeToString(bytes);
     }
 }

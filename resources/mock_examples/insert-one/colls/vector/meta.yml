@@ -1,0 +1,12 @@
+$schema: "../../../_base/meta.schema.json"
+test:
+  type: snapshot
+fixtures:
+  base: mutated-collection.js
+snapshots:
+  share: true
+  sources:
+    stderr::matches:
+      regex: ^$
+    collection::documents:
+      projection: { "$vector": true }
