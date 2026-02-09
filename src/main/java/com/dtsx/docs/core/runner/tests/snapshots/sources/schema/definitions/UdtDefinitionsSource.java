@@ -1,5 +1,9 @@
 package com.dtsx.docs.core.runner.tests.snapshots.sources.schema.definitions;
 
+import com.datastax.astra.client.collections.definition.documents.Document;
+import com.datastax.astra.client.core.commands.Command;
+import com.datastax.astra.client.tables.commands.options.ListTypesOptions;
+import com.datastax.astra.client.tables.definition.types.TableUserDefinedTypeDescriptor;
 import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.core.planner.meta.snapshot.meta.UdtDefinitionSourceMeta;
 import com.dtsx.docs.core.runner.Placeholders;
@@ -32,8 +36,16 @@ public class UdtDefinitionsSource extends SnapshotSource {
             overrideKeyspace.orElse(placeholders.keyspaceName())
         );
 
-        val types = database.listTypes().stream()
-            .filter(type -> this.types.contains(type.getName()))
+        val listTypesCommand = Command
+            .create("listTypes")
+            .withOptions(new Document().append("explain", true));
+
+        record TypeDescriptor(String udtName, Object definition) {}
+
+        val types = database.runCommand(listTypesCommand, (ListTypesOptions) null)
+            .getStatusKeyAsList("types", TypeDescriptor.class)
+            .stream()
+            .filter(type -> this.types.contains(type.udtName))
             .toList();
         
         return JacksonUtils.prettyPrintJson(

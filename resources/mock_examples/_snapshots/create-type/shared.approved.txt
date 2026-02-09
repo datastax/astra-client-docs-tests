@@ -1,0 +1,23 @@
+---udt::definitions---
+[
+  {
+    "udtName" : "member",
+    "definition" : {
+      "fields" : {
+        "date_joined" : {
+          "type" : "date"
+        },
+        "is_active" : {
+          "type" : "boolean"
+        },
+        "name" : {
+          "type" : "text"
+        }
+      }
+    }
+  }
+]
+---stdout::matches---
+Matches '^(|\{"status":\{"ok":1\}\})$'
+---stderr::matches---
+Matches '^$'
