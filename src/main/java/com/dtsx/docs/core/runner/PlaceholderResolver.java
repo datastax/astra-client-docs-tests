@@ -80,7 +80,7 @@ public class PlaceholderResolver {
 
         for (int i = 0; i < 1024; i++) {
             sb.append('.');
-            sb.append(random.nextInt());
+            sb.append(random.nextInt(1, 10));
             if (appendF) {
                 sb.append('f');
             }
