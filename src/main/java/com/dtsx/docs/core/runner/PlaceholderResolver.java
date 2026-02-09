@@ -27,10 +27,10 @@ public class PlaceholderResolver {
     private static final Pattern PLACEHOLDER = Pattern.compile("\\*\\*(\\w+)\\*\\*");
 
     private static final Map<String, String> VECTORS = Map.of(
-        "0.08, -0.62, 0.39", randomVectorArray("vec1"),
-        "0.08f, -0.62f, 0.39f", randomVectorArray("vec1"),
-        "0.12, 0.53, 0.32", randomVectorArray("vec2"),
-        "0.12f, 0.53f, 0.32f", randomVectorArray("vec2"),
+        "0.08, -0.62, 0.39", randomVectorArray("vec1", false),
+        "0.08f, -0.62f, 0.39f", randomVectorArray("vec1", true),
+        "0.12, 0.53, 0.32", randomVectorArray("vec2", false),
+        "0.12f, 0.53f, 0.32f", randomVectorArray("vec2", true),
         "PaPXCr8euFI+x64U", randomVectorBinary("bin1"),
         "PfXCjz8HrhQ+o9cK", randomVectorBinary("bin2")
     );
@@ -74,14 +74,18 @@ public class PlaceholderResolver {
         return envVars;
     }
 
-    private static String randomVectorArray(String seed) {
+    private static String randomVectorArray(String seed, boolean appendF) {
         val random = new Random(seed.hashCode());
         val sb = new StringBuilder();
 
         for (int i = 0; i < 1024; i++) {
-            sb.append(random.nextFloat());
+            sb.append('.');
+            sb.append(random.nextInt());
+            if (appendF) {
+                sb.append('f');
+            }
             if (i < 1023) {
-                sb.append(", ");
+                sb.append(',');
             }
         }
 

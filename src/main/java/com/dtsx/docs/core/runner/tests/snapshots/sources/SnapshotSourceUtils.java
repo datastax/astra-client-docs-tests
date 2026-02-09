@@ -39,6 +39,10 @@ public class SnapshotSourceUtils {
 
         return switch (obj) {
             case Map<?, ?> map -> {
+                if (map.size() == 1 && map.containsKey("$binary")) {
+                    yield "vector_or_binary";
+                }
+
                 var result = new LinkedHashMap<>();
                 map.entrySet().stream()
                     .sorted(Comparator.comparing(e -> calcSortValue(e.getKey()), Comparator.nullsFirst(Integer::compareTo)))
