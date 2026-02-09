@@ -26,8 +26,8 @@ public class PlaceholderResolver {
     private static final Pattern PLACEHOLDER = Pattern.compile("\\*\\*(\\w+)\\*\\*");
 
     private static final Map<String, String> VECTORS = Map.of(
-        "0.08, -0.62, 0.31", randomVectorArray("vec1"),
-        "0.08f, -0.62f, 0.31f", randomVectorArray("vec1"),
+        "0.08, -0.62, 0.39", randomVectorArray("vec1"),
+        "0.08f, -0.62f, 0.39f", randomVectorArray("vec1"),
         "0.12, 0.53, 0.32", randomVectorArray("vec2"),
         "0.12f, 0.53f, 0.32f", randomVectorArray("vec2"),
         "PaPXCr8euFI+x64U", randomVectorBinary("bin1"),
