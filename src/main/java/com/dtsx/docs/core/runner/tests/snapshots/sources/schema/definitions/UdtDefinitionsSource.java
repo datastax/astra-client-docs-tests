@@ -32,12 +32,28 @@ public class UdtDefinitionsSource extends SnapshotSource {
             overrideKeyspace.orElse(placeholders.keyspaceName())
         );
 
-        val types = database.listTypes().stream()
-            .filter(type -> this.types.contains(type.getName()))
-            .toList();
-        
+        val keyspace = overrideKeyspace.orElse(placeholders.keyspaceName());
+
+        // Get all type names and definitions - they should be in the same order
+        val allTypeNames = database.listTypeNames();
+        val allTypeDescriptors = database.listTypes();
+
+        // Match names with descriptors by index
+        val typeDefinitions = new java.util.ArrayList<>();
+        for (int i = 0; i < allTypeNames.size() && i < allTypeDescriptors.size(); i++) {
+            val typeName = allTypeNames.get(i);
+            if (this.types.contains(typeName)) {
+                val descriptor = allTypeDescriptors.get(i);
+                // Create a combined object with name and definition
+                typeDefinitions.add(java.util.Map.of(
+                    "name", typeName,
+                    "definition", descriptor
+                ));
+            }
+        }
+
         return JacksonUtils.prettyPrintJson(
-            mkJsonDeterministic(types)
+            mkJsonDeterministic(typeDefinitions)
         );
     }
 }
