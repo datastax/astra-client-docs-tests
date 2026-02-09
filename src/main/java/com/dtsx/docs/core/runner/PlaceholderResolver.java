@@ -77,7 +77,6 @@ public class PlaceholderResolver {
     private static String randomVectorArray(String seed) {
         val random = new Random(seed.hashCode());
         val sb = new StringBuilder();
-        sb.append("[");
 
         for (int i = 0; i < 1024; i++) {
             sb.append(random.nextFloat());
@@ -86,7 +85,6 @@ public class PlaceholderResolver {
             }
         }
 
-        sb.append("]");
         return sb.toString();
     }
 
