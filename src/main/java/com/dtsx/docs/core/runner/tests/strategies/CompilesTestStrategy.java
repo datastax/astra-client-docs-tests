@@ -1,22 +1,28 @@
 package com.dtsx.docs.core.runner.tests.strategies;
 
+import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.core.planner.TestRoot;
+import com.dtsx.docs.core.runner.ExecutionEnvironment;
+import com.dtsx.docs.core.runner.ExecutionEnvironment.ExecutionEnvironments;
 import com.dtsx.docs.core.runner.ExecutionEnvironment.TestFileModifiers;
 import com.dtsx.docs.core.runner.Placeholders;
-import com.dtsx.docs.commands.test.TestCtx;
-import com.dtsx.docs.lib.CliLogger;
-import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
-import com.dtsx.docs.core.runner.ExecutionEnvironment.ExecutionEnvironments;
+import com.dtsx.docs.core.runner.drivers.ClientDriver;
+import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import com.dtsx.docs.core.runner.tests.results.TestOutcome;
 import com.dtsx.docs.core.runner.tests.results.TestRootResults;
-import com.dtsx.docs.core.runner.drivers.ClientLanguage;
+import com.dtsx.docs.lib.CliLogger;
+import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import lombok.val;
 
 import java.nio.file.Path;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import static com.dtsx.docs.core.runner.tests.VerifyMode.DRY_RUN;
+import static com.dtsx.docs.core.runner.tests.VerifyMode.NO_COMPILE_ONLY;
 
 public final class CompilesTestStrategy extends TestStrategy {
     private static final Placeholders FAKE_FIXTURE_MD = new Placeholders(
@@ -31,35 +37,58 @@ public final class CompilesTestStrategy extends TestStrategy {
 
     @Override
     public TestRootResults runTestsInRoot(ExternalProgram tsx, TestRoot testRoot, ExecutionEnvironments execEnvs, Placeholders ignored) {
-        val outcomes = new HashMap<ClientLanguage, Map<Path, TestOutcome>>();
+        val outcomes = new ConcurrentHashMap<ClientLanguage, Map<Path, TestOutcome>>();
 
-        testRoot.filesToTest().forEach((lang, paths) -> {
-            val driver = ctx.drivers().get(lang);
-            val execEnv = execEnvs.forLanguage(lang);
+        val numFiles = new Object() {
+            int ref = 0;
+        };
 
-            for (val path : paths) {
-                if (ctx.verifyMode() == DRY_RUN) {
-                    outcomes.computeIfAbsent(lang, _ -> new HashMap<>()).put(path, TestOutcome.DryPassed.INSTANCE);
-                    continue;
-                }
-
-                execEnv.withTestFileCopied(driver, path, FAKE_FIXTURE_MD, TestFileModifiers.NONE, () -> {
-                    val displayPath = testRoot.displayPath(path);
-
-                    val res = CliLogger.loading("Compiling @!%s!@".formatted(displayPath), (_) -> {
-                        return driver.compileScript(ctx, execEnv);
-                    });
-
-                    val outcome = (res.notOk())
-                        ? new TestOutcome.FailedToCompile(res.output()).alsoLog(testRoot, lang, res.output())
-                        : TestOutcome.Passed.INSTANCE;
-
-                    outcomes.computeIfAbsent(lang, _ -> new HashMap<>()).put(path, outcome);
-                    return null;
-                });
-            }
+        testRoot.filesToTest().forEach((lang, files) -> {
+            outcomes.put(lang, new ConcurrentHashMap<>());
+            numFiles.ref += files.size();
         });
 
-        return new TestRootResults(testRoot, outcomes);
+        val displayMsg = "Compiling @!%d!@ file%s for @!%s!@".formatted(numFiles.ref, (numFiles.ref == 1) ? "" : "s", testRoot.rootName());
+
+        return CliLogger.loading(displayMsg, (_) -> {
+            try (val executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())) {
+                val futures = new ArrayList<Future<?>>();
+
+                testRoot.filesToTest().forEach((lang, paths) -> {
+                    val driver = ctx.drivers().get(lang);
+                    val execEnv = execEnvs.forLanguage(lang);
+
+                    paths.forEach(path -> {
+                        futures.add(executor.submit(() ->
+                            runSingleTest(testRoot, outcomes, lang, path, driver, execEnv)
+                        ));
+                    });
+                });
+
+                for (val future : futures) {
+                    future.get();
+                }
+            }
+
+            return new TestRootResults(testRoot, outcomes);
+        });
+    }
+
+    private void runSingleTest(TestRoot testRoot, ConcurrentHashMap<ClientLanguage, Map<Path, TestOutcome>> outcomes, ClientLanguage lang, Path path, ClientDriver driver, ExecutionEnvironment execEnv) {
+        if (ctx.verifyMode() == DRY_RUN || ctx.verifyMode() == NO_COMPILE_ONLY) {
+            outcomes.get(lang).put(path, TestOutcome.DryPassed.INSTANCE);
+            return;
+        }
+
+        execEnv.withTestFileCopied(driver, path, FAKE_FIXTURE_MD, TestFileModifiers.NONE, () -> {
+            val res = driver.compileScript(ctx, execEnv);
+
+            val outcome = (res.notOk())
+                ? new TestOutcome.FailedToCompile(res.output()).alsoLog(testRoot, lang, res.output())
+                : TestOutcome.Passed.INSTANCE;
+
+            outcomes.get(lang).put(path, outcome);
+            return null;
+        });
     }
 }

@@ -34,6 +34,9 @@ public enum VerifyMode {
     /// This also stops {@linkplain com.dtsx.docs.core.planner.fixtures.JSFixture fixtures} from running, but still sets up the {@linkplain com.dtsx.docs.core.runner.ExecutionEnvironment execution environment}.
     DRY_RUN,
 
+    /// Skips compile-only tests
+    NO_COMPILE_ONLY,
+
     /// Forces tests to use {@link com.dtsx.docs.core.runner.tests.strategies.CompilesTestStrategy CompilesTestStrategy}.
     ///
     /// Dependent on the invariant that all snapshot tests can be run as compilation tests.
@@ -49,7 +52,7 @@ public enum VerifyMode {
     /// @throws RunException if mode is invalid for the configuration
     public Function1<Options, Options> applyOptions(TestCtx ctx, Path approvedFile) {
         return switch (ctx.verifyMode()) {
-            case NORMAL -> {
+            case NORMAL, NO_COMPILE_ONLY -> {
                 yield (o) -> o;
             }
             case VERIFY_ONLY -> (o) -> {

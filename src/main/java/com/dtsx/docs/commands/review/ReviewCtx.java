@@ -17,6 +17,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
 
+import static com.dtsx.docs.HelperCli.CLI_DIR;
+
 @Getter
 public class ReviewCtx extends BaseCtx {
     private final int port;
@@ -30,7 +32,7 @@ public class ReviewCtx extends BaseCtx {
 
         this.port = validatePort(args.$port);
         this.snapshotsFolder = ArgUtils.requirePath(cmd, args.$snapshotsFolder, "snapshots folder", "-sf", "SNAPSHOTS_FOLDER");
-        this.dashboardFolder = Path.of("snapshot-dashboard");
+        this.dashboardFolder = CLI_DIR.resolve("snapshot-dashboard");
         this.openBrowser = !args.$noOpen;
         this.detached = args.$detached;
     }

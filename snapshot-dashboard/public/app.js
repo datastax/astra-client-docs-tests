@@ -1069,6 +1069,7 @@ function showCompletionState() {
  */
 function showStaleDataModal() {
   elements.staleModal.style.display = 'flex';
+  throw e;
   setTimeout(() => {
     window.location.reload();
   }, 2000);

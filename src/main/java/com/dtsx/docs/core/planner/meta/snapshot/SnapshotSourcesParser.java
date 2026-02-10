@@ -66,7 +66,7 @@ public class SnapshotSourcesParser {
             sources.add(parser.apply(source, params));
         }
 
-        return sources;
+        return sources.stream().sorted().toList();
     }
 
     private static <M> BiFunction<String, Map<String, Object>, SnapshotSource> mk(BiFunction<String, M, SnapshotSource> constructor, TypeReference<M> typeRef) {

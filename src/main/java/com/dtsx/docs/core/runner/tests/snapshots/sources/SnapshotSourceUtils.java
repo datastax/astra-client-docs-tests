@@ -44,8 +44,12 @@ public class SnapshotSourceUtils {
 
                 var result = new LinkedHashMap<>();
                 map.entrySet().stream()
+                    .map(e -> Map.entry(
+                        e.getKey(),
+                        mkJsonDeterministic(e.getValue())
+                    ))
                     .sorted(Comparator.comparing(e -> calcSortValue(e.getKey()), Comparator.nullsFirst(Integer::compareTo)))
-                    .forEach(e -> result.put(e.getKey(), mkJsonDeterministic(e.getValue())));
+                    .forEach(e -> result.put(e.getKey(), e.getValue()));
                 yield result;
             }
             case Collection<?> coll -> {
@@ -56,8 +60,8 @@ public class SnapshotSourceUtils {
                 }
 
                 yield coll.stream()
-                    .sorted(Comparator.comparing(SnapshotSourceUtils::calcSortValue, Comparator.nullsFirst(Integer::compareTo)))
                     .map(SnapshotSourceUtils::mkJsonDeterministic)
+                    .sorted(Comparator.comparing(SnapshotSourceUtils::calcSortValue, Comparator.nullsFirst(Integer::compareTo)))
                     .toList();
             }
             default -> {
