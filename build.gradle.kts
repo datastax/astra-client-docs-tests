@@ -42,7 +42,7 @@ dependencies {
 
 application {
     applicationDefaultJvmArgs = listOf("--enable-native-access=ALL-UNNAMED")
-    mainClass.set("com.dtsx.docs.VerifierCli")
+    mainClass.set("com.dtsx.docs.HelperCli")
 }
 
 tasks.register<Jar>("fatJar") {

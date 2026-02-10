@@ -54,7 +54,7 @@ public class PythonDriver extends ClientDriver {
     }
 
     @Override
-    public String preprocessScript(BaseScriptRunnerCtx ignoredCtx, String content, @TestFileModifierFlags int mods) {
+    public String preprocessScript(BaseScriptRunnerCtx ctx, String content, @TestFileModifierFlags int mods) {
         if ((mods & TestFileModifiers.JSONIFY_OUTPUT) != 0) {
             content = """
             import json as _json_module
@@ -82,6 +82,9 @@ public class PythonDriver extends ClientDriver {
                 _original_print(*json_args, **kwargs)
             """ + content;
         }
+
+        content = "from astrapy.admin import parse_api_endpoint\n" + content;
+        content = content.replace("DataAPIClient()", "DataAPIClient(environment=parse_api_endpoint(\"" + ctx.connectionInfo().endpoint() + "\").environment)");
 
         return content;
     }
