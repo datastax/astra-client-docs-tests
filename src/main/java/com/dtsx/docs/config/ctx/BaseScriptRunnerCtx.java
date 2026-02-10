@@ -24,6 +24,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import static com.dtsx.docs.HelperCli.CLI_DIR;
+
 @Getter
 public abstract class BaseScriptRunnerCtx extends BaseCtx {
     /// Resolved from `EXAMPLES_FOLDER` env var, with fallback to `./resources/mock_examples`.
@@ -62,7 +64,7 @@ public abstract class BaseScriptRunnerCtx extends BaseCtx {
         super(args, spec);
         this.examplesFolder = resolveExampleFolder(spec.commandLine(), args).toAbsolutePath().normalize();
         this.connectionInfo = mkConnectionInfo(cmd, args);
-        this.execEnvTemplatesFolder = Path.of("resources/environments/");
+        this.execEnvTemplatesFolder = CLI_DIR.resolve("resources/environments/");
         this.clean = args.$clean;
         this.bail = args.$bail;
     }

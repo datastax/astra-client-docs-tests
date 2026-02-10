@@ -3,15 +3,16 @@ package com.dtsx.docs;
 import com.dtsx.docs.commands.review.ReviewCmd;
 import com.dtsx.docs.commands.run.RunCmd;
 import com.dtsx.docs.commands.test.TestCmd;
-import com.dtsx.docs.core.runner.tests.snapshots.sources.SnapshotSourceUtils;
 import com.dtsx.docs.lib.CliLogger;
-import com.dtsx.docs.lib.JacksonUtils;
 import io.github.cdimascio.dotenv.Dotenv;
 import lombok.val;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Help.Ansi.Style;
 import picocli.CommandLine.Help.ColorScheme;
+
+import java.nio.file.Path;
+import java.util.List;
 
 import static com.dtsx.docs.lib.ColorUtils.ACCENT_COLOR;
 
@@ -25,8 +26,14 @@ import static com.dtsx.docs.lib.ColorUtils.ACCENT_COLOR;
     }
 )
 public class HelperCli {
+    public static Path CLI_DIR = Path.of(System.getenv("CLI_DIR"));
+
     public static void main(String[] args) {
-        Dotenv.configure().systemProperties().ignoreIfMissing().load();
+        for (val dir : List.of("./", CLI_DIR.toString())) {
+            Dotenv.configure().directory(dir).systemProperties().ignoreIfMissing().load();
+        }
+
+        System.setProperty("APPROVALTESTS_PROJECT_DIRECTORY", CLI_DIR.toString());
 
         val cli = new CommandLine(new HelperCli())
             .setCaseInsensitiveEnumValuesAllowed(true)

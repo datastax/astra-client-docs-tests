@@ -71,7 +71,7 @@ public class RunCtx extends BaseScriptRunnerCtx {
     private Path resolveAbsFilePath(String fileStr) {
         val roots = List.of(
             examplesFolder(),
-            Path.of(System.getenv("USERS_ACTUAL_CWD"))
+            Path.of(System.getenv("CLI_DIR"))
         );
 
         val triedPaths = new HashSet<String>();

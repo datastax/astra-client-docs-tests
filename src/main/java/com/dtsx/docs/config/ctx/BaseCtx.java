@@ -14,6 +14,8 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 
+import static com.dtsx.docs.HelperCli.CLI_DIR;
+
 @Getter
 public abstract class BaseCtx {
     protected CommandLine cmd;
@@ -31,7 +33,7 @@ public abstract class BaseCtx {
 
     public BaseCtx(BaseArgs<?> args, CommandSpec spec) {
         this.cmd = spec.commandLine();
-        this.tmpFolder = Path.of(".docs_tests_temp");
+        this.tmpFolder = CLI_DIR.resolve(".docs_tests_temp");
         this.commandOverrides = mkCommandOverrides(args);
     }
 

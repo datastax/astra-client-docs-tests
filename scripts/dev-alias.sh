@@ -3,23 +3,23 @@ function extract_root_dir() {
 }
 
 if [ -n "$BASH_SOURCE" ]; then
-  CLI_DIR=$(extract_root_dir "${BASH_SOURCE[0]}")
+  _CLI_DIR=$(extract_root_dir "${BASH_SOURCE[0]}")
 elif [ -n "$ZSH_VERSION" ]; then
   # shellcheck disable=SC2296
-  CLI_DIR=$(extract_root_dir "${(%):-%x}")
+  _CLI_DIR=$(extract_root_dir "${(%):-%x}")
 else
-  CLI_DIR="."
+  _CLI_DIR="."
 fi
 
-echo "Resolved docs-helper directory '$CLI_DIR'"
+echo "Resolved docs-helper directory '$_CLI_DIR'"
 
 function dh() {
-  export USERS_ACTUAL_CWD=$PWD
+  export CLI_DIR="$_CLI_DIR"
 
-  cd "$CLI_DIR" || {
-    echo "Failed to change directory to script location '$CLI_DIR'"
-    exit 1
-  }
-
-  ./gradlew -q fatJar && java --enable-native-access=ALL-UNNAMED -jar build/libs/verifier.jar "$@"
+  "$CLI_DIR/gradlew" \
+      --project-dir "$CLI_DIR" \
+      -q fatJar && \
+      java --enable-native-access=ALL-UNNAMED \
+      -jar "$CLI_DIR/build/libs/verifier.jar" \
+      "$@"
 }
