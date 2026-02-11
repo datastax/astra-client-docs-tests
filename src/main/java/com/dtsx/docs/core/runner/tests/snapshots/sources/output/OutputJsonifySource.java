@@ -36,7 +36,7 @@ public class OutputJsonifySource extends SnapshotSource {
             jsonAsString = runJq(ctx, jsonAsString, meta.jq().get());
         }
 
-        val processJson = JacksonUtils.parseJson(jsonAsString, List.class);
+        val processJson = JacksonUtils.parseJson(jsonAsString, Object.class);
 
         return JacksonUtils.prettyPrintJson(
             SnapshotSourceUtils.mkJsonDeterministic(processJson)

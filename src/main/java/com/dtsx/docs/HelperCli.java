@@ -4,6 +4,7 @@ import com.dtsx.docs.commands.review.ReviewCmd;
 import com.dtsx.docs.commands.run.RunCmd;
 import com.dtsx.docs.commands.test.TestCmd;
 import com.dtsx.docs.lib.CliLogger;
+import com.dtsx.docs.lib.JacksonUtils;
 import io.github.cdimascio.dotenv.Dotenv;
 import lombok.val;
 import picocli.CommandLine;
@@ -13,6 +14,7 @@ import picocli.CommandLine.Help.ColorScheme;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 
 import static com.dtsx.docs.lib.ColorUtils.ACCENT_COLOR;
 
@@ -26,7 +28,7 @@ import static com.dtsx.docs.lib.ColorUtils.ACCENT_COLOR;
     }
 )
 public class HelperCli {
-    public static Path CLI_DIR = Path.of(System.getenv("CLI_DIR"));
+    public static Path CLI_DIR = Path.of(Optional.ofNullable(System.getenv("CLI_DIR")).orElse("."));
 
     public static void main(String[] args) {
         for (val dir : List.of("./", CLI_DIR.toString())) {
