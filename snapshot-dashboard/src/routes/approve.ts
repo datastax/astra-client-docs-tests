@@ -195,10 +195,12 @@ router.post('/', async (req: Request, res: Response) => {
       }
     }
     
+    const newLastModified = await readLastModified(snapshotsDir);
+    
     const response: ActionSuccessResponse = {
       success: true,
       message: `Approved ${filename} affecting ${languages.size} language${languages.size === 1 ? '' : 's'}`,
-      lastModified: new Date().toISOString()
+      lastModified: newLastModified
     };
     
     res.json(response);
