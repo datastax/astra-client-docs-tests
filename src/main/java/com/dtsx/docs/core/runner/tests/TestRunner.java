@@ -2,6 +2,7 @@ package com.dtsx.docs.core.runner.tests;
 
 import com.dtsx.docs.core.planner.TestPlan;
 import com.dtsx.docs.commands.test.TestCtx;
+import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.core.planner.fixtures.JSFixture;
@@ -57,13 +58,18 @@ public class TestRunner {
                 ctx.reporter().printBaseFixtureHeading(baseFixture, history);
 
                 baseFixture.useResetting(tsx, placeholders, testRoots, (testRoot, _) -> {
-                    val result = testRoot.testStrategy().runTestsInRoot(tsx, testRoot, execEnvs, placeholders);
+                    try {
+                        val result = testRoot.testStrategy().runTestsInRoot(tsx, testRoot, execEnvs, placeholders);
 
-                    ctx.reporter().printTestRootResults(baseFixture, result, history);
-                    history.add(baseFixture, result);
+                        ctx.reporter().printTestRootResults(baseFixture, result, history);
+                        history.add(baseFixture, result);
 
-                    if (ctx.bail() && !result.allPassed()) {
-                        throw new BailException();
+                        if (ctx.bail() && !result.allPassed()) {
+                            throw new BailException();
+                        }
+                    } catch (Exception e) {
+                        CliLogger.exception("Error running tests in test root '" + testRoot.rootName() + "'");
+                        throw e;
                     }
                 });
             });

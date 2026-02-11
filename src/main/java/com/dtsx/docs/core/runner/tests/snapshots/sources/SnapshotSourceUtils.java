@@ -4,6 +4,7 @@ import com.dtsx.docs.core.planner.PlanException;
 import com.dtsx.docs.core.runner.tests.snapshots.verifier.SnapshotVerifier;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import lombok.experimental.UtilityClass;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
 
@@ -44,12 +45,12 @@ public class SnapshotSourceUtils {
 
                 var result = new LinkedHashMap<>();
                 map.entrySet().stream()
-                    .map(e -> Map.entry(
+                    .map(e -> Pair.of(
                         e.getKey(),
                         mkJsonDeterministic(e.getValue())
                     ))
-                    .sorted(Comparator.comparing(e -> calcSortValue(e.getKey()), Comparator.nullsFirst(Integer::compareTo)))
-                    .forEach(e -> result.put(e.getKey(), e.getValue()));
+                    .sorted(Comparator.comparing(p -> calcSortValue(p.getLeft()), Comparator.nullsFirst(Integer::compareTo)))
+                    .forEach(p -> result.put(p.getLeft(), p.getRight()));
                 yield result;
             }
             case Collection<?> coll -> {

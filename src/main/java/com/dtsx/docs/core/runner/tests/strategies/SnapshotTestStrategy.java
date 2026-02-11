@@ -83,10 +83,15 @@ public final class SnapshotTestStrategy extends TestStrategy {
                 val language = e.getKey();
                 val filesForLang = e.getValue();
 
-                val result = runTestsForLanguage(ctx.drivers().get(language), resetter, filesForLang, execEnvs.forLanguage(language));
+                try {
+                    val result = runTestsForLanguage(ctx.drivers().get(language), resetter, filesForLang, execEnvs.forLanguage(language));
 
-                val outcomesProduct = filesForLang.stream().collect(toMap(path -> path, _ -> result));
-                outcomes.put(language, outcomesProduct);
+                    val outcomesProduct = filesForLang.stream().collect(toMap(path -> path, _ -> result));
+                    outcomes.put(language, outcomesProduct);
+                } catch (Exception ex) {
+                    CliLogger.exception("Error running snapshot tests for language '%s' in test root '%s'".formatted(language, testRoot.rootName()));
+                    outcomes.put(language, filesForLang.stream().collect(toMap(path -> path, _ -> new TestOutcome.Errored(ex).alsoLog(testRoot, language))));
+                }
             });
 
             return new TestRootResults(testRoot, outcomes);
