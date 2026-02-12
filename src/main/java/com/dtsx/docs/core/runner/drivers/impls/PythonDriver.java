@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 public class PythonDriver extends ClientDriver {
     public PythonDriver(String artifact) {
@@ -53,8 +54,10 @@ public class PythonDriver extends ClientDriver {
         return execEnv.envDir().resolve("example.py");
     }
 
+    private static final Pattern DataAPIClientPattern = Pattern.compile("DataAPIClient\\(([^)]*?)\\)");
+
     @Override
-    public String preprocessScript(BaseScriptRunnerCtx ignoredCtx, String content, @TestFileModifierFlags int mods) {
+    public String preprocessScript(BaseScriptRunnerCtx ctx, String content, @TestFileModifierFlags int mods) {
         if ((mods & TestFileModifiers.JSONIFY_OUTPUT) != 0) {
             content = """
             import json as _json_module
@@ -83,7 +86,25 @@ public class PythonDriver extends ClientDriver {
             """ + content;
         }
 
-        return content;
+        val env = switch (ctx.connectionInfo().destination()) {
+            case ASTRA -> "prod";
+            case ASTRA_DEV -> "dev";
+            case ASTRA_TEST -> "test";
+            case DSE -> "dse";
+            case HCD -> "hcd";
+            case CASSANDRA -> "cassandra";
+            case OTHERS -> "other";
+        };
+
+        return DataAPIClientPattern.matcher(content).replaceAll((m) -> {
+            val args = m.group(1).trim();
+
+            if (args.isEmpty()) {
+                return "DataAPIClient(environment='" + env + "')";
+            } else {
+                return "DataAPIClient(" + args + ", environment='" + env + "')";
+            }
+        });
     }
 
     @Override
