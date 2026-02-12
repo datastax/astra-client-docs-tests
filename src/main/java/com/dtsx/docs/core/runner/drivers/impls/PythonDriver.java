@@ -83,11 +83,17 @@ public class PythonDriver extends ClientDriver {
             """ + content;
         }
 
-        if (ctx.connectionInfo().astraEnv().isPresent()) {
-            content = content.replace("DataAPIClient(", "DataAPIClient(environment=parse_api_endpoint(\"" + ctx.connectionInfo().endpoint() + "\").environment,");
-        }
+        val env = switch (ctx.connectionInfo().destination()) {
+            case ASTRA -> "prod";
+            case ASTRA_DEV -> "dev";
+            case ASTRA_TEST -> "test";
+            case DSE -> "dse";
+            case HCD -> "hcd";
+            case CASSANDRA -> "cassandra";
+            case OTHERS -> "other";
+        };
 
-        return content;
+        return content.replace("DataAPIClient(", "DataAPIClient(environment=\"" + env + "\",");
     }
 
     @Override
