@@ -15,6 +15,8 @@ public interface BaseMetaYml {
 
     SkipConfig skipConfig();
 
+    boolean parallel();
+
     interface BaseMetaYmlRep {
         String $schema();
 
@@ -24,7 +26,8 @@ public interface BaseMetaYml {
 
         record TestBlock(
             @NonNull TestType type,
-            @NonNull Optional<Object> skipConfig
+            @NonNull Optional<Object> skipConfig,
+            @NonNull Optional<Boolean> parallel
         ) {
             public static class SkipConfig extends PerLanguageToggle {
                 public SkipConfig(Map<ClientLanguage, Boolean> languages) {

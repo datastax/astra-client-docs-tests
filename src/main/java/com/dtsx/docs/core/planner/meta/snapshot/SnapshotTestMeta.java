@@ -28,6 +28,7 @@ public final class SnapshotTestMeta implements BaseMetaYml {
     private final JSFixture testFixture;
     private final List<SnapshotSource> snapshotSources;
     private final SnapshotsShareConfig shareConfig;
+    private final boolean parallel;
 
     public SnapshotTestMeta(TestCtx ctx, Path testRoot, SnapshotTestMetaRep meta) {
         this.skipConfig = SkipConfig.parse(SkipConfig::new, ctx, meta.test().skipConfig());
@@ -35,6 +36,7 @@ public final class SnapshotTestMeta implements BaseMetaYml {
         this.testFixture = resolveTestFixture(ctx, testRoot);
         this.snapshotSources = SnapshotSourcesParser.parseSources(meta.snapshots());
         this.shareConfig = SnapshotsShareConfig.parse(SnapshotsShareConfig::new, ctx, meta.snapshots().share());
+        this.parallel = meta.test().parallel().orElse(false);
     }
 
     /// Resolves a base fixture from the `_fixtures/` directory.

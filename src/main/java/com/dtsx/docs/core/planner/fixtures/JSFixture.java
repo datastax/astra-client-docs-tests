@@ -4,6 +4,7 @@ import com.dtsx.docs.core.planner.TestRoot;
 import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaRep;
 import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.lib.CliLogger;
+import com.dtsx.docs.lib.ExecutorUtils.DirectExecutor;
 import com.dtsx.docs.lib.ExternalPrograms;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.core.runner.PlaceholderResolver;
@@ -11,11 +12,16 @@ import com.dtsx.docs.core.runner.Placeholders;
 import com.dtsx.docs.core.runner.RunException;
 import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.val;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /// Represents a JavaScript fixture file used to set up, reset, and tear down database state for testing, with being JavaScript used for ease of scripting.
 ///
@@ -111,47 +117,56 @@ public sealed abstract class JSFixture implements Comparable<JSFixture> permits 
     /// @param tsx the TypeScript executor program
     /// @param ts the iterable of items to process
     /// @param consumer the consumer to execute for each item
-    public <T> void useResetting(ExternalProgram tsx, Placeholders placeholders, Iterable<T> ts, BiConsumer<T, Resetter> consumer) {
+    public <T> void useResetting(ExternalProgram tsx, Placeholders placeholders, Iterable<T> ts, Consumer<T> consumer) {
+        use(DirectExecutor.INSTANCE, tsx, placeholders, ts, (t, resetter) -> {
+            resetter.beforeEach();
+            try {
+                consumer.accept(t);
+            } finally {
+                resetter.afterEach();
+            }
+        });
+    }
+
+    @SneakyThrows
+    public <T> void use(ExecutorService executor, ExternalProgram tsx, Placeholders placeholders, Iterable<T> ts, BiConsumer<T, Resetter> consumer) {
+        val resetter = new Resetter(
+            () -> beforeEach(tsx, placeholders),
+            () -> afterEach(tsx, placeholders)
+        );
+
+        val futures = new ArrayList<Future<?>>();
+
         setup(tsx, placeholders);
         try {
             for (val item : ts) {
-                val resetter = new Resetter(() -> beforeEach(tsx, placeholders), () -> afterEach(tsx, placeholders));
+                futures.add(executor.submit(() -> {
+                    consumer.accept(item, resetter);
+                }));
+            }
 
-                beforeEach(tsx, placeholders);
-                consumer.accept(item, resetter);
-
-                if (!resetter.afterEachCalled()) {
-                    afterEach(tsx, placeholders);
-                }
+            for (val future : futures) {
+                future.get();
             }
         } finally {
             teardown(tsx, placeholders);
+            executor.shutdownNow();
         }
     }
 
     @RequiredArgsConstructor
     public static class Resetter {
-        private final Runnable beforeEach; // really don't like this, will fix later
-        private boolean beforeEachCalled = false;
+        public static final Resetter NOOP = new Resetter(() -> {}, () -> {});
 
+        private final Runnable beforeEach;
         private final Runnable afterEach;
-        private boolean afterEachCalled = false;
 
         public void beforeEach() {
-            if (!beforeEachCalled) {
-                beforeEachCalled = true;
-                return;
-            }
             beforeEach.run();
         }
 
         public void afterEach() {
-            afterEachCalled = true;
             afterEach.run();
-        }
-
-        public boolean afterEachCalled() {
-            return afterEachCalled;
         }
     }
 

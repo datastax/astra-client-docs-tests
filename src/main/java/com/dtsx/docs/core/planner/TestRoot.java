@@ -45,11 +45,15 @@ public class TestRoot {
     /// The different `example.<ext>` files to test within this test root, keyed by client language.
     private final TreeMap<ClientLanguage, Set<Path>> filesToTest;
 
+    /// The total number of files to test within this test root (i.e. the sum of the sizes of the sets in `filesToTest`).
+    private final int numFilesToTest;
+
     /// The test strategy to use for this test root.
     ///
     /// @see SnapshotTestStrategy
     /// @see CompilesTestStrategy
-    private final TestStrategy testStrategy;
+    private final TestStrategy<?> testStrategy;
+
 
     /// The name of this test root relative to the examples folder.
     ///
@@ -61,11 +65,12 @@ public class TestRoot {
     /// ```
     private final String rootName;
 
-    public TestRoot(TestCtx ctx, Path path, TreeMap<ClientLanguage, Set<Path>> filesToTest, TestStrategy testStrategy) {
+    public TestRoot(TestCtx ctx, Path path, TreeMap<ClientLanguage, Set<Path>> filesToTest, TestStrategy<?> testStrategy) {
         this.path = path;
         this.filesToTest = filesToTest;
         this.testStrategy = testStrategy;
         this.rootName = ctx.examplesFolder().relativize(path).toString();
+        this.numFilesToTest = filesToTest.values().stream().mapToInt(Set::size).sum();
     }
 
     /// Returns the relative path of the example file for the specified file to test from this test root.

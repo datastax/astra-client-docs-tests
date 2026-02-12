@@ -1,4 +1,0 @@
----stdout::matches---
-Matches '^(?:\d+|\{"status":\{"count":\d+}})$'
----stderr::matches---
-Matches '^$'

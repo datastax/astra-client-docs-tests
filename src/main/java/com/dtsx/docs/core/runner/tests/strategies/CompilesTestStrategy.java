@@ -2,6 +2,7 @@ package com.dtsx.docs.core.runner.tests.strategies;
 
 import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.core.planner.TestRoot;
+import com.dtsx.docs.core.planner.meta.compiles.CompilesTestMeta;
 import com.dtsx.docs.core.runner.ExecutionEnvironment;
 import com.dtsx.docs.core.runner.ExecutionEnvironment.ExecutionEnvironments;
 import com.dtsx.docs.core.runner.ExecutionEnvironment.TestFileModifiers;
@@ -16,42 +17,33 @@ import lombok.val;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import static com.dtsx.docs.core.runner.tests.VerifyMode.DRY_RUN;
 import static com.dtsx.docs.core.runner.tests.VerifyMode.NO_COMPILE_ONLY;
 
-public final class CompilesTestStrategy extends TestStrategy {
+public final class CompilesTestStrategy extends TestStrategy<CompilesTestMeta> {
     private static final Placeholders FAKE_FIXTURE_MD = new Placeholders(
         "compiles_test_collection",
         "compiles_test_table",
         "compiles_test_keyspace"
     );
 
-    public CompilesTestStrategy(TestCtx ctx) {
-        super(ctx);
+    public CompilesTestStrategy(TestCtx ctx, CompilesTestMeta m) {
+        super(ctx, m);
     }
 
     @Override
     public TestRootResults runTestsInRoot(ExternalProgram tsx, TestRoot testRoot, ExecutionEnvironments execEnvs, Placeholders ignored) {
+        val displayMsg = "Compiling @!%d!@ file%s in @!%s!@".formatted(testRoot.numFilesToTest(), (testRoot.numFilesToTest() == 1) ? "" : "s", testRoot.rootName());
+
         val outcomes = new ConcurrentHashMap<ClientLanguage, Map<Path, TestOutcome>>();
 
-        val numFiles = new Object() {
-            int ref = 0;
-        };
-
-        testRoot.filesToTest().forEach((lang, files) -> {
-            outcomes.put(lang, new ConcurrentHashMap<>());
-            numFiles.ref += files.size();
-        });
-
-        val displayMsg = "Compiling @!%d!@ file%s for @!%s!@".formatted(numFiles.ref, (numFiles.ref == 1) ? "" : "s", testRoot.rootName());
-
         return CliLogger.loading(displayMsg, (_) -> {
-            try (val executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            try (val executor = mkExecutor()) {
                 val futures = new ArrayList<Future<?>>();
 
                 testRoot.filesToTest().forEach((lang, paths) -> {
@@ -74,7 +66,9 @@ public final class CompilesTestStrategy extends TestStrategy {
         });
     }
 
-    private void runSingleTest(TestRoot testRoot, ConcurrentHashMap<ClientLanguage, Map<Path, TestOutcome>> outcomes, ClientLanguage lang, Path path, ClientDriver driver, ExecutionEnvironment execEnv) {
+    private void runSingleTest(TestRoot testRoot, Map<ClientLanguage, Map<Path, TestOutcome>> outcomes, ClientLanguage lang, Path path, ClientDriver driver, ExecutionEnvironment execEnv) {
+        outcomes.computeIfAbsent(lang, k -> new HashMap<>());
+
         if (ctx.verifyMode() == DRY_RUN || ctx.verifyMode() == NO_COMPILE_ONLY) {
             outcomes.get(lang).put(path, TestOutcome.DryPassed.INSTANCE);
             return;

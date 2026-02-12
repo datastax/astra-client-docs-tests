@@ -1,5 +1,3 @@
----stderr::matches---
-Matches '^$'
 ---collection::documents---
 [
   {
@@ -8,3 +6,5 @@ Matches '^$'
     "name" : "Jane Doe"
   }
 ]
+---stderr::matches---
+Matches '^$'

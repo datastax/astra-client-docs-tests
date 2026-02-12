@@ -147,7 +147,7 @@ public class TestPlanBuilder {
 
         val strategy = switch (meta) {
             case SnapshotTestMeta m -> new SnapshotTestStrategy(ctx, m);
-            case CompilesTestMeta _ -> new CompilesTestStrategy(ctx);
+            case CompilesTestMeta m -> new CompilesTestStrategy(ctx, m);
             default -> throw new RuntimeException(); // unreachable
         };
 

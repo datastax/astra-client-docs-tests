@@ -57,7 +57,7 @@ public class TestRunner {
 
                 ctx.reporter().printBaseFixtureHeading(baseFixture, history);
 
-                baseFixture.useResetting(tsx, placeholders, testRoots, (testRoot, _) -> {
+                baseFixture.useResetting(tsx, placeholders, testRoots, (testRoot) -> {
                     try {
                         val result = testRoot.testStrategy().runTestsInRoot(tsx, testRoot, execEnvs, placeholders);
 

@@ -1,3 +1,7 @@
+---stderr::matches---
+Matches '^$'
+---stdout::matches---
+Matches '^(|\{"status":\{"ok":1\}\})$'
 ---udt::definitions---
 [
   {
@@ -17,7 +21,3 @@
     }
   }
 ]
----stdout::matches---
-Matches '^(|\{"status":\{"ok":1\}\})$'
----stderr::matches---
-Matches '^$'

@@ -11,9 +11,11 @@ import lombok.RequiredArgsConstructor;
 @Getter
 public final class CompilesTestMeta implements BaseMetaYml {
     private final SkipConfig skipConfig;
+    private final boolean parallel;
 
     public CompilesTestMeta(TestCtx ctx, BaseMetaYmlRep meta) {
         this.skipConfig = SkipConfig.parse(SkipConfig::new, ctx, meta.test().skipConfig());
+        this.parallel = meta.test().parallel().orElse(true);
     }
 
     @Override

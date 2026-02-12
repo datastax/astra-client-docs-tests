@@ -2,10 +2,8 @@ package com.dtsx.docs.core.runner.tests.strategies;
 
 import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.core.planner.TestRoot;
-import com.dtsx.docs.core.planner.fixtures.JSFixture;
 import com.dtsx.docs.core.planner.fixtures.JSFixture.Resetter;
 import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMeta;
-import com.dtsx.docs.core.planner.meta.snapshot.SnapshotsShareConfig;
 import com.dtsx.docs.core.runner.ExecutionEnvironment;
 import com.dtsx.docs.core.runner.ExecutionEnvironment.ExecutionEnvironments;
 import com.dtsx.docs.core.runner.ExecutionEnvironment.TestFileModifiers;
@@ -15,7 +13,6 @@ import com.dtsx.docs.core.runner.drivers.ClientDriver;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import com.dtsx.docs.core.runner.tests.results.TestOutcome;
 import com.dtsx.docs.core.runner.tests.results.TestRootResults;
-import com.dtsx.docs.core.runner.tests.snapshots.sources.SnapshotSource;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.output.OutputJsonifySource;
 import com.dtsx.docs.core.runner.tests.snapshots.verifier.SnapshotVerifier;
 import com.dtsx.docs.lib.CliLogger;
@@ -24,32 +21,17 @@ import lombok.Getter;
 import lombok.val;
 
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 import static java.util.stream.Collectors.toMap;
 
 @Getter
-public final class SnapshotTestStrategy extends TestStrategy {
-    ///  The test-specific fixture to use for this test root.
-    private final JSFixture testFixture;
-
-    /// The set of snapshot sources configured for this test root.
-    private final List<SnapshotSource> snapshotSources;
-
-    /// Whether snapshots are shared across all client languages within this test root.
-    ///
-    /// If true, a snapshot created by one client language can be used to verify the output of another
-    ///  client language within the same test root for stronger consistency and reduced effort.
-    private final SnapshotsShareConfig shareConfig;
-
+public final class SnapshotTestStrategy extends TestStrategy<SnapshotTestMeta> {
     public SnapshotTestStrategy(TestCtx ctx, SnapshotTestMeta meta) {
-        super(ctx);
-        this.testFixture = meta.testFixture();
-        this.snapshotSources = meta.snapshotSources();
-        this.shareConfig = meta.shareConfig();
+        super(ctx, meta);
     }
 
     @Override
@@ -71,44 +53,57 @@ public final class SnapshotTestStrategy extends TestStrategy {
             this.execEnvs = execEnvs;
             this.placeholders = placeholders;
             this.envVars = PlaceholderResolver.mkEnvVars(ctx, placeholders);
-            this.verifier = new SnapshotVerifier(ctx, snapshotSources, shareConfig);
+            this.verifier = new SnapshotVerifier(ctx, meta.snapshotSources(), meta.shareConfig());
         }
 
         public TestRootResults runTestsInRoot() {
-            val outcomes = new HashMap<ClientLanguage, Map<Path, TestOutcome>>();
+            val displayMsg = "Verifying @!%d!@ file%s in @!%s!@".formatted(testRoot.numFilesToTest(), (testRoot.numFilesToTest() == 1) ? "" : "s", testRoot.rootName());
+
+            val outcomes = new ConcurrentHashMap<ClientLanguage, Map<Path, TestOutcome>>();
 
             val testFiles = testRoot.filesToTest().entrySet();
 
-            testFixture.useResetting(tsx, placeholders, testFiles, (e, resetter) -> {
-                val language = e.getKey();
-                val filesForLang = e.getValue();
+            return CliLogger.loading(displayMsg, (updateMsg) -> {
+                meta.testFixture().use(mkExecutor(), tsx, placeholders, testFiles, (e, resetter) -> {
+                    val language = e.getKey();
+                    val filesForLang = e.getValue();
 
-                try {
-                    val result = runTestsForLanguage(ctx.drivers().get(language), resetter, filesForLang, execEnvs.forLanguage(language));
+                    if (meta.parallel()) {
+                        resetter = Resetter.NOOP;
+                    }
 
-                    val outcomesProduct = filesForLang.stream().collect(toMap(path -> path, _ -> result));
-                    outcomes.put(language, outcomesProduct);
-                } catch (Exception ex) {
-                    CliLogger.exception("Error running snapshot tests for language '%s' in test root '%s'".formatted(language, testRoot.rootName()));
-                    outcomes.put(language, filesForLang.stream().collect(toMap(path -> path, _ -> new TestOutcome.Errored(ex).alsoLog(testRoot, language))));
-                }
+                    try {
+                        val result = runTestsForLanguage(
+                            ctx.drivers().get(language),
+                            resetter,
+                            filesForLang,
+                            execEnvs.forLanguage(language),
+                            updateMsg
+                        );
+
+                        val outcomesProduct = filesForLang.stream().collect(toMap(path -> path, _ -> result));
+                        outcomes.put(language, outcomesProduct);
+                    } catch (Exception ex) {
+                        CliLogger.exception("Error running snapshot tests for language '%s' in test root '%s'".formatted(language, testRoot.rootName()));
+                        outcomes.put(language, filesForLang.stream().collect(toMap(path -> path, _ -> new TestOutcome.Errored(ex).alsoLog(testRoot, language))));
+                    }
+                });
+                return new TestRootResults(testRoot, outcomes);
             });
-
-            return new TestRootResults(testRoot, outcomes);
         }
 
-        private TestOutcome runTestsForLanguage(ClientDriver driver, Resetter resetter, Set<Path> filesForLang, ExecutionEnvironment execEnv) {
+        private TestOutcome runTestsForLanguage(ClientDriver driver, Resetter resetter, Set<Path> filesForLang, ExecutionEnvironment execEnv, Consumer<String> updateMsg) {
             return verifier.verify(driver, resetter, testRoot, placeholders, filesForLang, (path) -> {
-                val testFileModifiers = (snapshotSources.stream().anyMatch(OutputJsonifySource.class::isInstance))
+                val testFileModifiers = (meta.snapshotSources().stream().anyMatch(OutputJsonifySource.class::isInstance))
                     ? TestFileModifiers.JSONIFY_OUTPUT
                     : TestFileModifiers.NONE;
 
                 return execEnv.withTestFileCopied(driver, path, placeholders, testFileModifiers, () -> {
-                    val displayPath = testRoot.displayPath(path);
-
-                    return CliLogger.loading("Verifying @!%s!@".formatted(displayPath), (_) -> {
-                        return driver.executeScript(ctx, execEnv, envVars);
-                    });
+                    if (!meta.parallel()) {
+                        val displayPath = testRoot.displayPath(path);
+                        updateMsg.accept("Verifying @!%s!@".formatted(displayPath));
+                    }
+                    return driver.executeScript(ctx, execEnv, envVars);
                 });
             });
         }
