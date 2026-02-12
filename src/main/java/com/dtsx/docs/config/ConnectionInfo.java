@@ -4,6 +4,7 @@ import com.datastax.astra.client.DataAPIDestination;
 import com.dtsx.docs.core.runner.RunException;
 import lombok.Getter;
 import lombok.val;
+import org.intellij.lang.annotations.MagicConstant;
 
 import java.util.Base64;
 import java.util.Optional;
@@ -14,6 +15,7 @@ public class ConnectionInfo {
     private final String token;
     private final String endpoint;
     private final DataAPIDestination destination;
+    private final @MagicConstant(stringValues = { "prod", "dev", "test" }) Optional<String> astraEnv;
 
     private final Optional<String> username;
     private final Optional<String> password;
@@ -22,14 +24,19 @@ public class ConnectionInfo {
         this.token = token;
         this.endpoint = endpoint;
 
-        this.destination =
-            (endpoint.contains("astra.datastax.com"))
-                ? DataAPIDestination.ASTRA :
-            (endpoint.contains("astra-dev.datastax.com"))
-                ? DataAPIDestination.ASTRA_DEV :
-            (endpoint.contains("astra-test.datastax.com"))
-                ? DataAPIDestination.ASTRA_TEST
-                : DataAPIDestination.HCD;
+        if (endpoint.contains("astra.datastax.com")) {
+            this.destination = DataAPIDestination.ASTRA;
+            this.astraEnv = Optional.of("prod");
+        } else if (endpoint.contains("astra-dev.datastax.com")) {
+            this.destination = DataAPIDestination.ASTRA_DEV;
+            this.astraEnv = Optional.of("dev");
+        } else if (endpoint.contains("astra-test.datastax.com")) {
+            this.destination = DataAPIDestination.ASTRA_TEST;
+            this.astraEnv = Optional.of("test");
+        } else {
+            this.destination = DataAPIDestination.HCD;
+            this.astraEnv = Optional.empty();
+        }
 
         if (token.startsWith("Cassandra:")) {
             val parts = token.split(":");

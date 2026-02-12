@@ -83,8 +83,9 @@ public class PythonDriver extends ClientDriver {
             """ + content;
         }
 
-        content = "from astrapy.admin import parse_api_endpoint\n" + content;
-        content = content.replace("DataAPIClient()", "DataAPIClient(environment=parse_api_endpoint(\"" + ctx.connectionInfo().endpoint() + "\").environment)");
+        if (ctx.connectionInfo().astraEnv().isPresent()) {
+            content = content.replace("DataAPIClient(", "DataAPIClient(environment=parse_api_endpoint(\"" + ctx.connectionInfo().endpoint() + "\").environment,");
+        }
 
         return content;
     }
