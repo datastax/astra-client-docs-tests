@@ -69,7 +69,7 @@ public final class SnapshotTestStrategy extends TestStrategy<SnapshotTestMeta> {
                     val filesForLang = e.getValue();
 
                     if (meta.parallel()) {
-                        resetter = Resetter.NOOP;
+                        resetter = resetter.once();
                     }
 
                     try {

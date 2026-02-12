@@ -156,8 +156,6 @@ public sealed abstract class JSFixture implements Comparable<JSFixture> permits 
 
     @RequiredArgsConstructor
     public static class Resetter {
-        public static final Resetter NOOP = new Resetter(() -> {}, () -> {});
-
         private final Runnable beforeEach;
         private final Runnable afterEach;
 
@@ -167,6 +165,37 @@ public sealed abstract class JSFixture implements Comparable<JSFixture> permits 
 
         public void afterEach() {
             afterEach.run();
+        }
+
+        public Resetter once() {
+            return new Once(beforeEach, afterEach);
+        }
+
+        private static class Once extends Resetter {
+            private boolean hasRunBefore = false;
+            private boolean hasRunAfter = false;
+
+            public Once(Runnable beforeEach, Runnable afterEach) {
+                super(beforeEach, afterEach);
+            }
+
+            @Override
+            public void beforeEach() {
+                if (hasRunBefore) {
+                    return;
+                }
+                hasRunBefore = true;
+                super.beforeEach();
+            }
+
+            @Override
+            public void afterEach() {
+                if (hasRunAfter) {
+                    return;
+                }
+                hasRunAfter = true;
+                super.afterEach();
+            }
         }
     }
 
