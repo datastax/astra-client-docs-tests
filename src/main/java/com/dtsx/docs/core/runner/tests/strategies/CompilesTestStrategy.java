@@ -51,18 +51,18 @@ public final class CompilesTestStrategy extends TestStrategy {
         val displayMsg = "Compiling @!%d!@ file%s for @!%s!@".formatted(numFiles.ref, (numFiles.ref == 1) ? "" : "s", testRoot.rootName());
 
         return CliLogger.loading(displayMsg, (_) -> {
-            try (val executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())) {
+            try (val executor = Executors.newVirtualThreadPerTaskExecutor()) {
                 val futures = new ArrayList<Future<?>>();
 
                 testRoot.filesToTest().forEach((lang, paths) -> {
                     val driver = ctx.drivers().get(lang);
                     val execEnv = execEnvs.forLanguage(lang);
 
-                    paths.forEach(path -> {
-                        futures.add(executor.submit(() ->
-                            runSingleTest(testRoot, outcomes, lang, path, driver, execEnv)
-                        ));
-                    });
+                    futures.add(executor.submit(() -> {
+                        paths.forEach(path -> {
+                            runSingleTest(testRoot, outcomes, lang, path, driver, execEnv);
+                        });
+                    }));
                 });
 
                 for (val future : futures) {
