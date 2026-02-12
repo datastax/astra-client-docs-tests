@@ -18,6 +18,7 @@ public class PlaceholderResolver {
         Map.entry("TABLE_NAME", (_, phs) -> phs.tableName()),
         Map.entry("COLLECTION_NAME", (_, phs) -> phs.collectionName()),
         Map.entry("UDT_NAME", (_, _) -> Optional.of("placeholder_udt_name")),
+        Map.entry("INDEX_NAME", (_, _) -> Optional.of("placeholder_index_name")),
         Map.entry("DATABASE_NAME", (_, _) -> Optional.of("whatever_db_name")), // can be actually implemented later if needed
         Map.entry("DATABASE_ID", (_, _) -> Optional.of("whatever_db_id")), // can be actually implemented later if needed
         Map.entry("OLD_COLLECTION_NAME", (_, _) -> Optional.of("whatever_old_name")), // can be actually implemented later if needed
