@@ -81,6 +81,7 @@ runs:
         repository: ${{ steps.parse-repo.outputs.repo-path }}
         ref: ${{ steps.parse-repo.outputs.branch }}
         path: docs-repo
+        token: '${{ secrets.DOCS_GITHUB_PAT || github.token }}'
 
     - name: Setup docs repo
       id: setup-docs
@@ -202,5 +203,6 @@ runs:
       shell: bash
       run: |
         export SPINNER=false
+        export EXAMPLES_FOLDER="${{ env.EXAMPLES_FOLDER }}"
         source astra-client-docs-tests/scripts/dev-alias.sh
         eval "${{ inputs.script }}"

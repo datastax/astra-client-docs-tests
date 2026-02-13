@@ -114,7 +114,7 @@ public class PythonDriver extends ClientDriver {
 
     @Override
     public RunResult compileScript(BaseScriptRunnerCtx ctx, ExecutionEnvironment execEnv) {
-        return ExternalPrograms.custom().run(execEnv.envDir(), "./.venv/bin/python", "-m", "mypy", "example.py");
+        return ExternalPrograms.custom().run(execEnv.envDir(), "./.venv/bin/python", "-m", "mypy", "example.py", "--show-error-codes", "--pretty", "--show-column-numbers");
     }
 
     @Override
