@@ -69,7 +69,7 @@ public class JavaDriver extends ClientDriver {
                     @Override
                     public void println(Object obj) {
                         try {
-                            super.println(JsonUtils.getObjectMapper().writeValueAsString(obj));
+                            super.println(JsonUtils.getObjectMapper().findAndRegisterModules().writeValueAsString(obj));
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
@@ -86,9 +86,6 @@ public class JavaDriver extends ClientDriver {
 
     @Override
     public List<?> preprocessToJson(BaseScriptRunnerCtx ctx, OutputJsonifySourceMeta meta, String content) {
-        if (content.startsWith("Optional[")) {
-            content = content.substring(9, content.length() - 1);
-        }
         return JacksonUtils.parseJsonRoots(content, Object.class);
     }
 
