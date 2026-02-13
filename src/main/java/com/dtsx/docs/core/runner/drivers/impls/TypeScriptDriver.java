@@ -55,6 +55,11 @@ public class TypeScriptDriver extends ClientDriver {
             import { stringify } from "json-bigint";
             
             (console.log as any) = (json: any) => {
+              if (typeof json !== "object" || json === null) {
+                _log(stringify(json));
+                return;
+              }
+            
               for (const [key, value] of Object.entries(json)) {
                 if (value instanceof Map) {
                   json[key] = Object.fromEntries(value);
