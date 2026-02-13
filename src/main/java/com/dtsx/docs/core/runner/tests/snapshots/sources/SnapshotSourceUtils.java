@@ -39,7 +39,7 @@ public class SnapshotSourceUtils {
 
         return switch (obj) {
             case Map<?, ?> map -> {
-                if (map.size() == 1 && map.containsKey("$binary")) {
+                if (map.size() == 1 && map.containsKey("$binary") || map.containsKey("_vector") || map.containsKey("embeddings")) {
                     yield "vector_or_binary";
                 }
 

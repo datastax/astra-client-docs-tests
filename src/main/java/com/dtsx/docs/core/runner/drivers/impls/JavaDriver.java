@@ -57,10 +57,10 @@ public class JavaDriver extends ClientDriver {
             val mainMethodIdx = content.indexOf(target);
 
             if (mainMethodIdx == -1) {
-                throw new IllegalStateException("main method not found");
+                throw new RunException("main method not found");
             }
 
-            int insertPos = mainMethodIdx + target.length();
+            val insertPos = mainMethodIdx + target.length();
 
             content =
                 content.substring(0, insertPos)+
@@ -69,7 +69,7 @@ public class JavaDriver extends ClientDriver {
                     @Override
                     public void println(Object obj) {
                         try {
-                            super.println(JsonUtils.valueAsJson(obj));
+                            super.println(JsonUtils.getObjectMapper().writeValueAsString(obj));
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
