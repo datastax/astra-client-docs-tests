@@ -1,0 +1,39 @@
+inputs:
+ clients:
+   description: 'Comma-separated list of client drivers to test (e.g., java,typescript,python) or "all" for all clients'
+   required: true
+ docs-repo:
+   description: 'Documentation repository in format [org/repo][@branch] (both the org/repo and branch are optional)'
+   default: 'riptano/astra-vector-docs@main'
+ examples-path:
+   description: 'Path to examples folder within the docs repository (defaults to modules/api-reference/examples)'
+   default: 'modules/api-reference/examples'
+ args:
+   description: 'Additional arguments to pass to dh'
+   default: ''
+ testing-repo-ref:
+   description: 'Git ref to checkout for the docs repository (overrides the branch specified in docs-repo)'
+   default: 'master'
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout docs testing repository
+      uses: actions/checkout@v4
+      with:
+        repository: 'datastax/astra-client-docs-tests'
+        ref: '${{ inputs.testing-repo-ref }}'
+        path: astra-client-docs-tests
+
+    - name: Run client compilation tests
+      uses: ./astra-client-docs-tests/.github/actions/use-dh
+      env:
+        ASTRA_TOKEN: 'dummy-token'
+        API_ENDPOINT: 'dummy-endpoint'
+      with:
+        docs-repo: ${{ inputs.docs-repo }}
+        examples-path: ${{ inputs.examples-path }}
+        snapshots-path: ${{ inputs.snapshots-path }}
+        setup-languages: ${{ inputs.clients }}
+        script: |
+          dh test -m compile_only ${{ inputs.clients }} ${{ inputs.args }}

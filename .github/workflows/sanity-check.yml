@@ -1,16 +1,18 @@
 on:
   push:
+  pull_request:
 
 jobs:
-  test-compilation:
+  checkout:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Run compilation tests
-        uses: ./actions/test-compilation
+      - name: Run "mock" client compilation tests
+        uses: ./.github/actions/test-compilation
         with:
           clients: 'all'
-          docs-repo: 'datastax/astra-client-docs-tests#master'
+          docs-repo: 'datastax/astra-client-docs-tests@master'
           examples-path: 'resources/mock_examples'
+          testing-repo-ref: ${{ github.ref_name || 'master' }}

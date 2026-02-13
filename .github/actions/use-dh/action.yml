@@ -3,7 +3,7 @@ description: 'Builds the `dh` cli + installs any required dependencies'
 
 inputs:
   docs-repo:
-    description: 'Documentation repository in format [org/repo][#branch] (both the org/repo and branch are optional)'
+    description: 'Documentation repository in format [org/repo][@branch] (both the org/repo and branch are optional)'
     required: true
   examples-path:
     description: 'Path to examples folder within the docs repository (defaults to modules/api-reference/examples)'
@@ -18,6 +18,9 @@ inputs:
     description: 'Install jq'
     required: false
     default: 'false'
+  script:
+    description: 'Script using dh'
+    required: true
 
 outputs:
   dh-cli-path:
@@ -34,17 +37,15 @@ runs:
       id: parse-repo
       shell: bash
       run: |
-        set -ex
-        
         REPO_PATH="riptano/astra-vector-docs"
         BRANCH="main"
 
         REPO_INPUT="${{ inputs.docs-repo }}"
         
         if [[ -n "$REPO_INPUT" ]]; then
-          if [[ "$REPO_INPUT" == *"#"* ]]; then
-            LEFT="${REPO_INPUT%%#*}"
-            RIGHT="${REPO_INPUT#*#}"
+          if [[ "$REPO_INPUT" == *"@"* ]]; then
+            LEFT="${REPO_INPUT%%@*}"
+            RIGHT="${REPO_INPUT#*@}"
         
             [[ -n "$LEFT" ]] && REPO_PATH="$LEFT"
             [[ -n "$RIGHT" ]] && BRANCH="$RIGHT"
@@ -71,6 +72,38 @@ runs:
         echo "Examples path: '$EXAMPLES_PATH'"
         echo "Snapshots path: '$SNAPSHOTS_PATH'"
 
+    - name: Clone docs repo
+      uses: actions/checkout@v4
+      with:
+        sparse-checkout: |
+          ${{ steps.parse-repo.outputs.examples-path }}
+          ${{ steps.parse-repo.outputs.snapshots-path }}
+        repository: ${{ steps.parse-repo.outputs.repo-path }}
+        ref: ${{ steps.parse-repo.outputs.branch }}
+        path: docs-repo
+
+    - name: Setup docs repo
+      id: setup-docs
+      shell: bash
+      run: |
+        DOCS_PATH="${{ github.workspace }}/docs-repo"
+        EXAMPLES_FOLDER="$DOCS_PATH/${{ steps.parse-repo.outputs.examples-path }}"
+        SNAPSHOTS_FOLDER="$DOCS_PATH/${{ steps.parse-repo.outputs.snapshots-path }}"
+        
+        if [ ! -d "$EXAMPLES_FOLDER" ]; then
+          echo "ERROR: Examples folder not found: $EXAMPLES_FOLDER"
+          exit 1
+        fi
+        
+        echo "EXAMPLES_FOLDER=$EXAMPLES_FOLDER" >> $GITHUB_ENV
+        echo "SNAPSHOTS_FOLDER=$SNAPSHOTS_FOLDER" >> $GITHUB_ENV
+        
+        echo "snapshots-folder=$SNAPSHOTS_FOLDER" >> $GITHUB_OUTPUT
+        
+        echo "Documentation cloned to: $DOCS_PATH"
+        echo "Examples folder: $EXAMPLES_FOLDER"
+        echo "Snapshots folder: $SNAPSHOTS_FOLDER"
+
     # --- java ---
     - name: Setup java
       uses: actions/setup-java@v4
@@ -91,62 +124,8 @@ runs:
     - name: Verify java
       shell: bash
       run: |
-        set -ex
+        set -x
         java --version
-
-    - name: Build dh
-      id: build-cli
-      shell: bash
-      run: |
-        set -ex
-        
-        ./gradlew fatJar
-
-        JAR_PATH="${{ github.workspace }}/build/libs/verifier.jar"
-
-        if [ ! -f "$JAR_PATH" ]; then
-          echo "ERROR: Failed to build dh (verifier.jar not found)"
-          exit 1
-        fi
-
-        echo "dh-cli-path=$JAR_PATH" >> $GITHUB_OUTPUT
-        echo "SPINNER=false" >> $GITHUB_ENV
-        
-        echo "dh built successfully: $JAR_PATH"
-
-    - name: Clone docs repo
-      uses: actions/checkout@v4
-      with:
-        sparse-checkout: |
-          ${{ steps.parse-repo.outputs.examples-path }}
-          ${{ steps.parse-repo.outputs.snapshots-path }}
-        repository: ${{ steps.parse-repo.outputs.repo-path }}
-        ref: ${{ steps.parse-repo.outputs.branch }}
-        path: docs-repo
-
-    - name: Setup docs repo
-      id: setup-docs
-      shell: bash
-      run: |
-        set -ex
-        
-        DOCS_PATH="${{ github.workspace }}/docs-repo"
-        EXAMPLES_FOLDER="$DOCS_PATH/${{ steps.parse-repo.outputs.examples-path }}"
-        SNAPSHOTS_FOLDER="$DOCS_PATH/${{ steps.parse-repo.outputs.snapshots-path }}"
-        
-        if [ ! -d "$EXAMPLES_FOLDER" ]; then
-          echo "ERROR: Examples folder not found: $EXAMPLES_FOLDER"
-          exit 1
-        fi
-        
-        echo "EXAMPLES_FOLDER=$EXAMPLES_FOLDER" >> $GITHUB_ENV
-        echo "SNAPSHOTS_FOLDER=$SNAPSHOTS_FOLDER" >> $GITHUB_ENV
-        
-        echo "snapshots-folder=$SNAPSHOTS_FOLDER" >> $GITHUB_OUTPUT
-        
-        echo "Documentation cloned to: $DOCS_PATH"
-        echo "Examples folder: $EXAMPLES_FOLDER"
-        echo "Snapshots folder: $SNAPSHOTS_FOLDER"
 
     # --- typescript ---
     - name: Setup node
@@ -168,7 +147,7 @@ runs:
       if: inputs.setup-languages == 'all' || contains(inputs.setup-languages, 'typescript')
       shell: bash
       run: |
-        set -ex
+        set -x
         node --version
         npm --version
         npx tsx --version
@@ -177,7 +156,7 @@ runs:
       if: inputs.setup-languages == 'all' || contains(inputs.setup-languages, 'typescript')
       shell: bash
       run: |
-        set -ex
+        set -x
         npm install -g tsx
         npx tsx --version
 
@@ -192,7 +171,7 @@ runs:
       if: inputs.setup-languages == 'all' || contains(inputs.setup-languages, 'python')
       shell: bash
       run: |
-        set -ex
+        set -x
         python3 --version
 
     # --- dotnet ---
@@ -206,7 +185,7 @@ runs:
       if: inputs.setup-languages == 'all' || contains(inputs.setup-languages, 'csharp')
       shell: bash
       run: |
-        set -ex
+        set -x
         dotnet --version
 
     # --- jq ---
@@ -214,6 +193,14 @@ runs:
       if: inputs.setup-jq == 'true'
       shell: bash
       run: |
-        set -ex
+        set -x
         sudo apt-get update && sudo apt-get install -y jq
         jq --version
+
+    # --- actually use dh ---
+    - name: Use dh
+      shell: bash
+      run: |
+        export SPINNER=false
+        source astra-client-docs-tests/scripts/dev-alias.sh
+        eval "${{ inputs.script }}"
