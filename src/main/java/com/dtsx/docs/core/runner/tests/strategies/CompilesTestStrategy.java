@@ -67,7 +67,7 @@ public final class CompilesTestStrategy extends TestStrategy<CompilesTestMeta> {
     }
 
     private void runSingleTest(TestRoot testRoot, Map<ClientLanguage, Map<Path, TestOutcome>> outcomes, ClientLanguage lang, Path path, ClientDriver driver, ExecutionEnvironment execEnv) {
-        outcomes.computeIfAbsent(lang, k -> new HashMap<>());
+        outcomes.computeIfAbsent(lang, _ -> new HashMap<>());
 
         if (ctx.verifyMode() == DRY_RUN || ctx.verifyMode() == NO_COMPILE_ONLY) {
             outcomes.get(lang).put(path, TestOutcome.DryPassed.INSTANCE);

@@ -4,7 +4,10 @@ inputs:
    required: true
  docs-repo:
    description: 'Documentation repository in format [org/repo][@branch] (both the org/repo and branch are optional)'
-   default: 'riptano/astra-vector-docs@main'
+   default: 'riptano/astra-vector-docs@ske-tests-1'
+ docs-repo-token:
+   description: 'GitHub PAT with access to the docs repository (if internal/private, otherwise not needed)'
+   required: true
  examples-path:
    description: 'Path to examples folder within the docs repository (defaults to modules/api-reference/examples)'
    default: 'modules/api-reference/examples'
@@ -32,6 +35,7 @@ runs:
         API_ENDPOINT: 'dummy-endpoint'
       with:
         docs-repo: ${{ inputs.docs-repo }}
+        docs-repo-token: ${{ inputs.docs-repo-token }}
         examples-path: ${{ inputs.examples-path }}
         snapshots-path: ${{ inputs.snapshots-path }}
         setup-languages: ${{ inputs.clients }}

@@ -14,5 +14,6 @@ jobs:
         with:
           clients: 'all'
           docs-repo: 'datastax/astra-client-docs-tests@master'
+          docs-repo-token: ${{ github.token }}
           examples-path: 'resources/mock_examples'
           testing-repo-ref: ${{ github.ref_name || 'master' }}

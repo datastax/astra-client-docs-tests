@@ -5,6 +5,9 @@ inputs:
   docs-repo:
     description: 'Documentation repository in format [org/repo][@branch] (both the org/repo and branch are optional)'
     required: true
+  docs-repo-token:
+    description: 'GitHub PAT with access to the docs repository (if internal/private, otherwise not needed)'
+    required: true
   examples-path:
     description: 'Path to examples folder within the docs repository (defaults to modules/api-reference/examples)'
     required: true
@@ -38,7 +41,7 @@ runs:
       shell: bash
       run: |
         REPO_PATH="riptano/astra-vector-docs"
-        BRANCH="main"
+        BRANCH="ske-tests-1"
 
         REPO_INPUT="${{ inputs.docs-repo }}"
         
@@ -72,12 +75,6 @@ runs:
         echo "Examples path: '$EXAMPLES_PATH'"
         echo "Snapshots path: '$SNAPSHOTS_PATH'"
 
-    - name: Print tokens 2
-      shell: bash
-      run: |
-        echo "${{ secrets.DOC_GITHUB_PAT_CROSS_ORG }}" | cut -c1-20
-        echo "${{ secrets.DOCS_GITHUB_PAT }}" | cut -c1-20
-
     - name: Clone docs repo
       uses: actions/checkout@v4
       with:
@@ -87,7 +84,7 @@ runs:
         repository: ${{ steps.parse-repo.outputs.repo-path }}
         ref: ${{ steps.parse-repo.outputs.branch }}
         path: docs-repo
-        token: '${{ secrets.DOC_GITHUB_PAT_CROSS_ORG || github.token }}'
+        token: ${{ inputs.docs-repo-token }}
 
     - name: Setup docs repo
       id: setup-docs
@@ -208,6 +205,15 @@ runs:
     - name: Use dh
       shell: bash
       run: |
+        set -x
         export SPINNER=false
         source astra-client-docs-tests/scripts/dev-alias.sh
         eval "${{ inputs.script }}"
+
+    - name: Print logs on failure
+      if: failure()
+      shell: bash
+      run: |
+        set -x
+        echo "Script failed, printing dh logs:"
+        cat astra-client-docs-tests/.docs_tests_temp/logs/* || echo "No logs found"
