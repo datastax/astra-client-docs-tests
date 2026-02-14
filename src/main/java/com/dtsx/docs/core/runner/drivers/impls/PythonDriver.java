@@ -102,7 +102,7 @@ public class PythonDriver extends ClientDriver {
             if (args.isEmpty()) {
                 return "DataAPIClient(environment='" + env + "')";
             } else {
-                return "DataAPIClient(" + args + ", environment='" + env + "')";
+                return "DataAPIClient(" + args + (args.trim().endsWith(",") ? "" : ",") + " environment='" + env + "')";
             }
         });
     }
