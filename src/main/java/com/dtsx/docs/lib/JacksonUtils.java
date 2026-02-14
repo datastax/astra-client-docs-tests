@@ -5,6 +5,7 @@ import com.dtsx.docs.core.runner.RunException;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import lombok.val;
+import tools.jackson.core.JsonToken;
 import tools.jackson.core.json.JsonReadFeature;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.core.util.DefaultIndenter;
@@ -17,6 +18,7 @@ import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -44,6 +46,7 @@ public class JacksonUtils {
         JSON = JsonMapper.builder()
             .enable(JsonReadFeature.ALLOW_SINGLE_QUOTES)
             .enable(JsonReadFeature.ALLOW_UNQUOTED_PROPERTY_NAMES)
+            .disable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
             .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS, true)
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
             .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true)
@@ -60,18 +63,22 @@ public class JacksonUtils {
         }
     }
 
-    @SneakyThrows
     public static <T> List<T> parseJsonLines(String string, Class<T> clazz) {
-        return string.lines()
-            .filter(line -> !line.trim().isEmpty())
-            .map(line -> {
-                try {
-                    return JSON.readValue(line, clazz);
-                } catch (Exception e) {
-                    throw new RunException("Failed to parse JSON line into " + clazz.getSimpleName() + ": " + e.getMessage() + "\nLine:\n" + line, e);
+        val res = new ArrayList<T>();
+
+        try (val parser = JSON.createParser(string)) {
+            while (!parser.isClosed()) {
+                val token = parser.nextToken();
+                if (token == null) {
+                    break;
                 }
-            })
-            .toList();
+                res.add(JSON.readValue(parser, clazz));
+            }
+        } catch (Exception e) {
+            throw new RunException("Failed to parse JSON lines into " + clazz.getSimpleName() + ": " + e.getMessage() + "\nJSON:\n" + string, e);
+        }
+
+        return res;
     }
 
     @SneakyThrows

@@ -27,9 +27,9 @@ public class OutputJsonifySource extends SnapshotSource {
     @Override
     public String mkSnapshot(TestCtx ctx, ClientDriver driver, RunResult res, Placeholders placeholders) {
         val output = SnapshotSourceUtils.extractOutput(name, res);
-        val rawJson = driver.preprocessToJson(ctx, meta, output);
+        val rawJsonLines = driver.preprocessToJson(ctx, meta, output);
 
-        var jsonAsString = JacksonUtils.printJson(rawJson);
+        var jsonAsString = JacksonUtils.printJson(rawJsonLines);
         jsonAsString = JsonScrubber.scrub(jsonAsString);
 
         if (meta.jq().isPresent()) {

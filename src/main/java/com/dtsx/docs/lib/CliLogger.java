@@ -128,7 +128,7 @@ public class CliLogger {
     ///
     /// Prefixed with `[FAILED]` in the log file.
     public static void failed(String... msg) {
-        writeToLogFile("FAILED", String.join("", msg));
+        writeToLogFile("FAILED", "--------------------------------\n" + String.join("", msg) + "\n--------------------------------");
     }
 
 //    /// Logs the result of failed test executions (only to log file, not console).

@@ -76,10 +76,6 @@ public sealed interface TestOutcome {
     }
 
     private static void logResult(TestRoot testRoot, ClientLanguage language, TestOutcome testOutcome, String extra) {
-        CliLogger.failed(testRoot.rootName() + " (" + language + ") => " + testOutcome.name());
-
-        if (!extra.isBlank()) {
-            CliLogger.failed(extra);
-        }
+        CliLogger.failed(testRoot.rootName() + " (" + language + ") => " + testOutcome.name() + (extra.isBlank() ? "" : "\n" + extra));
     }
 }
