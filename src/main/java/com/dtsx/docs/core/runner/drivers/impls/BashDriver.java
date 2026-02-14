@@ -49,7 +49,7 @@ public class BashDriver extends ClientDriver {
         if (meta.jqBash().isPresent()) {
             content = runJq(ctx, content, meta.jqBash().get());
         }
-        return JacksonUtils.parseJsonRoots(content, Object.class);
+        return JacksonUtils.parseJsonLines(content, Object.class);
     }
 
     @Override

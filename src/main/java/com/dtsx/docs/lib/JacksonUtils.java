@@ -61,12 +61,17 @@ public class JacksonUtils {
     }
 
     @SneakyThrows
-    public static <T> List<T> parseJsonRoots(String string, Class<T> clazz) {
-        try {
-            return JSON.readerFor(clazz).<T>readValues(string).readAll();
-        } catch (Exception e) {
-            throw new RunException("Failed to parse JSON array into List<" + clazz.getSimpleName() + ">: " + e.getMessage() + "\nJSON:\n" + string, e);
-        }
+    public static <T> List<T> parseJsonLines(String string, Class<T> clazz) {
+        return string.lines()
+            .filter(line -> !line.trim().isEmpty())
+            .map(line -> {
+                try {
+                    return JSON.readValue(line, clazz);
+                } catch (Exception e) {
+                    throw new RunException("Failed to parse JSON line into " + clazz.getSimpleName() + ": " + e.getMessage() + "\nLine:\n" + line, e);
+                }
+            })
+            .toList();
     }
 
     @SneakyThrows

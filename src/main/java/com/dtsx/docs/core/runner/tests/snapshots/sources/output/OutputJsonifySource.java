@@ -11,6 +11,7 @@ import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import com.dtsx.docs.lib.JacksonUtils;
 import lombok.val;
 
+import java.util.Collection;
 import java.util.regex.Pattern;
 
 import static com.dtsx.docs.lib.JacksonUtils.runJq;
@@ -35,10 +36,16 @@ public class OutputJsonifySource extends SnapshotSource {
             jsonAsString = runJq(ctx, jsonAsString, meta.jq().get());
         }
 
-        val processJson = JacksonUtils.parseJson(jsonAsString, Object.class);
+        val processedJson = SnapshotSourceUtils.mkJsonDeterministic(
+            JacksonUtils.parseJson(jsonAsString, Object.class)
+        );
+
+        val finalJson = (processedJson instanceof Collection<?> c && c.size() == 1)
+            ? c.iterator().next()
+            : processedJson;
 
         return JacksonUtils.prettyPrintJson(
-            SnapshotSourceUtils.mkJsonDeterministic(processJson)
+            SnapshotSourceUtils.mkJsonDeterministic(finalJson)
         );
     }
 

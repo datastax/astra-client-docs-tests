@@ -58,7 +58,7 @@ public class CSharpDriver extends ClientDriver {
 
     @Override
     public List<?> preprocessToJson(BaseScriptRunnerCtx ctx, OutputJsonifySourceMeta meta, String content) {
-        return JacksonUtils.parseJsonRoots(content, Object.class);
+        return JacksonUtils.parseJsonLines(content, Object.class);
     }
 
     @Override
