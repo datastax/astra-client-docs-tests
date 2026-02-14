@@ -1,0 +1,50 @@
+inputs:
+  clients:
+    description: 'Comma-separated list of client drivers to test (e.g., java,typescript,python) or "all" for all clients'
+    required: true
+  docs-repo:
+    description: 'Documentation repository in format [org/repo][@branch] (both the org/repo and branch are optional)'
+    default: 'riptano/astra-vector-docs@ske-tests-1'
+  docs-repo-token:
+    description: 'GitHub PAT with access to the docs repository (if internal/private, otherwise not needed)'
+    required: true
+  examples-path:
+    description: 'Path to examples folder within the docs repository (defaults to modules/api-reference/examples)'
+    default: 'modules/api-reference/examples'
+  snapshots-path:
+    description: 'Path to snapshots folder within the docs repository (defaults to ${examples-path}/_snapshots)'
+    required: false
+    default: '' # I don't know if it automatically defaults to '' and I'm too lazy to find out
+  args:
+    description: 'Additional arguments to pass to dh'
+    default: ''
+  db-token:
+    description: 'Astra token for authentication'
+    required: true
+  db-endpoint:
+    description: 'API endpoint for testing'
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout docs testing repository
+      uses: actions/checkout@v4
+      with:
+        repository: 'datastax/astra-client-docs-tests'
+        path: astra-client-docs-tests
+
+    - name: Run client compilation tests
+      uses: ./astra-client-docs-tests/.github/actions/use-dh
+      env:
+        ASTRA_TOKEN: ${{ inputs.token }}
+        API_ENDPOINT: ${{ inputs.api-endpoint }}
+      with:
+        docs-repo: ${{ inputs.docs-repo }}
+        docs-repo-token: ${{ inputs.docs-repo-token }}
+        examples-path: ${{ inputs.examples-path }}
+        snapshots-path: ${{ inputs.snapshots-path }}
+        setup-languages: ${{ inputs.clients }},typescript # always need typescript for execution tests
+        setup-jq: true
+        script: |
+          dh test ${{ inputs.clients }} ${{ inputs.args }}
