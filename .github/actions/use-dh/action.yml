@@ -11,9 +11,6 @@ inputs:
   examples-path:
     description: 'Path to examples folder within the docs repository (defaults to modules/api-reference/examples)'
     required: true
-  snapshots-path:
-    description: 'Path to snapshots folder within the docs repository (defaults to ${examples-path}/_snapshots)'
-    required: true
   setup-languages:
     description: 'Comma-separated list of languages to setup (e.g., java,typescript,python,csharp) or "all" for all languages'
     required: true
@@ -29,9 +26,6 @@ outputs:
   dh-cli-path:
     description: 'Path to the built dh jar file'
     value: ${{ steps.build-cli.outputs.dh-cli-path }}
-  snapshots-folder:
-    description: 'Path to the snapshots folder in the docs repo'
-    value: ${{ steps.setup-docs.outputs.snapshots-folder }}
 
 runs:
   using: composite
@@ -58,29 +52,20 @@ runs:
         fi
         
         EXAMPLES_PATH="${{ inputs.examples-path }}"
-
-        if [ -n "${{ inputs.snapshots-path }}" ]; then
-          SNAPSHOTS_PATH="${{ inputs.snapshots-path }}"
-        else
-          SNAPSHOTS_PATH="$EXAMPLES_PATH/_snapshots"
-        fi
         
         echo "repo-path=$REPO_PATH" >> $GITHUB_OUTPUT
         echo "branch=$BRANCH" >> $GITHUB_OUTPUT
         echo "examples-path=$EXAMPLES_PATH" >> $GITHUB_OUTPUT
-        echo "snapshots-path=$SNAPSHOTS_PATH" >> $GITHUB_OUTPUT
         
         echo "Repository: '$REPO_PATH'"
         echo "Branch: '$BRANCH'"
         echo "Examples path: '$EXAMPLES_PATH'"
-        echo "Snapshots path: '$SNAPSHOTS_PATH'"
 
     - name: Clone docs repo
       uses: actions/checkout@v4
       with:
         sparse-checkout: |
           ${{ steps.parse-repo.outputs.examples-path }}
-          ${{ steps.parse-repo.outputs.snapshots-path }}
         repository: ${{ steps.parse-repo.outputs.repo-path }}
         ref: ${{ steps.parse-repo.outputs.branch }}
         path: docs-repo
@@ -92,7 +77,6 @@ runs:
       run: |
         DOCS_PATH="${{ github.workspace }}/docs-repo"
         EXAMPLES_FOLDER="$DOCS_PATH/${{ steps.parse-repo.outputs.examples-path }}"
-        SNAPSHOTS_FOLDER="$DOCS_PATH/${{ steps.parse-repo.outputs.snapshots-path }}"
         
         if [ ! -d "$EXAMPLES_FOLDER" ]; then
           echo "ERROR: Examples folder not found: $EXAMPLES_FOLDER"
@@ -100,13 +84,7 @@ runs:
         fi
         
         echo "EXAMPLES_FOLDER=$EXAMPLES_FOLDER" >> $GITHUB_ENV
-        echo "SNAPSHOTS_FOLDER=$SNAPSHOTS_FOLDER" >> $GITHUB_ENV
-        
-        echo "snapshots-folder=$SNAPSHOTS_FOLDER" >> $GITHUB_OUTPUT
-        
         echo "Documentation cloned to: $DOCS_PATH"
-        echo "Examples folder: $EXAMPLES_FOLDER"
-        echo "Snapshots folder: $SNAPSHOTS_FOLDER"
 
     # --- java ---
     - name: Setup java
@@ -207,7 +185,7 @@ runs:
       run: |
         set -x
         export SPINNER=false
-        source astra-client-docs-tests/scripts/dev-alias.sh
+        source astra-client-docs-tests/scripts/dev-alias.sh --no-compgen
         eval "${{ inputs.script }}"
 
     - name: Print logs on failure

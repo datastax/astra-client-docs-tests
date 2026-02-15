@@ -23,3 +23,10 @@ function dh() {
       -jar "$CLI_DIR/build/libs/verifier.jar" \
       "$@"
 }
+
+if [ "$1" != "--no-compgen" ]; then
+  echo "Loading completions for dh..."
+  dh -h >/dev/null
+  # shellcheck disable=SC1090
+  source <(dh compgen)
+fi

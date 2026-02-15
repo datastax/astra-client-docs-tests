@@ -63,7 +63,6 @@ public class PythonDriver extends ClientDriver {
             import json as _json_module
             from astrapy.data.utils.table_converters import preprocess_table_payload, FullSerdesOptions
             
-            # Create serdes options for converting Data API types
             _serdes_options = FullSerdesOptions(
                 binary_encode_vectors=False,
                 custom_datatypes_in_reading=True,
@@ -76,7 +75,6 @@ public class PythonDriver extends ClientDriver {
                 deserializer_by_udt={}
             )
             
-            # Override print to automatically preprocess Data API types
             _original_print = print
             def print(*args, **kwargs):
                 json_args = []

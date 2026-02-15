@@ -1,13 +1,13 @@
 package com.dtsx.docs;
 
+import com.dtsx.docs.commands.completions.CompgenCmd;
 import com.dtsx.docs.commands.review.ReviewCmd;
 import com.dtsx.docs.commands.run.RunCmd;
 import com.dtsx.docs.commands.test.TestCmd;
-import com.dtsx.docs.core.runner.tests.snapshots.sources.SnapshotSourceUtils;
 import com.dtsx.docs.lib.CliLogger;
-import com.dtsx.docs.lib.JacksonUtils;
 import io.github.cdimascio.dotenv.Dotenv;
 import lombok.val;
+import picocli.AutoComplete.GenerateCompletion;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Help.Ansi.Style;
@@ -26,6 +26,7 @@ import static com.dtsx.docs.lib.ColorUtils.ACCENT_COLOR;
         TestCmd.class,
         RunCmd.class,
         ReviewCmd.class,
+        CompgenCmd.class,
     }
 )
 public class HelperCli {

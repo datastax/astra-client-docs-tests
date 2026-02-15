@@ -11,9 +11,12 @@ import com.dtsx.docs.core.runner.RunException;
 import com.dtsx.docs.core.runner.drivers.impls.*;
 import lombok.AllArgsConstructor;
 import lombok.val;
+import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -124,5 +127,12 @@ public abstract class ClientDriver {
             throw new RunException("Attempted to access artifact for driver that does not use one: " + language() + ". Did *someone* forget to set a default artifact in ClientLanguage?");
         }
         return artifact;
+    }
+
+    public static class Completions implements Iterable<String> {
+        @Override
+        public @NotNull Iterator<String> iterator() {
+            return new ArrayList<>(ClientLanguage.names()) {{ add("all"); }}.stream().map(String::toLowerCase).iterator();
+        }
     }
 }

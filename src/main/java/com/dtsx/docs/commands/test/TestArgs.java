@@ -1,7 +1,10 @@
 package com.dtsx.docs.commands.test;
 
 import com.dtsx.docs.config.args.BaseScriptRunnerArgs;
+import com.dtsx.docs.core.runner.drivers.ClientDriver;
 import com.dtsx.docs.core.runner.tests.VerifyMode;
+import com.dtsx.docs.core.runner.tests.reporter.TestReporter;
+import com.dtsx.docs.core.runner.tests.reporter.TestReporters;
 import lombok.ToString;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
@@ -13,10 +16,9 @@ import java.util.Optional;
 @ToString
 public class TestArgs extends BaseScriptRunnerArgs<TestCtx> {
     @Parameters(
-        index = "0",
-        arity = "0..1",
         description = "Client drivers to use (e.g., 'java', 'typescript').",
         defaultValue = "${CLIENT_DRIVERS}",
+        completionCandidates = ClientDriver.Completions.class,
         paramLabel = "DRIVER",
         split = ","
     )
@@ -28,7 +30,7 @@ public class TestArgs extends BaseScriptRunnerArgs<TestCtx> {
         defaultValue = "${TEST_REPORTER:-all_tests}",
         paramLabel = "TYPE"
     )
-    public String $reporter;
+    public TestReporters $reporter;
 
     @Option(
         names = { "-m", "--verify-mode" },

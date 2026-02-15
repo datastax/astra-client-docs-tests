@@ -13,9 +13,12 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.apache.commons.lang3.tuple.Pair;
+import org.jetbrains.annotations.NotNull;
 import picocli.CommandLine.Help.Ansi.Style;
 
 import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -96,29 +99,6 @@ public abstract class TestReporter {
         if (skippedTests > 0) {
             CliLogger.println(true, "@!-!@ Bailed tests: " + skippedTests);
         }
-    }
-
-    /// Parses a reporter name and returns the corresponding reporter instance.
-    /// - `all_tests` => [AllTestsReporter]
-    /// - `only_failures` => [OnlyFailuresReporter]
-    ///
-    /// @param ctx the verifier context
-    /// @param reporter the reporter name ("all_tests" or "only_failures")
-    /// @return the reporter instance
-    /// @throws PlanException if the reporter name is unknown
-    public static TestReporter parse(TestCtx ctx, String reporter) {
-        final Map<String, Function<TestCtx, TestReporter>> availableReporters = Map.of(
-            "only_failures", OnlyFailuresReporter::new,
-            "all_tests", AllTestsReporter::new
-        );
-
-        val supplier = availableReporters.get(reporter.toLowerCase());
-
-        if (supplier == null) {
-            throw new PlanException("Unknown reporter: '" + reporter + "' (expected one of: " + String.join(", ", availableReporters.keySet()) + ")");
-        }
-
-        return supplier.apply(ctx);
     }
 
     /// Helper to print a numbered fixture heading.

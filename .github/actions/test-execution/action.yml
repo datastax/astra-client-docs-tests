@@ -11,10 +11,6 @@ inputs:
   examples-path:
     description: 'Path to examples folder within the docs repository (defaults to modules/api-reference/examples)'
     default: 'modules/api-reference/examples'
-  snapshots-path:
-    description: 'Path to snapshots folder within the docs repository (defaults to ${examples-path}/_snapshots)'
-    required: false
-    default: '' # I don't know if it automatically defaults to '' and I'm too lazy to find out
   args:
     description: 'Additional arguments to pass to dh'
     default: ''
@@ -43,7 +39,6 @@ runs:
         docs-repo: ${{ inputs.docs-repo }}
         docs-repo-token: ${{ inputs.docs-repo-token }}
         examples-path: ${{ inputs.examples-path }}
-        snapshots-path: ${{ inputs.snapshots-path }}
         setup-languages: ${{ inputs.clients }},typescript # always need typescript for execution tests
         setup-jq: true
         script: |

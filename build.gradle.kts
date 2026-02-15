@@ -14,6 +14,7 @@ dependencies {
     // cli stuff
     implementation("info.picocli:picocli:4.7.7")
     annotationProcessor("info.picocli:picocli-codegen:4.7.7")
+    implementation("info.picocli:picocli-codegen:4.7.7")
 
     // snapshot testing
     implementation("com.approvaltests:approvaltests:25.0.23")

@@ -11,7 +11,8 @@ import java.util.Optional;
 public class RunArgs extends BaseScriptRunnerArgs<RunCtx> {
     @Parameters(
         description = "Files to run.",
-        paramLabel = "FILE"
+        paramLabel = "FILE",
+        split = ","
     )
     public List<String> $scripts;
 
