@@ -1,6 +1,5 @@
 package com.dtsx.docs.commands.review;
 
-import com.dtsx.docs.config.ArgUtils;
 import com.dtsx.docs.config.ctx.BaseCtx;
 import com.dtsx.docs.lib.ExternalPrograms;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
@@ -29,9 +28,8 @@ public class ReviewCtx extends BaseCtx {
 
     public ReviewCtx(ReviewArgs args, CommandSpec spec) {
         super(args, spec);
-
         this.port = validatePort(args.$port);
-        this.snapshotsFolder = ArgUtils.requirePath(cmd, args.$snapshotsFolder, "snapshots folder", "-sf", "SNAPSHOTS_FOLDER");
+        this.snapshotsFolder = args.$examplesFolder.resolve().resolve("_snapshots");
         this.dashboardFolder = CLI_DIR.resolve("snapshot-dashboard");
         this.openBrowser = !args.$noOpen;
         this.detached = args.$detached;

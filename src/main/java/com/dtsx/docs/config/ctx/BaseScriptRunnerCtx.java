@@ -15,14 +15,11 @@ import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.ParameterException;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 import static com.dtsx.docs.HelperCli.CLI_DIR;
 
@@ -62,7 +59,7 @@ public abstract class BaseScriptRunnerCtx extends BaseCtx {
 
     public BaseScriptRunnerCtx(BaseScriptRunnerArgs<?> args, CommandSpec spec) {
         super(args, spec);
-        this.examplesFolder = resolveExampleFolder(spec.commandLine(), args).toAbsolutePath().normalize();
+        this.examplesFolder = args.$examplesFolder.resolve();
         this.connectionInfo = mkConnectionInfo(cmd, args);
         this.execEnvTemplatesFolder = CLI_DIR.resolve("resources/environments/");
         this.clean = args.$clean;
@@ -82,26 +79,6 @@ public abstract class BaseScriptRunnerCtx extends BaseCtx {
         val token = ArgUtils.requireFlag(cmd, args.$token, "astra token", "-t", "ASTRA_TOKEN");
         val apiEndpoint = ArgUtils.requireFlag(cmd, args.$apiEndpoint, "API endpoint", "-e", "API_ENDPOINT");
         return new ConnectionInfo(token, apiEndpoint);
-    }
-
-    private Path resolveExampleFolder(CommandLine cmd, BaseScriptRunnerArgs<?> args) {
-        val folder = ArgUtils.requirePath(cmd, args.$examplesFolder, "examples folder", "-ef", "EXAMPLES_FOLDER");
-
-        Predicate<Path> isValidExampleFolder = (path) -> {
-            return Stream.of(path, path.resolve("_base"), path.resolve("_fixtures")).allMatch(Files::isDirectory);
-        };
-
-        if (isValidExampleFolder.test(folder)) {
-            return folder;
-        }
-
-        val nestedFolder = folder.resolve("modules/api-reference/examples");
-
-        if (isValidExampleFolder.test(nestedFolder)) {
-            return nestedFolder;
-        }
-
-        throw new ParameterException(cmd, "Neither " + folder + " nor " + nestedFolder + " is the expected examples folder.");
     }
 
     protected ClientDriver mkDriverForLanguage(CommandLine cmd, ClientLanguage lang, BaseScriptRunnerArgs<?> args) {

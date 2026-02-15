@@ -101,7 +101,7 @@ public class CliLogger {
     /// @param supplier function that performs work and optionally updates the message
     /// @return the result from the supplier
     @SneakyThrows
-    public static <T> T loading(@NonNull String initialMsg, FailableFunction<Consumer<String>, T, Throwable> supplier) {
+    public static <T> T loading(@NonNull String initialMsg, FailableFunction<MessageUpdater, T, Throwable> supplier) {
         val formattedMsg = ColorUtils.format(initialMsg);
 
         val controls = (spinnerEnabled)
@@ -110,11 +110,15 @@ public class CliLogger {
 
         try {
             return supplier.apply((msg) -> {
-                controls.ifPresent(s -> s.updateMessage(ColorUtils.format(msg)));
+                controls.ifPresent(s -> s.updateMessage(ColorUtils.format(msg.apply(globalSpinner.message()))));
             });
         } finally {
             controls.ifPresent(LoadingSpinnerControls::stop);
         }
+    }
+
+    public interface MessageUpdater {
+        void update(Function<String, String> mkMsg);
     }
 
     /// Logs a debug message (only to log file, not console).

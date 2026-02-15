@@ -25,15 +25,19 @@ public class MetaYmlParser {
             throw new PlanException("'" + ymlFile + "' was parsed as a '" + rep.expectTestType() + "' test descriptor, but was actually a '" + rep.test().type() + "' test descriptor");
         }
 
-        if (ctx.verifyMode() == COMPILE_ONLY) {
-            return new CompilesTestMeta(ctx, rep); // Dependent on the invariant that all snapshot tests can be run as compilation tests
-        }
+        try {
+            if (ctx.verifyMode() == COMPILE_ONLY) {
+                return new CompilesTestMeta(ctx, rep); // Dependent on the invariant that all snapshot tests can be run as compilation tests
+            }
 
-        return switch (rep) {
-            case SnapshotTestMetaRep m -> new SnapshotTestMeta(ctx, ymlFile.getParent(), m);
-            case CompilesTestMetaRep m -> new CompilesTestMeta(ctx, m);
-            default -> throw new RuntimeException(); // unreachable
-        };
+            return switch (rep) {
+                case SnapshotTestMetaRep m -> new SnapshotTestMeta(ctx, ymlFile.getParent(), m);
+                case CompilesTestMetaRep m -> new CompilesTestMeta(ctx, m);
+                default -> throw new RuntimeException(); // unreachable
+            };
+        } catch (Exception e) {
+            throw new PlanException("Failed to parse meta.yml file at '" + ymlFile + "': " + e.getMessage(), e);
+        }
     }
 
     private static BaseMetaYml.BaseMetaYmlRep parseRep(Path file) {

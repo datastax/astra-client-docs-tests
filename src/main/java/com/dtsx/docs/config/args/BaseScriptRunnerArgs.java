@@ -1,13 +1,18 @@
 package com.dtsx.docs.config.args;
 
+import com.dtsx.docs.config.args.mixins.ExamplesFolderMixin;
 import com.dtsx.docs.config.ctx.BaseScriptRunnerCtx;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 import java.util.Map;
 import java.util.Optional;
 
 public abstract class BaseScriptRunnerArgs<Ctx extends BaseScriptRunnerCtx> extends BaseArgs<Ctx> {
+    @Mixin
+    public ExamplesFolderMixin $examplesFolder;
+
     @Option(
         names = { "-A", "--client-artifact" },
         description = "Client artifacts to install (e.g.,`-Atypescript=@datastax/astra-db-ts@v2.0.0' -Apython=/path/to/local/package`).",
@@ -44,12 +49,4 @@ public abstract class BaseScriptRunnerArgs<Ctx extends BaseScriptRunnerCtx> exte
         defaultValue = "${BAIL:-false}"
     )
     public boolean $bail;
-
-    @Option(
-        names = { "-ef", "--examples-folder" },
-        description = "Path to the folder containing example projects.",
-        defaultValue = "${EXAMPLES_FOLDER:-resources/mock_examples}",
-        paramLabel = "FOLDER"
-    )
-    public String $examplesFolder;
 }

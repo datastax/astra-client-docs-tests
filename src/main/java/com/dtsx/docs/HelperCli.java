@@ -29,7 +29,7 @@ import static com.dtsx.docs.lib.ColorUtils.ACCENT_COLOR;
     }
 )
 public class HelperCli {
-    public static Path CLI_DIR = Path.of(Optional.ofNullable(System.getenv("CLI_DIR")).orElse("."));
+    public static Path CLI_DIR = Path.of(Optional.ofNullable(System.getenv("CLI_DIR")).orElse(".")).toAbsolutePath();
 
     public static void main(String[] args) {
         for (val dir : List.of("./", CLI_DIR.toString())) {

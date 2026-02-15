@@ -1,5 +1,6 @@
 package com.dtsx.docs.lib;
 
+import lombok.Getter;
 import lombok.val;
 import org.apache.commons.lang3.function.FailableRunnable;
 
@@ -13,6 +14,7 @@ public class LoadingSpinner {
 
     private static final int FRAME_DELAY_MS = 80;
 
+    @Getter
     private volatile String message;
     private int lastLineLength = 0;
 

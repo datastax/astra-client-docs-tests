@@ -79,20 +79,11 @@ public class TestCtx extends BaseScriptRunnerCtx {
 
     public TestCtx(TestArgs args, CommandSpec spec) {
         super(args, spec);
-
         this.drivers = mkDrivers(cmd, args);
         this.reporter = TestReporter.parse(this, args.$reporter);
         this.verifyMode = resolveVerifyMode(args);
         this.filter = mkFilter(args.$filters, args.$inverseFilters);
-
-        if (this.verifyMode != COMPILE_ONLY) {
-            val snapshotsFolder = args.$snapshotsFolder
-                .orElse(examplesFolder().resolve("_snapshots").toAbsolutePath().toString());
-
-            this.snapshotsFolder = ArgUtils.requirePath(cmd, snapshotsFolder, "snapshots folder", "-sf", "SNAPSHOTS_FOLDER");
-        } else {
-            this.snapshotsFolder = null; // may or may not find a more elegant way to handle this later
-        }
+        this.snapshotsFolder = examplesFolder().resolve("_snapshots");
     }
 
     @Override

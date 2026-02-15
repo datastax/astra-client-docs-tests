@@ -16,6 +16,7 @@ import com.dtsx.docs.core.runner.tests.snapshots.sources.output.OutputJsonifySou
 import com.dtsx.docs.core.runner.tests.snapshots.verifier.SnapshotVerifier;
 import com.dtsx.docs.core.runner.tests.strategies.execution.ExecutionMode.Resetter;
 import com.dtsx.docs.lib.CliLogger;
+import com.dtsx.docs.lib.CliLogger.MessageUpdater;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import lombok.Getter;
 import lombok.val;
@@ -24,7 +25,6 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
 
 import static java.util.stream.Collectors.toMap;
 
@@ -63,7 +63,7 @@ public final class SnapshotTestStrategy extends TestStrategy<SnapshotTestMeta> {
 
             val testFiles = testRoot.filesToTest().entrySet();
 
-            return CliLogger.loading(displayMsg, (updateMsg) -> {
+            return CliLogger.loading(displayMsg, (msgUpdater) -> {
                 meta.testFixture().use(executionMode(), tsx, placeholders, testFiles, (e, resetter) -> {
                     val language = e.getKey();
                     val filesForLang = e.getValue();
@@ -74,7 +74,7 @@ public final class SnapshotTestStrategy extends TestStrategy<SnapshotTestMeta> {
                             resetter,
                             filesForLang,
                             execEnvs.forLanguage(language),
-                            updateMsg
+                            msgUpdater
                         );
 
                         val outcomesProduct = filesForLang.stream().collect(toMap(path -> path, _ -> result));
@@ -88,7 +88,7 @@ public final class SnapshotTestStrategy extends TestStrategy<SnapshotTestMeta> {
             });
         }
 
-        private TestOutcome runTestsForLanguage(ClientDriver driver, Resetter resetter, Set<Path> filesForLang, ExecutionEnvironment execEnv, Consumer<String> updateMsg) {
+        private TestOutcome runTestsForLanguage(ClientDriver driver, Resetter resetter, Set<Path> filesForLang, ExecutionEnvironment execEnv, MessageUpdater msgUpdater) {
             return verifier.verify(driver, resetter, testRoot, placeholders, filesForLang, (path) -> {
                 val testFileModifiers = (meta.snapshotSources().stream().anyMatch(OutputJsonifySource.class::isInstance))
                     ? TestFileModifiers.JSONIFY_OUTPUT
@@ -97,7 +97,7 @@ public final class SnapshotTestStrategy extends TestStrategy<SnapshotTestMeta> {
                 return execEnv.withTestFileCopied(driver, path, placeholders, testFileModifiers, () -> {
                     if (!meta.parallel()) {
                         val displayPath = testRoot.displayPath(path);
-                        updateMsg.accept("Verifying @!%s!@".formatted(displayPath));
+                        msgUpdater.update(_ -> "Verifying @!%s!@".formatted(displayPath));
                     }
                     return driver.executeScript(ctx, execEnv, envVars);
                 });

@@ -2,8 +2,11 @@ package com.dtsx.docs.core.planner.meta;
 
 import com.dtsx.docs.core.planner.fixtures.JSFixture;
 import com.dtsx.docs.core.planner.meta.BaseMetaYml.BaseMetaYmlRep.TestBlock.SkipConfig;
+import com.dtsx.docs.core.planner.meta.BaseMetaYml.BaseMetaYmlRep.TestBlock.SkipConfig.SkipTestType;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
+import com.dtsx.docs.core.runner.tests.snapshots.sources.SnapshotSourceUtils;
 import lombok.NonNull;
+import lombok.val;
 import tools.jackson.databind.annotation.JsonDeserialize;
 
 import java.util.Map;
@@ -29,13 +32,30 @@ public interface BaseMetaYml {
             @NonNull Optional<Object> skip,
             @NonNull Optional<Boolean> parallel
         ) {
-            public static class SkipConfig extends PerLanguageToggle {
-                public SkipConfig(Map<ClientLanguage, Boolean> languages) {
+            public static class SkipConfig extends PerLanguageToggle<SkipTestType> {
+                public enum SkipTestType {
+                    SNAPSHOT,
+                    COMPILES,
+                    ALL,
+                    NONE
+                }
+
+                private final TestType type;
+
+                public SkipConfig(TestType testType, Map<ClientLanguage, SkipTestType> languages) {
                     super(languages);
+                    this.type = testType;
                 }
 
                 public boolean isSkipped(ClientLanguage language) {
-                    return languages.getOrDefault(language, false);
+                    val skipType = languages.getOrDefault(language, SkipTestType.NONE);
+
+                    return switch (skipType) {
+                        case ALL -> true;
+                        case NONE -> false;
+                        case SNAPSHOT -> type == TestType.SNAPSHOT;
+                        case COMPILES -> type == TestType.COMPILES;
+                    };
                 }
             }
         }

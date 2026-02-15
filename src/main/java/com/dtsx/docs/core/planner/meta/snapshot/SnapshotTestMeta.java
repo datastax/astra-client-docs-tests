@@ -7,14 +7,19 @@ import com.dtsx.docs.core.planner.fixtures.JSFixtureImpl;
 import com.dtsx.docs.core.planner.fixtures.NoopFixture;
 import com.dtsx.docs.core.planner.meta.BaseMetaYml;
 import com.dtsx.docs.core.planner.meta.BaseMetaYml.BaseMetaYmlRep.TestBlock.SkipConfig;
+import com.dtsx.docs.core.planner.meta.BaseMetaYml.BaseMetaYmlRep.TestBlock.SkipConfig.SkipTestType;
+import com.dtsx.docs.core.planner.meta.BaseMetaYml.BaseMetaYmlRep.TestType;
 import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaRep.FixturesConfig;
+import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.SnapshotSource;
 import lombok.Getter;
 import lombok.val;
+import tools.jackson.core.type.TypeReference;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static com.dtsx.docs.core.runner.tests.VerifyMode.DRY_RUN;
@@ -31,11 +36,11 @@ public final class SnapshotTestMeta implements BaseMetaYml {
     private final boolean parallel;
 
     public SnapshotTestMeta(TestCtx ctx, Path testRoot, SnapshotTestMetaRep meta) {
-        this.skipConfig = SkipConfig.parse(SkipConfig::new, ctx, meta.test().skip());
+        this.skipConfig = SkipConfig.parse((Map<ClientLanguage, SkipTestType> l) -> new SkipConfig(TestType.SNAPSHOT, l), ctx, meta.test().skip(), new TypeReference<>() {});
         this.baseFixture = resolveBaseFixture(ctx, meta.fixtures().flatMap(FixturesConfig::base));
         this.testFixture = resolveTestFixture(ctx, testRoot);
         this.snapshotSources = SnapshotSourcesParser.parseSources(meta.snapshots());
-        this.shareConfig = SnapshotsShareConfig.parse(SnapshotsShareConfig::new, ctx, meta.snapshots().share());
+        this.shareConfig = SnapshotsShareConfig.parse(SnapshotsShareConfig::new, ctx, meta.snapshots().share(), new TypeReference<>() {});
         this.parallel = meta.test().parallel().orElse(false);
     }
 

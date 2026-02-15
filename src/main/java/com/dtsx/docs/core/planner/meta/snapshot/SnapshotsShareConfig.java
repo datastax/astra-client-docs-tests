@@ -5,7 +5,7 @@ import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 
 import java.util.Map;
 
-public class SnapshotsShareConfig extends PerLanguageToggle {
+public class SnapshotsShareConfig extends PerLanguageToggle<Boolean> {
     public SnapshotsShareConfig(Map<ClientLanguage, Boolean> languages) {
         super(languages);
     }

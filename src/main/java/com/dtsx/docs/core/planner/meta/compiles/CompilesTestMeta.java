@@ -5,7 +5,13 @@ import com.dtsx.docs.core.planner.fixtures.JSFixture;
 import com.dtsx.docs.core.planner.fixtures.NoopFixture;
 import com.dtsx.docs.core.planner.meta.BaseMetaYml;
 import com.dtsx.docs.core.planner.meta.BaseMetaYml.BaseMetaYmlRep.TestBlock.SkipConfig;
+import com.dtsx.docs.core.planner.meta.BaseMetaYml.BaseMetaYmlRep.TestBlock.SkipConfig.SkipTestType;
+import com.dtsx.docs.core.planner.meta.BaseMetaYml.BaseMetaYmlRep.TestType;
+import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import lombok.Getter;
+import tools.jackson.core.type.TypeReference;
+
+import java.util.Map;
 
 @Getter
 public final class CompilesTestMeta implements BaseMetaYml {
@@ -13,7 +19,7 @@ public final class CompilesTestMeta implements BaseMetaYml {
     private final boolean parallel;
 
     public CompilesTestMeta(TestCtx ctx, BaseMetaYmlRep meta) {
-        this.skipConfig = SkipConfig.parse(SkipConfig::new, ctx, meta.test().skip());
+        this.skipConfig = SkipConfig.parse((Map<ClientLanguage, SkipTestType> l) -> new SkipConfig(TestType.COMPILES, l), ctx, meta.test().skip(), new TypeReference<>() {});
         this.parallel = meta.test().parallel().orElse(true);
     }
 

@@ -90,6 +90,15 @@ public class JacksonUtils {
     }
 
     @SneakyThrows
+    public static <T> T convertValue(Object fromValue, Class<T> clazz) {
+        try {
+            return JSON.convertValue(fromValue, clazz);
+        } catch (Exception e) {
+            throw new RunException("Failed to convert value to " + clazz.getSimpleName() + ": " + e.getMessage() + "\nValue:\n" + formatJsonCompact(fromValue), e);
+        }
+    }
+
+    @SneakyThrows
     public static String formatJsonCompact(Object obj) {
         return JSON.writeValueAsString(obj);
     }

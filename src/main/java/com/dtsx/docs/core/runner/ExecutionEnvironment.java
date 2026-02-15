@@ -4,6 +4,7 @@ import com.dtsx.docs.config.ctx.BaseScriptRunnerCtx;
 import com.dtsx.docs.core.runner.drivers.ClientDriver;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import com.dtsx.docs.lib.CliLogger;
+import com.dtsx.docs.lib.CliLogger.MessageUpdater;
 import lombok.*;
 import org.apache.commons.io.file.PathUtils;
 import org.intellij.lang.annotations.MagicConstant;
@@ -195,12 +196,12 @@ public class ExecutionEnvironment {
         private ExecutionEnvironment mkExecEnv(Path rootDir, ClientDriver driver) {
             val languageName = driver.language().name().toLowerCase();
 
-            return CliLogger.loading("Setting up @!%s!@ execution environment".formatted(languageName), (_) -> {
+            return CliLogger.loading("Setting up @!%s!@ execution environment".formatted(languageName), (msgUpdater) -> {
                 val srcExecEnv = ctx.executionEnvironmentTemplate(driver.language());
                 val destExecEnv = rootDir.resolve(driver.language().name().toLowerCase());
 
                 val execEnv = new ExecutionEnvironment(ctx, destExecEnv, null);
-                cleanIfNeeded(destExecEnv);
+                cleanIfNeeded(srcExecEnv, destExecEnv, msgUpdater);
 
                 try {
                     if (!Files.exists(destExecEnv)) {
@@ -219,13 +220,30 @@ public class ExecutionEnvironment {
         }
 
         @SneakyThrows
-        private void cleanIfNeeded(Path execEnv) {
-            if (ctx.clean()) {
+        private void cleanIfNeeded(Path srcExecEnv, Path destExecEnv, MessageUpdater msgUpdater) {
+            if (ctx.clean() || needsCleaning(srcExecEnv, destExecEnv)) {
                 CliLogger.debug("Cleaning up execution environments");
 
-                if (Files.exists(execEnv)) {
-                    PathUtils.deleteDirectory(execEnv);
+                if (Files.exists(destExecEnv)) {
+                    msgUpdater.update(m -> m + " (after cleanup)");
+                    PathUtils.deleteDirectory(destExecEnv);
                 }
+            }
+        }
+
+        @SuppressWarnings("resource")
+        private boolean needsCleaning(Path srcExecEnv, Path destExecEnv) {
+            if (!Files.exists(destExecEnv)) {
+                return false;
+            }
+
+            try {
+                val srcFiles = Files.walk(srcExecEnv).filter(Files::isRegularFile).map(srcExecEnv::relativize).collect(Collectors.toSet());
+                val destFiles = Files.walk(destExecEnv).filter(Files::isRegularFile).map(destExecEnv::relativize).collect(Collectors.toSet());
+
+                return !destFiles.containsAll(srcFiles);
+            } catch (Exception e) {
+                throw new RunException("Failed to check if execution environment needs cleaning", e);
             }
         }
     }

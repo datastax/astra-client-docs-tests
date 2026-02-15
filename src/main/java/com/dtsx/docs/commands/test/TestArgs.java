@@ -23,14 +23,6 @@ public class TestArgs extends BaseScriptRunnerArgs<TestCtx> {
     public List<String> $drivers;
 
     @Option(
-        names = { "-sf", "--snapshots-folder" },
-        description = "Path to the folder containing snapshots.",
-        defaultValue = "${SNAPSHOTS_FOLDER:" + Option.NULL_VALUE + "}",
-        paramLabel = "FOLDER"
-    )
-    public Optional<String> $snapshotsFolder;
-
-    @Option(
         names = { "-r", "--test-reporter" },
         description = "Test reporter type (e.g., 'only_failures', 'all_tests').",
         defaultValue = "${TEST_REPORTER:-all_tests}",
