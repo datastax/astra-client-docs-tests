@@ -6,9 +6,9 @@ import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaRep;
 import com.dtsx.docs.core.runner.PlaceholderResolver;
 import com.dtsx.docs.core.runner.Placeholders;
 import com.dtsx.docs.core.runner.RunException;
-import com.dtsx.docs.core.runner.tests.strategies.execution.ExecutionStrategy;
-import com.dtsx.docs.core.runner.tests.strategies.execution.ExecutionStrategy.Resetter;
-import com.dtsx.docs.core.runner.tests.strategies.execution.SequentialExecutionStrategy;
+import com.dtsx.docs.core.runner.tests.strategies.execution.ExecutionMode;
+import com.dtsx.docs.core.runner.tests.strategies.execution.ExecutionMode.Resetter;
+import com.dtsx.docs.core.runner.tests.strategies.execution.SequentialExecutionMode;
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
@@ -118,7 +118,7 @@ public sealed abstract class JSFixture implements Comparable<JSFixture> permits 
     /// @param ts the iterable of items to process
     /// @param consumer the consumer to execute for each item
     public <T> void useResetting(ExternalProgram tsx, Placeholders placeholders, Iterable<T> ts, Consumer<T> consumer) {
-        use(SequentialExecutionStrategy.INSTANCE, tsx, placeholders, ts, (t, resetter) -> {
+        use(SequentialExecutionMode.INSTANCE, tsx, placeholders, ts, (t, resetter) -> {
             resetter.beforeEach();
             try {
                 consumer.accept(t);
@@ -129,17 +129,17 @@ public sealed abstract class JSFixture implements Comparable<JSFixture> permits 
     }
 
     @SneakyThrows
-    public <T> void use(ExecutionStrategy executionStrat, ExternalProgram tsx, Placeholders placeholders, Iterable<T> ts, BiConsumer<T, Resetter> consumer) {
+    public <T> void use(ExecutionMode executionMode, ExternalProgram tsx, Placeholders placeholders, Iterable<T> ts, BiConsumer<T, Resetter> consumer) {
         val futures = new ArrayList<Future<?>>();
 
-        val resetter = executionStrat.mkResetter(
+        val resetter = executionMode.resetter(
             () -> beforeEach(tsx, placeholders),
             () -> afterEach(tsx, placeholders)
         );
 
         setup(tsx, placeholders);
 
-        try (val executor = executionStrat.mkExecutor()) {
+        try (val executor = executionMode.executor()) {
             for (val item : ts) {
                 futures.add(executor.submit(() -> {
                     consumer.accept(item, resetter);
@@ -153,7 +153,6 @@ public sealed abstract class JSFixture implements Comparable<JSFixture> permits 
             teardown(tsx, placeholders);
         }
     }
-
 
     /// Executes `npm install` in the {@linkplain com.dtsx.docs.core.runner.ExecutionEnvironment root execution environment folder}
     /// to install any dependencies used by the JS fixtures (e.g. `astra-db-ts`).

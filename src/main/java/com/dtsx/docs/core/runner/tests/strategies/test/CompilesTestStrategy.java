@@ -43,7 +43,7 @@ public final class CompilesTestStrategy extends TestStrategy<CompilesTestMeta> {
         val outcomes = new ConcurrentHashMap<ClientLanguage, Map<Path, TestOutcome>>();
 
         return CliLogger.loading(displayMsg, (_) -> {
-            try (val executor = executionStrategy().mkExecutor()) {
+            try (val executor = executionMode().executor()) {
                 val futures = new ArrayList<Future<?>>();
 
                 testRoot.filesToTest().forEach((lang, paths) -> {

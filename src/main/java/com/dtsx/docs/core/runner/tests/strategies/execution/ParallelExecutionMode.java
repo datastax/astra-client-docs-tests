@@ -5,16 +5,16 @@ import lombok.RequiredArgsConstructor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public enum ParallelExecutionStrategy implements ExecutionStrategy {
+public enum ParallelExecutionMode implements ExecutionMode {
     INSTANCE;
 
     @Override
-    public ExecutorService mkExecutor() {
+    public ExecutorService executor() {
         return Executors.newVirtualThreadPerTaskExecutor();
     }
 
     @Override
-    public Resetter mkResetter(Runnable beforeEach, Runnable afterEach) {
+    public Resetter resetter(Runnable beforeEach, Runnable afterEach) {
         return NoopResetter.INSTANCE;
     }
 

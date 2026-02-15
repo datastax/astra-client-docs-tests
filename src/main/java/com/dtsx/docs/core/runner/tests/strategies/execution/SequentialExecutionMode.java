@@ -5,16 +5,16 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.concurrent.ExecutorService;
 
-public enum SequentialExecutionStrategy implements ExecutionStrategy {
+public enum SequentialExecutionMode implements ExecutionMode {
     INSTANCE;
 
     @Override
-    public ExecutorService mkExecutor() {
+    public ExecutorService executor() {
         return DirectExecutor.INSTANCE;
     }
 
     @Override
-    public Resetter mkResetter(Runnable beforeEach, Runnable afterEach) {
+    public Resetter resetter(Runnable beforeEach, Runnable afterEach) {
         return new BasicResetter(beforeEach, afterEach);
     }
 

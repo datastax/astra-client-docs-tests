@@ -4,9 +4,9 @@ import com.dtsx.docs.core.planner.TestRoot;
 import com.dtsx.docs.core.planner.meta.BaseMetaYml;
 import com.dtsx.docs.core.runner.Placeholders;
 import com.dtsx.docs.commands.test.TestCtx;
-import com.dtsx.docs.core.runner.tests.strategies.execution.ExecutionStrategy;
-import com.dtsx.docs.core.runner.tests.strategies.execution.ParallelExecutionStrategy;
-import com.dtsx.docs.core.runner.tests.strategies.execution.SequentialExecutionStrategy;
+import com.dtsx.docs.core.runner.tests.strategies.execution.ExecutionMode;
+import com.dtsx.docs.core.runner.tests.strategies.execution.ParallelExecutionMode;
+import com.dtsx.docs.core.runner.tests.strategies.execution.SequentialExecutionMode;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.core.runner.ExecutionEnvironment.ExecutionEnvironments;
 import com.dtsx.docs.core.runner.tests.results.TestRootResults;
@@ -19,9 +19,9 @@ public sealed abstract class TestStrategy<M extends BaseMetaYml> permits Compile
 
     public abstract TestRootResults runTestsInRoot(ExternalProgram tsx, TestRoot testRoot, ExecutionEnvironments execEnvs, Placeholders placeholders);
 
-    protected final ExecutionStrategy executionStrategy() {
+    protected final ExecutionMode executionMode() {
         return (meta.parallel())
-            ? ParallelExecutionStrategy.INSTANCE
-            : SequentialExecutionStrategy.INSTANCE;
+            ? ParallelExecutionMode.INSTANCE
+            : SequentialExecutionMode.INSTANCE;
     }
 }

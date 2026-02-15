@@ -14,7 +14,7 @@ import com.dtsx.docs.core.runner.tests.results.TestOutcome;
 import com.dtsx.docs.core.runner.tests.results.TestRootResults;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.output.OutputJsonifySource;
 import com.dtsx.docs.core.runner.tests.snapshots.verifier.SnapshotVerifier;
-import com.dtsx.docs.core.runner.tests.strategies.execution.ExecutionStrategy.Resetter;
+import com.dtsx.docs.core.runner.tests.strategies.execution.ExecutionMode.Resetter;
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import lombok.Getter;
@@ -64,7 +64,7 @@ public final class SnapshotTestStrategy extends TestStrategy<SnapshotTestMeta> {
             val testFiles = testRoot.filesToTest().entrySet();
 
             return CliLogger.loading(displayMsg, (updateMsg) -> {
-                meta.testFixture().use(executionStrategy(), tsx, placeholders, testFiles, (e, resetter) -> {
+                meta.testFixture().use(executionMode(), tsx, placeholders, testFiles, (e, resetter) -> {
                     val language = e.getKey();
                     val filesForLang = e.getValue();
 

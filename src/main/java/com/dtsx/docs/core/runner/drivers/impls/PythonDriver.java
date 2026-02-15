@@ -60,7 +60,6 @@ public class PythonDriver extends ClientDriver {
     public String preprocessScript(BaseScriptRunnerCtx ctx, String content, @TestFileModifierFlags int mods) {
         if ((mods & TestFileModifiers.JSONIFY_OUTPUT) != 0) {
             content = """
-            import json as _json_module
             from astrapy.data.utils.table_converters import preprocess_table_payload, FullSerdesOptions
             
             # Create serdes options for converting Data API types
@@ -96,15 +95,21 @@ public class PythonDriver extends ClientDriver {
             case OTHERS -> "other";
         };
 
-        return DataAPIClientPattern.matcher(content).replaceAll((m) -> {
-            val args = m.group(1).trim();
+        content = """
+        import astrapy as _astrapy_module
+        import astrapy.utils.unset as _astrapy_unset_module
+        
+        _original_init = _astrapy_module.DataAPIClient.__init__
+        
+        def patched_init(self, *args, **kwargs):
+            if "environment" not in kwargs or isinstance(kwargs["environment"], _astrapy_unset_module.UnsetType):
+                kwargs["environment"] = "%s"
+            return _original_init(self, *args, **kwargs)
+        
+        _astrapy_module.DataAPIClient.__init__ = patched_init
+        """.formatted(env) + content;
 
-            if (args.isEmpty()) {
-                return "DataAPIClient(environment='" + env + "')";
-            } else {
-                return "DataAPIClient(" + args + (args.trim().endsWith(",") ? "" : ",") + " environment='" + env + "')";
-            }
-        });
+        return content;
     }
 
     @Override

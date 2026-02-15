@@ -33,25 +33,19 @@ public class OutputJsonifySource extends SnapshotSource {
         var jsonAsString = JacksonUtils.printJson(rawJsonLines);
         jsonAsString = JsonScrubber.scrub(jsonAsString);
 
-//        System.out.println(driver.language());
-//        System.out.println(jsonAsString);
-
         if (meta.jq().isPresent()) {
             jsonAsString = runJq(ctx, jsonAsString, meta.jq().get());
         }
 
-        val processedJson =
-            JacksonUtils.parseJson(jsonAsString, Object.class);
-
-        val finalJson = SnapshotSourceUtils.mkJsonDeterministic((processedJson instanceof Collection<?> c && c.size() == 1 && (c.iterator().next() instanceof Collection<?>))
-            ? c.iterator().next()
-            : processedJson);
-
-//        System.out.println(finalJson);
-
-        return JacksonUtils.prettyPrintJson(
-            SnapshotSourceUtils.mkJsonDeterministic(finalJson)
+        val processedJson = SnapshotSourceUtils.mkJsonDeterministic(
+            JacksonUtils.parseJson(jsonAsString, Object.class)
         );
+
+        val finalJson = (processedJson instanceof Collection<?> c && c.size() == 1 && (c.iterator().next() instanceof Collection<?>))
+            ? c.iterator().next()
+            : processedJson;
+
+        return JacksonUtils.prettyPrintJson(finalJson);
     }
 
     @SuppressWarnings("SameParameterValue")

@@ -9,7 +9,7 @@ import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import com.dtsx.docs.core.runner.tests.results.TestOutcome;
 import com.dtsx.docs.core.runner.tests.results.TestOutcome.FailedToVerify;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.SnapshotSource;
-import com.dtsx.docs.core.runner.tests.strategies.execution.ExecutionStrategy.Resetter;
+import com.dtsx.docs.core.runner.tests.strategies.execution.ExecutionMode.Resetter;
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import lombok.RequiredArgsConstructor;
@@ -43,7 +43,8 @@ public class SnapshotVerifier {
     ///   - {@link $DateScrubber $DateScrubber}: Scrubs collection `$date`s
     public static final Scrubber SCRUBBER = new MultiScrubber(List.of(
         new GuidScrubber(),
-        new $DateScrubber()
+        new $DateScrubber(),
+        new ObjectIdScrubber()
     ));
 
     private final TestCtx ctx;
@@ -133,6 +134,14 @@ public class SnapshotVerifier {
 
         public $DateScrubber() {
             super(DATE_PATTERN, n -> "{ \"$date\" : \"date_" + n + "\" }");
+        }
+    }
+
+    public static class ObjectIdScrubber extends RegExScrubber {
+        public static final Pattern OBJECT_ID_PATTERN = Pattern.compile("\"[a-fA-F0-9]{24}\"");
+
+        public ObjectIdScrubber() {
+            super(OBJECT_ID_PATTERN, n -> "\"objectId_" + n + "\"");
         }
     }
 }
