@@ -3,7 +3,6 @@ package com.dtsx.docs.core.runner.tests.snapshots.sources.schema.definitions;
 import com.datastax.astra.client.collections.definition.documents.Document;
 import com.datastax.astra.client.core.commands.Command;
 import com.datastax.astra.client.tables.commands.options.ListTypesOptions;
-import com.datastax.astra.client.tables.definition.types.TableUserDefinedTypeDescriptor;
 import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.core.planner.meta.snapshot.meta.UdtDefinitionSourceMeta;
 import com.dtsx.docs.core.runner.Placeholders;
@@ -48,7 +47,7 @@ public class UdtDefinitionsSource extends SnapshotSource {
             .filter(type -> this.types.contains(type.udtName))
             .toList();
         
-        return JacksonUtils.prettyPrintJson(
+        return JacksonUtils.formatJsonPretty(
             mkJsonDeterministic(types)
         );
     }

@@ -31,7 +31,7 @@ public abstract class NamesSource extends SnapshotSource {
             this.keyspace.orElse(placeholders.keyspaceName())
         );
 
-        return JacksonUtils.prettyPrintJson(
+        return JacksonUtils.formatJsonPretty(
             names(db, placeholders).stream()
                 .sorted()
                 .toList()

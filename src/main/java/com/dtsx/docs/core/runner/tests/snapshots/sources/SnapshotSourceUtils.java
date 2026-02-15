@@ -1,7 +1,9 @@
 package com.dtsx.docs.core.runner.tests.snapshots.sources;
 
+import com.datastax.astra.client.collections.definition.documents.types.ObjectId;
 import com.dtsx.docs.core.planner.PlanException;
 import com.dtsx.docs.core.runner.tests.snapshots.verifier.SnapshotVerifier;
+import com.dtsx.docs.core.runner.tests.snapshots.verifier.SnapshotVerifier.ObjectIdScrubber;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.tuple.Pair;
@@ -39,14 +41,16 @@ public class SnapshotSourceUtils {
 
         return switch (obj) {
             case Map<?, ?> map -> {
-                if (map.size() == 1 && map.containsKey("$binary") || map.containsKey("_vector") || map.containsKey("embeddings")) {
-                    yield "vector_or_binary";
+                if (map.size() == 1) {
+                    if (map.containsKey("$binary") || map.containsKey("_vector") || map.containsKey("embeddings")) {
+                        yield "vector_or_binary";
+                    }
                 }
 
                 var result = new LinkedHashMap<>();
                 map.entrySet().stream()
                     .map(e -> Pair.of(
-                        e.getKey(),
+                        mkJsonDeterministic(e.getKey()),
                         mkJsonDeterministic(e.getValue())
                     ))
                     .sorted(Comparator.comparing(p -> calcSortValue(p.getLeft()), Comparator.nullsFirst(Integer::compareTo)))
@@ -80,9 +84,9 @@ public class SnapshotSourceUtils {
                 System.out.print(indent + "  Value (" + entry.getValue().getClass().getSimpleName() + "): ");
                 recursivelyPrintTypes(entry.getValue(), indent + "    ");
             }
-        } else if (obj instanceof List<?> list) {
+        } else if (obj instanceof Collection<?> coll) {
             System.out.println(indent + "List:");
-            for (var item : list) {
+            for (var item : coll) {
                 System.out.print(indent + "  Item (" + item.getClass().getSimpleName() + "): ");
                 recursivelyPrintTypes(item, indent + "    ");
             }

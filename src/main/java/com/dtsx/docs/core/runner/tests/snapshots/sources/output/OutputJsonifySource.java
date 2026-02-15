@@ -12,7 +12,6 @@ import com.dtsx.docs.lib.JacksonUtils;
 import lombok.val;
 
 import java.util.Collection;
-import java.util.Map;
 import java.util.regex.Pattern;
 
 import static com.dtsx.docs.lib.JacksonUtils.runJq;
@@ -30,7 +29,7 @@ public class OutputJsonifySource extends SnapshotSource {
         val output = SnapshotSourceUtils.extractOutput(name, res);
         val rawJsonLines = driver.preprocessToJson(ctx, meta, output);
 
-        var jsonAsString = JacksonUtils.printJson(rawJsonLines);
+        var jsonAsString = JacksonUtils.formatJsonCompact(rawJsonLines);
         jsonAsString = JsonScrubber.scrub(jsonAsString);
 
         if (meta.jq().isPresent()) {
@@ -45,7 +44,7 @@ public class OutputJsonifySource extends SnapshotSource {
             ? c.iterator().next()
             : processedJson;
 
-        return JacksonUtils.prettyPrintJson(finalJson);
+        return JacksonUtils.formatJsonPretty(finalJson);
     }
 
     @SuppressWarnings("SameParameterValue")

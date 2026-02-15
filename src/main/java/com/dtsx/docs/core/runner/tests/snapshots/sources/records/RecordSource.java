@@ -6,7 +6,6 @@ import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.core.planner.PlanException;
 import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaRep;
 import com.dtsx.docs.core.planner.meta.snapshot.meta.RecordSourceMeta;
-import com.dtsx.docs.core.planner.meta.snapshot.meta.WithNameAndKeyspace;
 import com.dtsx.docs.core.runner.Placeholders;
 import com.dtsx.docs.core.runner.drivers.ClientDriver;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.SnapshotSource;
@@ -115,7 +114,7 @@ public abstract class RecordSource extends SnapshotSource {
 
         val schemaObjKeyspace = overrideKeyspace.orElse(placeholders.keyspaceName());
 
-        return JacksonUtils.prettyPrintJson(
+        return JacksonUtils.formatJsonPretty(
             mkJsonDeterministic(streamRecords(ctx, schemaObjName, schemaObjKeyspace).toList())
         );
     }

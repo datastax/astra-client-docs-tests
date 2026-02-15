@@ -60,6 +60,7 @@ public class PythonDriver extends ClientDriver {
     public String preprocessScript(BaseScriptRunnerCtx ctx, String content, @TestFileModifierFlags int mods) {
         if ((mods & TestFileModifiers.JSONIFY_OUTPUT) != 0) {
             content = """
+            import json as _json_module
             from astrapy.data.utils.table_converters import preprocess_table_payload, FullSerdesOptions
             
             # Create serdes options for converting Data API types

@@ -5,7 +5,6 @@ import com.dtsx.docs.core.runner.RunException;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import lombok.val;
-import tools.jackson.core.JsonToken;
 import tools.jackson.core.json.JsonReadFeature;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.core.util.DefaultIndenter;
@@ -86,17 +85,17 @@ public class JacksonUtils {
         try {
             return JSON.convertValue(fromValue, ref);
         } catch (Exception e) {
-            throw new RunException("Failed to convert value to " + ref.getType().getTypeName() + ": " + e.getMessage() + "\nValue:\n" + printJson(fromValue), e);
+            throw new RunException("Failed to convert value to " + ref.getType().getTypeName() + ": " + e.getMessage() + "\nValue:\n" + formatJsonCompact(fromValue), e);
         }
     }
 
     @SneakyThrows
-    public static String printJson(Object obj) {
+    public static String formatJsonCompact(Object obj) {
         return JSON.writeValueAsString(obj);
     }
 
     @SneakyThrows
-    public static String prettyPrintJson(Object obj) {
+    public static String formatJsonPretty(Object obj) {
         return JSON.writerWithDefaultPrettyPrinter().writeValueAsString(obj);
     }
 

@@ -37,7 +37,7 @@ public abstract class SchemaObjectDefinitionSource extends SnapshotSource {
 
         val schemaObjKeyspace = overrideKeyspace.orElse(placeholders.keyspaceName());
 
-        return JacksonUtils.prettyPrintJson(
+        return JacksonUtils.formatJsonPretty(
             mkJsonDeterministic(getDefinition(ctx, schemaObjName, schemaObjKeyspace))
         );
     }

@@ -3,6 +3,7 @@ package com.dtsx.docs;
 import com.dtsx.docs.commands.review.ReviewCmd;
 import com.dtsx.docs.commands.run.RunCmd;
 import com.dtsx.docs.commands.test.TestCmd;
+import com.dtsx.docs.core.runner.tests.snapshots.sources.SnapshotSourceUtils;
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.JacksonUtils;
 import io.github.cdimascio.dotenv.Dotenv;

@@ -44,7 +44,7 @@ public class TableIndexDefinitionsSource extends SnapshotSource {
             .filter(index -> this.indexes.contains(index.getName()))
             .toList();
         
-        return JacksonUtils.prettyPrintJson(
+        return JacksonUtils.formatJsonPretty(
             mkJsonDeterministic(indexes)
         );
     }
