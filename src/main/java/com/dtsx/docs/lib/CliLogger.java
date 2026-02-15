@@ -179,6 +179,10 @@ public class CliLogger {
         return e;
     }
 
+    public static Path logsDir(BaseCtx ctx) {
+        return ctx.tmpFolder().resolve("logs");
+    }
+
     /// Returns the absolute path to the log file for this session.
     ///
     /// The log file name is determined at static initialization time.
@@ -253,9 +257,5 @@ public class CliLogger {
         val sw = new StringWriter();
         t.printStackTrace(new PrintWriter(sw));
         return sw.toString();
-    }
-
-    private static Path logsDir(BaseCtx ctx) {
-        return ctx.tmpFolder().resolve("logs");
     }
 }

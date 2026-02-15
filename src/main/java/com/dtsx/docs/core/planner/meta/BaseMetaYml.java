@@ -4,7 +4,6 @@ import com.dtsx.docs.core.planner.fixtures.JSFixture;
 import com.dtsx.docs.core.planner.meta.BaseMetaYml.BaseMetaYmlRep.TestBlock.SkipConfig;
 import com.dtsx.docs.core.planner.meta.BaseMetaYml.BaseMetaYmlRep.TestBlock.SkipConfig.SkipTestType;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
-import com.dtsx.docs.core.runner.tests.snapshots.sources.SnapshotSourceUtils;
 import lombok.NonNull;
 import lombok.val;
 import tools.jackson.databind.annotation.JsonDeserialize;

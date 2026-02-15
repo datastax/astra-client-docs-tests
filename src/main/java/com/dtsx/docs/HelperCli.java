@@ -1,6 +1,7 @@
 package com.dtsx.docs;
 
 import com.dtsx.docs.commands.completions.CompgenCmd;
+import com.dtsx.docs.commands.logs.LogsCmd;
 import com.dtsx.docs.commands.review.ReviewCmd;
 import com.dtsx.docs.commands.run.RunCmd;
 import com.dtsx.docs.commands.test.TestCmd;
@@ -27,6 +28,7 @@ import static com.dtsx.docs.lib.ColorUtils.ACCENT_COLOR;
         RunCmd.class,
         ReviewCmd.class,
         CompgenCmd.class,
+        LogsCmd.class,
     }
 )
 public class HelperCli {
