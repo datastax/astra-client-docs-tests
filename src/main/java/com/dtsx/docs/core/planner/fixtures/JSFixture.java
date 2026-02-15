@@ -1,24 +1,24 @@
 package com.dtsx.docs.core.planner.fixtures;
 
+import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.core.planner.TestRoot;
 import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaRep;
-import com.dtsx.docs.commands.test.TestCtx;
-import com.dtsx.docs.lib.CliLogger;
-import com.dtsx.docs.lib.ExecutorUtils.DirectExecutor;
-import com.dtsx.docs.lib.ExternalPrograms;
-import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.core.runner.PlaceholderResolver;
 import com.dtsx.docs.core.runner.Placeholders;
 import com.dtsx.docs.core.runner.RunException;
+import com.dtsx.docs.core.runner.tests.strategies.execution.ExecutionStrategy;
+import com.dtsx.docs.core.runner.tests.strategies.execution.ExecutionStrategy.Resetter;
+import com.dtsx.docs.core.runner.tests.strategies.execution.SequentialExecutionStrategy;
+import com.dtsx.docs.lib.CliLogger;
+import com.dtsx.docs.lib.ExternalPrograms;
+import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import lombok.EqualsAndHashCode;
-import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.val;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -118,7 +118,7 @@ public sealed abstract class JSFixture implements Comparable<JSFixture> permits 
     /// @param ts the iterable of items to process
     /// @param consumer the consumer to execute for each item
     public <T> void useResetting(ExternalProgram tsx, Placeholders placeholders, Iterable<T> ts, Consumer<T> consumer) {
-        use(DirectExecutor.INSTANCE, tsx, placeholders, ts, (t, resetter) -> {
+        use(SequentialExecutionStrategy.INSTANCE, tsx, placeholders, ts, (t, resetter) -> {
             resetter.beforeEach();
             try {
                 consumer.accept(t);
@@ -129,16 +129,17 @@ public sealed abstract class JSFixture implements Comparable<JSFixture> permits 
     }
 
     @SneakyThrows
-    public <T> void use(ExecutorService executor, ExternalProgram tsx, Placeholders placeholders, Iterable<T> ts, BiConsumer<T, Resetter> consumer) {
-        val resetter = new Resetter(
+    public <T> void use(ExecutionStrategy executionStrat, ExternalProgram tsx, Placeholders placeholders, Iterable<T> ts, BiConsumer<T, Resetter> consumer) {
+        val futures = new ArrayList<Future<?>>();
+
+        val resetter = executionStrat.mkResetter(
             () -> beforeEach(tsx, placeholders),
             () -> afterEach(tsx, placeholders)
         );
 
-        val futures = new ArrayList<Future<?>>();
-
         setup(tsx, placeholders);
-        try {
+
+        try (val executor = executionStrat.mkExecutor()) {
             for (val item : ts) {
                 futures.add(executor.submit(() -> {
                     consumer.accept(item, resetter);
@@ -150,54 +151,9 @@ public sealed abstract class JSFixture implements Comparable<JSFixture> permits 
             }
         } finally {
             teardown(tsx, placeholders);
-            executor.shutdownNow();
         }
     }
 
-    @RequiredArgsConstructor
-    public static class Resetter {
-        private final Runnable beforeEach;
-        private final Runnable afterEach;
-
-        public void beforeEach() {
-            beforeEach.run();
-        }
-
-        public void afterEach() {
-            afterEach.run();
-        }
-
-        public Resetter once() {
-            return new Once(beforeEach, afterEach);
-        }
-
-        private static class Once extends Resetter {
-            private boolean hasRunBefore = false;
-            private boolean hasRunAfter = false;
-
-            public Once(Runnable beforeEach, Runnable afterEach) {
-                super(beforeEach, afterEach);
-            }
-
-            @Override
-            public void beforeEach() {
-                if (hasRunBefore) {
-                    return;
-                }
-                hasRunBefore = true;
-                super.beforeEach();
-            }
-
-            @Override
-            public void afterEach() {
-                if (hasRunAfter) {
-                    return;
-                }
-                hasRunAfter = true;
-                super.afterEach();
-            }
-        }
-    }
 
     /// Executes `npm install` in the {@linkplain com.dtsx.docs.core.runner.ExecutionEnvironment root execution environment folder}
     /// to install any dependencies used by the JS fixtures (e.g. `astra-db-ts`).

@@ -1,4 +1,4 @@
-import {Collection, DataAPIClient, Table} from '@datastax/astra-db-ts';
+import { Collection, DataAPIClient, Table } from '@datastax/astra-db-ts';
 
 export const Token = process.env.APPLICATION_TOKEN;
 export const ApiEndpoint = process.env.API_ENDPOINT;
@@ -14,25 +14,70 @@ export const client = new DataAPIClient(Token, {
 
 export const db = client.db(ApiEndpoint);
 
-export async function truncate(schemaObj, ...pkeys) {
-  if (schemaObj instanceof Collection) {
-    await schemaObj.deleteMany({ i_dont_exist_for_sure: { $exists: false } });
-  }
-  else if (schemaObj instanceof Table) {
-    const docs = await schemaObj.find({}).toArray();
+export function withUtils(schemaObj) {
+  schemaObj.truncate = () => truncate(schemaObj);
 
-    if (pkeys.length === 0) {
-      throw new Error('truncate function requires at least one primary key when truncating a Table');
+  if (schemaObj instanceof Table) {
+    schemaObj.addColumns = (columns) => addColumns(schemaObj, columns);
+    schemaObj.dropColumns = (...columns) => dropColumns(schemaObj, columns);
+  }
+
+  return schemaObj;
+}
+
+async function truncate(schemaObj) {
+  return (schemaObj instanceof Collection)
+    ? truncateCollection(schemaObj)
+    : truncateTable(schemaObj);
+}
+
+async function truncateCollection(collection) {
+  await collection.deleteMany({ i_dont_exist_for_sure: { $exists: false } });
+}
+
+async function truncateTable(table) {
+  if (table._primaryKeys === undefined) {
+    const { primaryKey } = await table.definition();
+
+    table._primaryKeys = [
+      primaryKey.partitionBy,
+      Object.keys(primaryKey.partitionSort ?? {}),
+    ].flat();
+  }
+
+  const docs = await table.find({}).toArray();
+
+  await Promise.all(docs.map((doc) => {
+    const filter = {};
+
+    for (const pkey of table._primaryKeys) {
+      filter[pkey] = doc[pkey];
     }
 
-    await Promise.all(docs.map(async (doc) => {
-      const filter = {};
+    return table.deleteMany(filter);
+  }));
+}
 
-      for (const pkey of pkeys) {
-        filter[pkey] = doc[pkey];
-      }
+async function addColumns(table, columns) {
+  try {
+    await table.alter({
+      operation: { add: { columns } },
+    });
+  } catch (e) {
+    if (!e.message.includes('Column names must be unique in the table schema.')) {
+      throw e;
+    }
+  }
+}
 
-      await schemaObj.deleteMany(filter);
-    }));
+async function dropColumns(table, ...columns) {
+  try {
+    await table.alter({
+      operation: { drop: { columns } },
+    });
+  } catch (e) {
+    if (!e.message.includes(' The command attempted to drop columns that are not in the table schema.')) {
+      throw e;
+    }
   }
 }

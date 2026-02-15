@@ -68,7 +68,7 @@ public class TestRunner {
                             throw new BailException();
                         }
                     } catch (Exception e) {
-                        CliLogger.exception("Error running tests in test root '" + testRoot.rootName() + "'");
+                        CliLogger.exception("Error running tests in test root '" + testRoot.rootName() + "' (" + e.getClass().getSimpleName() + ")");
                         throw e;
                     }
                 });

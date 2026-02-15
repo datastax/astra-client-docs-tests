@@ -1,9 +1,9 @@
 package com.dtsx.docs.core.planner;
 
 import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaRep;
-import com.dtsx.docs.core.runner.tests.strategies.CompilesTestStrategy;
-import com.dtsx.docs.core.runner.tests.strategies.SnapshotTestStrategy;
-import com.dtsx.docs.core.runner.tests.strategies.TestStrategy;
+import com.dtsx.docs.core.runner.tests.strategies.test.CompilesTestStrategy;
+import com.dtsx.docs.core.runner.tests.strategies.test.SnapshotTestStrategy;
+import com.dtsx.docs.core.runner.tests.strategies.test.TestStrategy;
 import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.core.runner.RunException;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;

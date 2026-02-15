@@ -2,6 +2,7 @@ package com.dtsx.docs.core.runner.tests;
 
 import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.core.runner.RunException;
+import com.dtsx.docs.core.runner.tests.strategies.test.CompilesTestStrategy;
 import org.approvaltests.core.Options;
 import org.approvaltests.inline.InlineOptions;
 import org.lambda.functions.Function1;
@@ -37,7 +38,7 @@ public enum VerifyMode {
     /// Skips compile-only tests
     NO_COMPILE_ONLY,
 
-    /// Forces tests to use {@link com.dtsx.docs.core.runner.tests.strategies.CompilesTestStrategy CompilesTestStrategy}.
+    /// Forces tests to use {@link CompilesTestStrategy CompilesTestStrategy}.
     ///
     /// Dependent on the invariant that all snapshot tests can be run as compilation tests.
     COMPILE_ONLY;

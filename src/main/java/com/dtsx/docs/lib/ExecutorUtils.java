@@ -1,5 +1,6 @@
 package com.dtsx.docs.lib;
 
+import lombok.SneakyThrows;
 import lombok.val;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,15 +40,14 @@ public class ExecutorUtils {
         }
 
         @Override
+        @SneakyThrows
         public <T> @NotNull Future<T> submit(@NotNull Callable<T> task) {
-            val future = new FutureTask<>(task);
-            future.run();
-            return future;
+            return CompletableFuture.completedFuture(task.call());
         }
 
         @Override
         public <T> @NotNull Future<T> submit(@NotNull Runnable task, T result) {
-            return submit(() -> { task.run(); return result; });
+            return submit(Executors.callable(task, result));
         }
 
         @Override

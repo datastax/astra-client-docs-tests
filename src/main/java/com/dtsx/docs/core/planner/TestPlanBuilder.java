@@ -10,8 +10,8 @@ import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaRep;
 import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
-import com.dtsx.docs.core.runner.tests.strategies.CompilesTestStrategy;
-import com.dtsx.docs.core.runner.tests.strategies.SnapshotTestStrategy;
+import com.dtsx.docs.core.runner.tests.strategies.test.CompilesTestStrategy;
+import com.dtsx.docs.core.runner.tests.strategies.test.SnapshotTestStrategy;
 import lombok.val;
 import org.apache.commons.lang3.tuple.Pair;
 

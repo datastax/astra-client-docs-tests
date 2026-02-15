@@ -31,7 +31,7 @@ public final class SnapshotTestMeta implements BaseMetaYml {
     private final boolean parallel;
 
     public SnapshotTestMeta(TestCtx ctx, Path testRoot, SnapshotTestMetaRep meta) {
-        this.skipConfig = SkipConfig.parse(SkipConfig::new, ctx, meta.test().skipConfig());
+        this.skipConfig = SkipConfig.parse(SkipConfig::new, ctx, meta.test().skip());
         this.baseFixture = resolveBaseFixture(ctx, meta.fixtures().flatMap(FixturesConfig::base));
         this.testFixture = resolveTestFixture(ctx, testRoot);
         this.snapshotSources = SnapshotSourcesParser.parseSources(meta.snapshots());

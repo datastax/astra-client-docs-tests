@@ -26,7 +26,7 @@ public interface BaseMetaYml {
 
         record TestBlock(
             @NonNull TestType type,
-            @NonNull Optional<Object> skipConfig,
+            @NonNull Optional<Object> skip,
             @NonNull Optional<Boolean> parallel
         ) {
             public static class SkipConfig extends PerLanguageToggle {

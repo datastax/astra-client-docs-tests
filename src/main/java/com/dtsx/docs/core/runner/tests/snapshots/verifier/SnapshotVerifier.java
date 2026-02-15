@@ -2,7 +2,6 @@ package com.dtsx.docs.core.runner.tests.snapshots.verifier;
 
 import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.core.planner.TestRoot;
-import com.dtsx.docs.core.planner.fixtures.JSFixture.Resetter;
 import com.dtsx.docs.core.planner.meta.snapshot.SnapshotsShareConfig;
 import com.dtsx.docs.core.runner.Placeholders;
 import com.dtsx.docs.core.runner.drivers.ClientDriver;
@@ -10,6 +9,7 @@ import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import com.dtsx.docs.core.runner.tests.results.TestOutcome;
 import com.dtsx.docs.core.runner.tests.results.TestOutcome.FailedToVerify;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.SnapshotSource;
+import com.dtsx.docs.core.runner.tests.strategies.execution.ExecutionStrategy.Resetter;
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import lombok.RequiredArgsConstructor;

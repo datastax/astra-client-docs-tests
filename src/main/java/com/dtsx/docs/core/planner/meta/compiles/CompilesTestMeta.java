@@ -6,7 +6,6 @@ import com.dtsx.docs.core.planner.fixtures.NoopFixture;
 import com.dtsx.docs.core.planner.meta.BaseMetaYml;
 import com.dtsx.docs.core.planner.meta.BaseMetaYml.BaseMetaYmlRep.TestBlock.SkipConfig;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
 @Getter
 public final class CompilesTestMeta implements BaseMetaYml {
@@ -14,7 +13,7 @@ public final class CompilesTestMeta implements BaseMetaYml {
     private final boolean parallel;
 
     public CompilesTestMeta(TestCtx ctx, BaseMetaYmlRep meta) {
-        this.skipConfig = SkipConfig.parse(SkipConfig::new, ctx, meta.test().skipConfig());
+        this.skipConfig = SkipConfig.parse(SkipConfig::new, ctx, meta.test().skip());
         this.parallel = meta.test().parallel().orElse(true);
     }
 
