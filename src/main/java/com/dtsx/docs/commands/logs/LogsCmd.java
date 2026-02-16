@@ -1,14 +1,12 @@
 package com.dtsx.docs.commands.logs;
 
 import com.dtsx.docs.commands.BaseCmd;
-import com.dtsx.docs.commands.review.ReviewArgs;
 import com.dtsx.docs.lib.CliLogger;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import lombok.ToString;
 import lombok.val;
-import picocli.CommandLine.*;
-import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 import java.nio.file.Files;
 import java.nio.file.Path;

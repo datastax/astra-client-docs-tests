@@ -1,6 +1,8 @@
 import { basicTable } from "../../../_fixtures/basic-table";
 
 export async function BeforeEach() {
+  await basicTable.truncate();
+
   await basicTable.insertMany([
     {
       id: 'a',

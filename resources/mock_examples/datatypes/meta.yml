@@ -1,7 +1,7 @@
 $schema: "../_base/meta.schema.json"
 test:
   type: snapshot
-  parallel: true
+execution: shared
 snapshots:
   share: true
   sources:

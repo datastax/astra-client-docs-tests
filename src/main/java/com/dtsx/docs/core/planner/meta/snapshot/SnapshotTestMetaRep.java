@@ -12,7 +12,8 @@ public record SnapshotTestMetaRep(
     @NonNull String $schema,
     @NonNull TestBlock test,
     @NonNull Optional<FixturesConfig> fixtures,
-    @NonNull SnapshotsConfig snapshots
+    @NonNull SnapshotsConfig snapshots,
+    @NonNull Optional<ExecutionMode> execution
 ) implements BaseMetaYmlRep {
     public record FixturesConfig(
         @NonNull Optional<String> base

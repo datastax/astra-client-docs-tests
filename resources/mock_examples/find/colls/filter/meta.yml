@@ -1,7 +1,7 @@
 $schema: "../../../_base/meta.schema.json"
 test:
   type: snapshot
-  parallel: true
+execution: shared
 fixtures:
   base: basic-collection.js
 snapshots:

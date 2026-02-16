@@ -6,11 +6,8 @@ import com.dtsx.docs.core.planner.meta.snapshot.SnapshotsShareConfig;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import lombok.Getter;
 import lombok.val;
-import org.approvaltests.Approvals;
-import org.approvaltests.approvers.ApprovalTracker;
 import org.approvaltests.approvers.FileApprover;
 import org.approvaltests.namer.ApprovalNamer;
-import org.approvaltests.namer.ApprovalResults;
 import org.approvaltests.writers.Writer;
 
 import java.io.File;

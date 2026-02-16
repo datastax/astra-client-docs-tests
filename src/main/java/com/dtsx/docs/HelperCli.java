@@ -8,7 +8,6 @@ import com.dtsx.docs.commands.test.TestCmd;
 import com.dtsx.docs.lib.CliLogger;
 import io.github.cdimascio.dotenv.Dotenv;
 import lombok.val;
-import picocli.AutoComplete.GenerateCompletion;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Help.Ansi.Style;
@@ -34,6 +33,7 @@ import static com.dtsx.docs.lib.ColorUtils.ACCENT_COLOR;
 public class HelperCli {
     public static Path CLI_DIR = Path.of(Optional.ofNullable(System.getenv("CLI_DIR")).orElse(".")).toAbsolutePath();
 
+    @SuppressWarnings("UnnecessaryModifier")
     public static void main(String[] args) {
         for (val dir : List.of("./", CLI_DIR.toString())) {
             Dotenv.configure().directory(dir).systemProperties().ignoreIfMissing().load();

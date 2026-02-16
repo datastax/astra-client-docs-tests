@@ -12,7 +12,7 @@ import java.util.Set;
 public class Example {
     public static void main(String[] args) {
         System.out.println(new Document(Map.of(
-            "vector", new DataAPIVector(new float[]{ 1.0f, 2.2f, 3.333f }),
+            "vector", new DataAPIVector(new float[]{ 0.08f, -0.62f, 0.39f }),
             "date", new Date(),
             "time", LocalTime.now(),
             "timestamp", Instant.now(),

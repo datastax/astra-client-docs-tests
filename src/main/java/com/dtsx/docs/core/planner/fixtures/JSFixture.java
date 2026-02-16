@@ -2,26 +2,17 @@ package com.dtsx.docs.core.planner.fixtures;
 
 import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.core.planner.TestRoot;
+import com.dtsx.docs.core.planner.fixtures.BaseFixturePool.FixtureIndex;
 import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaRep;
-import com.dtsx.docs.core.runner.PlaceholderResolver;
-import com.dtsx.docs.core.runner.Placeholders;
 import com.dtsx.docs.core.runner.RunException;
-import com.dtsx.docs.core.runner.tests.strategies.execution.ExecutionMode;
-import com.dtsx.docs.core.runner.tests.strategies.execution.ExecutionMode.Resetter;
-import com.dtsx.docs.core.runner.tests.strategies.execution.SequentialExecutionMode;
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import lombok.EqualsAndHashCode;
-import lombok.SneakyThrows;
 import lombok.val;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.concurrent.Future;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 /// Represents a JavaScript fixture file used to set up, reset, and tear down database state for testing, with being JavaScript used for ease of scripting.
 ///
@@ -74,91 +65,13 @@ public sealed abstract class JSFixture implements Comparable<JSFixture> permits 
     @EqualsAndHashCode.Include
     public abstract String fixtureName();
 
-    /// Returns "metadata" about this fixture, such as names of collections, tables, keyspaces, etc. it creates/works with.
-    ///
-    /// Expects metadata of the following format to be returned from the fixture file:
-    /// ```javascript
-    /// export function Meta() {
-    ///   return {
-    ///     CollectionName?: '...',  // defaults to `null`
-    ///     TableName?: '...',       // defaults to `null`
-    ///     KeyspaceName?: '...',    // defaults to 'default_keyspace'
-    ///   };
-    /// }
-    /// ```
-    ///
-    /// The output will be used in {@link PlaceholderResolver} to replace placeholders in code snippets.
-    ///
-    /// @see PlaceholderResolver
-    public abstract Placeholders meta(ExternalProgram tsx);
+    public abstract FixtureMetadata meta(ExternalProgram tsx, FixtureIndex index);
 
-    protected abstract void setup(ExternalProgram tsx, Placeholders placeholders);
-    protected abstract void beforeEach(ExternalProgram tsx, Placeholders placeholders);
-    protected abstract void afterEach(ExternalProgram tsx, Placeholders placeholders);
-    protected abstract void teardown(ExternalProgram tsx, Placeholders placeholders);
+    public abstract void setup(ExternalProgram tsx, FixtureMetadata md);
+    public abstract void beforeEach(ExternalProgram tsx, FixtureMetadata md);
+    public abstract void afterEach(ExternalProgram tsx, FixtureMetadata md);
+    public abstract void teardown(ExternalProgram tsx, FixtureMetadata md);
 
-    /// Executes a consumer for each item in an iterable, resetting the fixture state before each iteration.
-    ///
-    /// This method:
-    /// 1. Calls `Setup()` once before processing any items
-    /// 2. For each item:
-    ///    - Calls `Reset()` to restore clean state
-    ///    - Executes the consumer with the item
-    /// 3. Calls `Teardown()` once after all items are processed (even if an exception occurs)
-    ///
-    /// Example usage:
-    /// ```java
-    /// fixture.useResetting(tsx, testRoots, (testRoot) -> {
-    ///     // Run test with clean database state
-    ///     runTest(testRoot);
-    /// });
-    /// ```
-    ///
-    /// @param tsx the TypeScript executor program
-    /// @param ts the iterable of items to process
-    /// @param consumer the consumer to execute for each item
-    public <T> void useResetting(ExternalProgram tsx, Placeholders placeholders, Iterable<T> ts, Consumer<T> consumer) {
-        use(SequentialExecutionMode.INSTANCE, tsx, placeholders, ts, (t, resetter) -> {
-            resetter.beforeEach();
-            try {
-                consumer.accept(t);
-            } finally {
-                resetter.afterEach();
-            }
-        });
-    }
-
-    @SneakyThrows
-    public <T> void use(ExecutionMode executionMode, ExternalProgram tsx, Placeholders placeholders, Iterable<T> ts, BiConsumer<T, Resetter> consumer) {
-        val futures = new ArrayList<Future<?>>();
-
-        val resetter = executionMode.resetter(
-            () -> beforeEach(tsx, placeholders),
-            () -> afterEach(tsx, placeholders)
-        );
-
-        setup(tsx, placeholders);
-
-        try (val executor = executionMode.executor()) {
-            for (val item : ts) {
-                futures.add(executor.submit(() -> {
-                    consumer.accept(item, resetter);
-                }));
-            }
-
-            for (val future : futures) {
-                future.get();
-            }
-        } finally {
-            teardown(tsx, placeholders);
-        }
-    }
-
-    /// Executes `npm install` in the {@linkplain com.dtsx.docs.core.runner.ExecutionEnvironment root execution environment folder}
-    /// to install any dependencies used by the JS fixtures (e.g. `astra-db-ts`).
-    ///
-    /// @param ctx the verifier context containing the examples directory path and execution environment path
-    /// @throws RunException if npm install fails
     public static void installDependencies(TestCtx ctx) {
         CliLogger.debug("Installing JSFixture dependencies in " + Path.of(".").toAbsolutePath());
 

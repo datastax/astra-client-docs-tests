@@ -1,15 +1,12 @@
 package com.dtsx.docs.core.runner.tests.strategies.test;
 
-import com.dtsx.docs.core.planner.TestRoot;
-import com.dtsx.docs.core.planner.meta.BaseMetaYml;
-import com.dtsx.docs.core.runner.Placeholders;
 import com.dtsx.docs.commands.test.TestCtx;
-import com.dtsx.docs.core.runner.tests.strategies.execution.ExecutionMode;
-import com.dtsx.docs.core.runner.tests.strategies.execution.ParallelExecutionMode;
-import com.dtsx.docs.core.runner.tests.strategies.execution.SequentialExecutionMode;
-import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
+import com.dtsx.docs.core.planner.TestRoot;
+import com.dtsx.docs.core.planner.fixtures.BaseFixturePool;
+import com.dtsx.docs.core.planner.meta.BaseMetaYml;
 import com.dtsx.docs.core.runner.ExecutionEnvironment.ExecutionEnvironments;
 import com.dtsx.docs.core.runner.tests.results.TestRootResults;
+import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -17,11 +14,10 @@ public sealed abstract class TestStrategy<M extends BaseMetaYml> permits Compile
     protected final TestCtx ctx;
     protected final M meta;
 
-    public abstract TestRootResults runTestsInRoot(ExternalProgram tsx, TestRoot testRoot, ExecutionEnvironments execEnvs, Placeholders placeholders);
-
-    protected final ExecutionMode executionMode() {
-        return (meta.parallel())
-            ? ParallelExecutionMode.INSTANCE
-            : SequentialExecutionMode.INSTANCE;
+    public M meta() {
+        return meta;
     }
+
+    public abstract BaseFixturePool slicePool(BaseFixturePool pool, TestRoot testRoot);
+    public abstract TestRootResults runTestsInRoot(ExternalProgram tsx, TestRoot testRoot, ExecutionEnvironments execEnvs, BaseFixturePool pool);
 }

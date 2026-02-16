@@ -1,8 +1,8 @@
 package com.dtsx.docs.core.planner.fixtures;
 
 import com.dtsx.docs.commands.test.TestCtx;
+import com.dtsx.docs.core.planner.fixtures.BaseFixturePool.FixtureIndex;
 import com.dtsx.docs.core.runner.PlaceholderResolver;
-import com.dtsx.docs.core.runner.Placeholders;
 import com.dtsx.docs.core.runner.RunException;
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
@@ -12,7 +12,6 @@ import com.dtsx.docs.lib.JacksonUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.val;
-import tools.jackson.databind.node.ObjectNode;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,56 +32,56 @@ public final class JSFixtureImpl extends JSFixture {
     }
 
     @Override
-    public Placeholders meta(ExternalProgram tsx) {
-        val maybeOutput = tryCallJsFunction(tsx, Placeholders.EMPTY, "Meta");
+    public FixtureMetadata meta(ExternalProgram tsx, FixtureIndex index) {
+        val emptyMd = FixtureMetadata.emptyForIndex(index);
 
-        // don't actually have fixture metadata here, but we can just pass the empty value
-        // since it shouldn't be used outside of actual fixture functions
+        val maybeOutput = tryCallJsFunction(tsx, emptyMd, "Meta");
+
         if (maybeOutput.isEmpty()) {
-            return Placeholders.EMPTY;
+            return emptyMd;
         }
 
         val output = maybeOutput.get().stdout();
 
         try {
-            return JacksonUtils.parseJson(output, Placeholders.class);
+            return JacksonUtils.parseJson(output, FixtureMetadata.class).withIndex(index);
         } catch (Exception e) {
             throw new RunException("Failed to parse fixture metadata JSON from " + path + ":\n" + output, e);
         }
     }
 
     @Override
-    protected void setup(ExternalProgram tsx, Placeholders placeholders) {
+    public void setup(ExternalProgram tsx, FixtureMetadata md) {
         if (!dryRun) {
-            tryCallJsFunction(tsx, placeholders, "Setup");
+            tryCallJsFunction(tsx, md, "Setup");
         }
     }
 
     @Override
-    protected void beforeEach(ExternalProgram tsx, Placeholders placeholders) {
+    public void beforeEach(ExternalProgram tsx, FixtureMetadata md) {
         if (!dryRun) {
-            tryCallJsFunction(tsx, placeholders, "BeforeEach"); // TODO cache if any of the methods aren't present (if possible?)
+            tryCallJsFunction(tsx, md, "BeforeEach");
         }
     }
 
     @Override
-    protected void afterEach(ExternalProgram tsx, Placeholders placeholders) {
+    public void afterEach(ExternalProgram tsx, FixtureMetadata md) {
         if (!dryRun) {
-            tryCallJsFunction(tsx, placeholders, "AfterEach");
+            tryCallJsFunction(tsx, md, "AfterEach");
         }
     }
 
     @Override
-    protected void teardown(ExternalProgram tsx, Placeholders placeholders) {
+    public void teardown(ExternalProgram tsx, FixtureMetadata md) {
         if (!dryRun) {
-            tryCallJsFunction(tsx, placeholders, "Teardown");
+            tryCallJsFunction(tsx, md, "Teardown");
         }
     }
 
     private final Set<String> nonexistentFunctions = new HashSet<>();
 
     @SneakyThrows
-    private Optional<RunResult> tryCallJsFunction(ExternalProgram tsx, Placeholders placeholders, String function) {
+    private Optional<RunResult> tryCallJsFunction(ExternalProgram tsx, FixtureMetadata md, String function) {
         if (nonexistentFunctions.contains(function)) {
             return Optional.empty();
         }
@@ -94,7 +93,8 @@ public final class JSFixtureImpl extends JSFixture {
 
         val displayPath = ctx.examplesFolder().relativize(path);
 
-        val envVars = new HashMap<>(PlaceholderResolver.mkEnvVars(ctx, placeholders));
+        val envVars = new HashMap<>(PlaceholderResolver.mkEnvVars(ctx, md));
+        envVars.put("NAME_ROOT", "n" + md.index().unwrap());
 
         val code = """
           import * as m from '%s';

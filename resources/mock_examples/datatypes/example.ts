@@ -1,7 +1,7 @@
 import { vector, date, time } from "@datastax/astra-db-ts";
 
 console.log({
-  vector: vector([1.0, 2.2, 3.333]),
+  vector: vector([0.08, -0.62, 0.39]),
   date: date("2023-10-05"),
   time: time("14:30:15.123456"),
   timestamp: new Date("2023-10-05T14:30:15.123Z"),

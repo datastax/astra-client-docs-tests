@@ -62,10 +62,6 @@
           "enum": ["snapshot", "compiles"],
           "description": "The type of test to run"
         },
-        "parallel": {
-          "type": "boolean",
-          "description": "Whether to run this test in parallel with others"
-        },
         "skip": {
           "$ref": "#/$defs/perLanguageToggleSkipTestType",
           "description": "Whether to skip this test (boolean for all languages, or per-language object)"
@@ -83,6 +79,11 @@
         }
       },
       "additionalProperties": false
+    },
+    "execution": {
+      "type": "string",
+      "enum": ["sequential", "shared", "isolated"],
+      "description": "Execution mode: sequential (one language at a time), shared (parallel with shared fixture), isolated (parallel with isolated fixtures)"
     },
     "snapshots": {
       "type": "object",
@@ -428,6 +429,11 @@
             {
               "required": [
                 "snapshots"
+              ]
+            },
+            {
+              "required": [
+                "execution"
               ]
             }
           ]

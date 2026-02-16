@@ -21,7 +21,6 @@ import java.util.Comparator;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static com.dtsx.docs.lib.ColorUtils.stripAnsi;
@@ -135,21 +134,6 @@ public class CliLogger {
         writeToLogFile("FAILED", "--------------------------------\n" + String.join("", msg) + "\n--------------------------------");
     }
 
-//    /// Logs the result of failed test executions (only to log file, not console).
-//    ///
-//    /// Prefixed with `[FAILED]` in the log file for failed tests.
-//    public static void failed(TestRoot testRoot, ClientLanguage language, TestOutcome testOutcome, String extra) {
-//        if (testOutcome.passed()) {
-//            return;
-//        }
-//
-//        writeToLogFile("FAILED", testRoot.rootName() + " (" + language + ") => " + testOutcome.name());
-//
-//        if (!extra.isBlank()) {
-//            writeToLogFile("FAILED", extra);
-//        }
-//    }
-
     /// Logs an exception message (only to log file, not console).
     ///
     /// Prefixed with `[ERROR]` in the log file.
@@ -163,9 +147,8 @@ public class CliLogger {
     /// ```java
     /// throw exception("Failed to parse file", new IOException("bad format"));
     /// ```
-    public static <E extends Throwable> E exception(String msg, E e) {
+    public static void exception(String msg, Exception e) {
         exception(msg, "\n", captureStackTrace(e));
-        return e;
     }
 
     /// Logs an exception's stack trace and returns it for rethrowing (only to log file, not console).

@@ -1,9 +1,7 @@
 package com.dtsx.docs.core.runner.tests.snapshots.sources;
 
-import com.datastax.astra.client.collections.definition.documents.types.ObjectId;
 import com.dtsx.docs.core.planner.PlanException;
 import com.dtsx.docs.core.runner.tests.snapshots.verifier.SnapshotVerifier;
-import com.dtsx.docs.core.runner.tests.snapshots.verifier.SnapshotVerifier.ObjectIdScrubber;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.tuple.Pair;

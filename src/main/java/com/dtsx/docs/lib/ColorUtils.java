@@ -5,7 +5,6 @@ import picocli.CommandLine.Help.Ansi;
 import picocli.CommandLine.Help.Ansi.IStyle;
 import picocli.CommandLine.Help.Ansi.Style;
 
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static java.util.regex.Matcher.quoteReplacement;

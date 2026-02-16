@@ -1,6 +1,8 @@
 import { basicCollection } from "../../../_fixtures/basic-collection";
 
 export async function BeforeEach() {
+  await basicCollection.truncate();
+
   await basicCollection.insertMany([
     {
       a: 3

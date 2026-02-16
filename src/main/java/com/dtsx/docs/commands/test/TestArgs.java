@@ -3,7 +3,6 @@ package com.dtsx.docs.commands.test;
 import com.dtsx.docs.config.args.BaseScriptRunnerArgs;
 import com.dtsx.docs.core.runner.drivers.ClientDriver;
 import com.dtsx.docs.core.runner.tests.VerifyMode;
-import com.dtsx.docs.core.runner.tests.reporter.TestReporter;
 import com.dtsx.docs.core.runner.tests.reporter.TestReporters;
 import lombok.ToString;
 import picocli.CommandLine.Model.CommandSpec;
@@ -11,7 +10,6 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 import java.util.List;
-import java.util.Optional;
 
 @ToString
 public class TestArgs extends BaseScriptRunnerArgs<TestCtx> {
@@ -63,6 +61,14 @@ public class TestArgs extends BaseScriptRunnerArgs<TestCtx> {
         split = ","
     )
     public List<String> $inverseFilters;
+
+    @Option(
+        names = { "-n", "--max-fixture-instances" },
+        description = "Maximum number of base fixture instances to create for isolated execution.",
+        defaultValue = "5",
+        paramLabel = "N"
+    )
+    public int $maxFixtureInstances;
 
     @Override
     public TestCtx toCtx(CommandSpec spec) {

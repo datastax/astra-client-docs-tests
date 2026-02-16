@@ -1,5 +1,6 @@
 package com.dtsx.docs.core.planner;
 
+import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.core.planner.TestPlan.Builder;
 import com.dtsx.docs.core.planner.fixtures.JSFixture;
 import com.dtsx.docs.core.planner.meta.BaseMetaYml.BaseMetaYmlRep.TestBlock.SkipConfig;
@@ -7,11 +8,10 @@ import com.dtsx.docs.core.planner.meta.MetaYmlParser;
 import com.dtsx.docs.core.planner.meta.compiles.CompilesTestMeta;
 import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMeta;
 import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaRep;
-import com.dtsx.docs.commands.test.TestCtx;
-import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import com.dtsx.docs.core.runner.tests.strategies.test.CompilesTestStrategy;
 import com.dtsx.docs.core.runner.tests.strategies.test.SnapshotTestStrategy;
+import com.dtsx.docs.lib.CliLogger;
 import lombok.val;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -69,7 +69,7 @@ public class TestPlanBuilder {
                 mkTestRoot(ctx, rootPath).ifPresent(builder::addRoot);
             }
 
-            val plan = builder.build();
+            val plan = builder.build(ctx.maxFixtureInstances());
 
             CliLogger.println(true, "@!->!@ Found " + plan.totalTests() + " files to test");
             CliLogger.println(true);
@@ -177,7 +177,7 @@ public class TestPlanBuilder {
     ///
     /// @param root       the test root directory to search
     /// @param ctx        the verifier context containing language configuration
-    /// @param skipConfig
+    /// @param skipConfig the skip configuration to check if any languages should be skipped
     /// @return map of client languages to their example file paths
     /// @throws PlanException if traversal fails
     private static TreeMap<ClientLanguage, Set<Path>> findFilesToTestInRoot(Path root, TestCtx ctx, SkipConfig skipConfig) {

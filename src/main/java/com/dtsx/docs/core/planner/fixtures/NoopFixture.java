@@ -1,7 +1,7 @@
 package com.dtsx.docs.core.planner.fixtures;
 
+import com.dtsx.docs.core.planner.fixtures.BaseFixturePool.FixtureIndex;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
-import com.dtsx.docs.core.runner.Placeholders;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 
@@ -18,27 +18,27 @@ public final class NoopFixture extends JSFixture {
     }
 
     @Override
-    public Placeholders meta(ExternalProgram tsx) {
-        return Placeholders.EMPTY;
+    public FixtureMetadata meta(ExternalProgram tsx, FixtureIndex index) {
+        return FixtureMetadata.emptyForIndex(index);
     }
 
     @Override
-    protected void setup(ExternalProgram tsx, Placeholders placeholders) {
+    public void setup(ExternalProgram tsx, FixtureMetadata md) {
         // noop
     }
 
     @Override
-    protected void beforeEach(ExternalProgram tsx, Placeholders placeholders) {
+    public void beforeEach(ExternalProgram tsx, FixtureMetadata md) {
         // noop
     }
 
     @Override
-    protected void afterEach(ExternalProgram tsx, Placeholders placeholders) {
+    public void afterEach(ExternalProgram tsx, FixtureMetadata md) {
         // noop
     }
 
     @Override
-    protected void teardown(ExternalProgram tsx, Placeholders placeholders) {
+    public void teardown(ExternalProgram tsx, FixtureMetadata md) {
         // noop
     }
 }

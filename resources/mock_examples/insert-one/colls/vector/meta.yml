@@ -1,6 +1,7 @@
 $schema: "../../../_base/meta.schema.json"
 test:
   type: snapshot
+execution: isolated
 fixtures:
   base: mutated-collection.js
 snapshots:

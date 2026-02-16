@@ -36,42 +36,13 @@ import static com.dtsx.docs.core.runner.tests.VerifyMode.DRY_RUN;
 /// @see TestArgs
 @Getter
 public class TestCtx extends BaseScriptRunnerCtx {
-    /// Resolved from `SNAPSHOTS_FOLDER` env var, with fallback to `./snapshots`.
-    ///
-    /// Snapshots can be shared across languages (one file per test root) or separate
-    /// (one file per language per test root), controlled by `share: true/false` in meta.yml.
     private final Path snapshotsFolder;
-
-    /// Built from `CLIENT_DRIVERS` env var (e.g., `typescript,python,java`).
-    ///
-    /// Each driver is initialized with its artifact version from either:
-    /// - `<LANG>_ARTIFACT` env var (e.g., `TYPESCRIPT_ARTIFACT=@datastax/astra-db-ts@v2.0.0`)
-    /// - `-A` flag (e.g., `-Atypescript=@datastax/astra-db-ts@v2.0.0`)
-    /// - Language's default version
     private final Map<ClientLanguage, ClientDriver> drivers;
-
-    /// Parsed from `TEST_REPORTER` env var (default: `all_tests`).
-    ///
-    /// Controls output verbosity:
-    /// - `all_tests`: Shows all test results
-    /// - `only_failures`: Only shows failed tests
     private final TestReporter reporter;
-
-    /// Resolved from `--verify-mode` flag or `VERIFY_MODE` env var (default: `normal`).
-    ///
-    /// - `normal`: Runs tests and verifies snapshots
-    /// - `verify_only`: Skips test execution, only checks existing snapshots
-    /// - `dry_run`: Prints what would run without executing anything
     private final VerifyMode verifyMode;
-
-    /// Built from `--filter` and `--filter-not` flags (or `FILTERS`/`INVERSE_FILTERS` env vars).
-    ///
-    /// Uses regex matching on full file paths. For example:
-    /// - `--filter dates` matches `examples/dates/example.ts`
-    /// - `--filter-not java` excludes `examples/dates/example.java`
     private final Predicate<Path> filter;
+    private final int maxFixtureInstances;
 
-    /// Returns the languages specified in `CLIENT_DRIVERS` (e.g., `[TYPESCRIPT, PYTHON, JAVA]`).
     public List<ClientLanguage> languages() {
         return new ArrayList<>(drivers.keySet());
     }
@@ -83,6 +54,7 @@ public class TestCtx extends BaseScriptRunnerCtx {
         this.verifyMode = resolveVerifyMode(args);
         this.filter = mkFilter(args.$filters, args.$inverseFilters);
         this.snapshotsFolder = examplesFolder().resolve("_snapshots");
+        this.maxFixtureInstances = args.$maxFixtureInstances;
     }
 
     @Override
@@ -149,6 +121,6 @@ public class TestCtx extends BaseScriptRunnerCtx {
             .map(String::trim)
             .filter(s -> !s.isBlank())
             .map((s) -> (Predicate<Path>) (path) -> path.toString().matches(".*" + s + ".*"))
-            .reduce(Predicate::or);
+            .reduce(Predicate::and);
     }
 }

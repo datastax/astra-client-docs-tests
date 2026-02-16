@@ -1,14 +1,13 @@
 import * as $ from '../_base/prelude';
 
-export const mutatedCollection = $.db.collection(Meta().CollectionName);
-
-mutatedCollection.truncate = async function () {
-  await $.truncate(this);
-}
+export const mutatedCollection = $.withUtils(
+  $.db.collection(Meta().CollectionName)
+);
 
 export function Meta() {
   return {
-    CollectionName: 'mutated_collection',
+    CollectionName: $.name("mutated_collection"),
+    Initialization: "parallel",
   };
 }
 

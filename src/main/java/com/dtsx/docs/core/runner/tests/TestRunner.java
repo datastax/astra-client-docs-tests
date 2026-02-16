@@ -1,15 +1,15 @@
 package com.dtsx.docs.core.runner.tests;
 
-import com.dtsx.docs.core.planner.TestPlan;
 import com.dtsx.docs.commands.test.TestCtx;
-import com.dtsx.docs.lib.CliLogger;
-import com.dtsx.docs.lib.ExternalPrograms;
-import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
+import com.dtsx.docs.core.planner.TestPlan;
 import com.dtsx.docs.core.planner.fixtures.JSFixture;
 import com.dtsx.docs.core.runner.ExecutionEnvironment;
 import com.dtsx.docs.core.runner.drivers.ClientDriver;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import com.dtsx.docs.core.runner.tests.results.TestResults;
+import com.dtsx.docs.lib.CliLogger;
+import com.dtsx.docs.lib.ExternalPrograms;
+import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import lombok.val;
 
 import java.util.HashMap;
@@ -52,26 +52,33 @@ public class TestRunner {
         ctx.reporter().printHeader(plan);
 
         try {
-            plan.forEachBaseFixture((baseFixture, testRoots) -> {
-                val placeholders = baseFixture.meta(tsx);
+            plan.forEachPool((pool, testRoots) -> {
+                ctx.reporter().printBaseFixtureHeading(pool.fixture(), history);
+                
+                try {
+                    pool.setup(tsx);
+                    
+                    for (val testRoot : testRoots) {
+                        try {
+                            val slice = testRoot.testStrategy().slicePool(pool, testRoot);
+                            val result = testRoot.testStrategy().runTestsInRoot(tsx, testRoot, execEnvs, slice);
 
-                ctx.reporter().printBaseFixtureHeading(baseFixture, history);
-
-                baseFixture.useResetting(tsx, placeholders, testRoots, (testRoot) -> {
-                    try {
-                        val result = testRoot.testStrategy().runTestsInRoot(tsx, testRoot, execEnvs, placeholders);
-
-                        ctx.reporter().printTestRootResults(baseFixture, result, history);
-                        history.add(baseFixture, result);
-
-                        if (ctx.bail() && !result.allPassed()) {
-                            throw new BailException();
+                            ctx.reporter().printTestRootResults(pool.fixture(), result, history);
+                            history.add(pool.fixture(), result);
+                            
+                            if (ctx.bail() && !result.allPassed()) {
+                                throw new BailException();
+                            }
+                        } catch (Exception e) {
+                            CliLogger.exception("Error running tests in test root '" + testRoot.rootName() + "' (" + e.getClass().getSimpleName() + ")");
+                            throw e;
                         }
-                    } catch (Exception e) {
-                        CliLogger.exception("Error running tests in test root '" + testRoot.rootName() + "' (" + e.getClass().getSimpleName() + ")");
-                        throw e;
                     }
-                });
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                } finally {
+                    pool.teardown(tsx);
+                }
             });
 
             return history.allPassed();

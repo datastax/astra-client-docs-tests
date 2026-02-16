@@ -47,11 +47,11 @@ public class RunCtx extends BaseScriptRunnerCtx {
     }
 
     private Placeholders mkPlaceholders(RunArgs args) {
-        val collectionName = args.$collection.orElse(null);
-        val tableName = args.$table.orElse(null);
+        val collectionName = args.$collection;
+        val tableName = args.$table;
         val keyspaceName = args.$keyspace;
 
-        if (collectionName != null || tableName != null) {
+        if (collectionName.isPresent() || tableName.isPresent()) {
             return new Placeholders(collectionName, tableName, keyspaceName);
         }
 

@@ -2,31 +2,24 @@ package com.dtsx.docs.core.runner.tests.strategies.test;
 
 import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.core.planner.TestRoot;
+import com.dtsx.docs.core.planner.fixtures.BaseFixturePool;
+import com.dtsx.docs.core.planner.fixtures.BaseFixturePool.FixtureIndex;
 import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMeta;
-import com.dtsx.docs.core.runner.ExecutionEnvironment;
 import com.dtsx.docs.core.runner.ExecutionEnvironment.ExecutionEnvironments;
 import com.dtsx.docs.core.runner.ExecutionEnvironment.TestFileModifiers;
 import com.dtsx.docs.core.runner.PlaceholderResolver;
-import com.dtsx.docs.core.runner.Placeholders;
-import com.dtsx.docs.core.runner.drivers.ClientDriver;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import com.dtsx.docs.core.runner.tests.results.TestOutcome;
 import com.dtsx.docs.core.runner.tests.results.TestRootResults;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.output.OutputJsonifySource;
 import com.dtsx.docs.core.runner.tests.snapshots.verifier.SnapshotVerifier;
-import com.dtsx.docs.core.runner.tests.strategies.execution.ExecutionMode.Resetter;
+import com.dtsx.docs.core.runner.tests.strategies.execution.ExecutionStrategy;
 import com.dtsx.docs.lib.CliLogger;
-import com.dtsx.docs.lib.CliLogger.MessageUpdater;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import lombok.Getter;
 import lombok.val;
 
 import java.nio.file.Path;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
-import static java.util.stream.Collectors.toMap;
 
 @Getter
 public final class SnapshotTestStrategy extends TestStrategy<SnapshotTestMeta> {
@@ -35,70 +28,69 @@ public final class SnapshotTestStrategy extends TestStrategy<SnapshotTestMeta> {
     }
 
     @Override
-    public TestRootResults runTestsInRoot(ExternalProgram tsx, TestRoot testRoot, ExecutionEnvironments execEnvs, Placeholders placeholders) {
-        return new Runner(tsx, testRoot, execEnvs, placeholders).runTestsInRoot();
+    public BaseFixturePool slicePool(BaseFixturePool pool, TestRoot testRoot) {
+        return meta.executionMode().slicePool(pool, testRoot);
     }
 
-    private class Runner {
+    @Override
+    public TestRootResults runTestsInRoot(ExternalProgram tsx, TestRoot testRoot, ExecutionEnvironments execEnvs, BaseFixturePool pool) {
+        return new Runner(tsx, testRoot, execEnvs, pool).runTestsInRoot();
+    }
+
+    public class Runner {
         private final ExternalProgram tsx;
         private final TestRoot testRoot;
         private final ExecutionEnvironments execEnvs;
-        private final Placeholders placeholders;
-        private final Map<String, String> envVars;
+        private final BaseFixturePool pool;
         private final SnapshotVerifier verifier;
+        private final ExecutionStrategy executionStrategy;
 
-        public Runner(ExternalProgram tsx, TestRoot testRoot, ExecutionEnvironments execEnvs, Placeholders placeholders) {
+        public Runner(ExternalProgram tsx, TestRoot testRoot, ExecutionEnvironments execEnvs, BaseFixturePool pool) {
             this.tsx = tsx;
             this.testRoot = testRoot;
             this.execEnvs = execEnvs;
-            this.placeholders = placeholders;
-            this.envVars = PlaceholderResolver.mkEnvVars(ctx, placeholders);
+            this.pool = pool;
             this.verifier = new SnapshotVerifier(ctx, meta.snapshotSources(), meta.shareConfig());
+            this.executionStrategy = meta.executionMode().createStrategy(tsx, meta.testFixture(), pool, testRoot);
         }
 
         public TestRootResults runTestsInRoot() {
-            val displayMsg = "Verifying @!%d!@ file%s in @!%s!@".formatted(testRoot.numFilesToTest(), (testRoot.numFilesToTest() == 1) ? "" : "s", testRoot.rootName());
-
-            val outcomes = new ConcurrentHashMap<ClientLanguage, Map<Path, TestOutcome>>();
-
-            val testFiles = testRoot.filesToTest().entrySet();
-
-            return CliLogger.loading(displayMsg, (msgUpdater) -> {
-                meta.testFixture().use(executionMode(), tsx, placeholders, testFiles, (e, resetter) -> {
-                    val language = e.getKey();
-                    val filesForLang = e.getValue();
-
-                    try {
-                        val result = runTestsForLanguage(
-                            ctx.drivers().get(language),
-                            resetter,
-                            filesForLang,
-                            execEnvs.forLanguage(language),
-                            msgUpdater
-                        );
-
-                        val outcomesProduct = filesForLang.stream().collect(toMap(path -> path, _ -> result));
-                        outcomes.put(language, outcomesProduct);
-                    } catch (Exception ex) {
-                        CliLogger.exception("Error running snapshot tests for language '%s' in test root '%s'".formatted(language, testRoot.rootName()));
-                        outcomes.put(language, filesForLang.stream().collect(toMap(path -> path, _ -> new TestOutcome.Errored(ex).alsoLog(testRoot, language))));
-                    }
-                });
+            return CliLogger.loading(mkLoadingMsg(), (msgUpdater) -> {
+                val outcomes = executionStrategy.execute(
+                    testRoot.filesToTest(),
+                    msgUpdater,
+                    this::run
+                );
                 return new TestRootResults(testRoot, outcomes);
             });
         }
 
-        private TestOutcome runTestsForLanguage(ClientDriver driver, Resetter resetter, Set<Path> filesForLang, ExecutionEnvironment execEnv, MessageUpdater msgUpdater) {
-            return verifier.verify(driver, resetter, testRoot, placeholders, filesForLang, (path) -> {
+        private String mkLoadingMsg() {
+            return "Verifying @!%d!@ file%s in @!%s!@%s".formatted(
+                testRoot.numFilesToTest(),
+                (testRoot.numFilesToTest() > 1)
+                    ? "s"
+                    : "",
+                testRoot.rootName(),
+                (pool.size() > 1)
+                    ? " (across %s instances)".formatted(pool.size())
+                    : ""
+            );
+        }
+
+        private TestOutcome run(BaseFixturePool pool, ClientLanguage language, Path path, FixtureIndex index) {
+            val driver = ctx.drivers().get(language);
+            val execEnv = execEnvs.forLanguage(language);
+
+            val md = pool.meta(tsx, index);
+            val envVars = PlaceholderResolver.mkEnvVars(ctx, md);
+
+            return verifier.verify(driver, testRoot, md, path, () -> {
                 val testFileModifiers = (meta.snapshotSources().stream().anyMatch(OutputJsonifySource.class::isInstance))
                     ? TestFileModifiers.JSONIFY_OUTPUT
                     : TestFileModifiers.NONE;
 
-                return execEnv.withTestFileCopied(driver, path, placeholders, testFileModifiers, () -> {
-                    if (!meta.parallel()) {
-                        val displayPath = testRoot.displayPath(path);
-                        msgUpdater.update(_ -> "Verifying @!%s!@".formatted(displayPath));
-                    }
+                return execEnv.withTestFileCopied(driver, path, md, testFileModifiers, () -> {
                     return driver.executeScript(ctx, execEnv, envVars);
                 });
             });

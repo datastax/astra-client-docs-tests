@@ -1,13 +1,24 @@
 package com.dtsx.docs.lib;
 
 import lombok.SneakyThrows;
+import lombok.experimental.UtilityClass;
 import lombok.val;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.*;
 
+@UtilityClass
 public class ExecutorUtils {
+    public static ArrayList<Future<?>> emptyFuturesList() {
+        return new ArrayList<>();
+    }
+
+    @SneakyThrows
+    public static void awaitAll(Collection<? extends Future<?>> futures) {
+        for (val future : futures) future.get();
+    }
+
     public enum DirectExecutor implements ExecutorService {
         INSTANCE;
 

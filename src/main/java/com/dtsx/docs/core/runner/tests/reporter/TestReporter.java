@@ -1,29 +1,24 @@
 package com.dtsx.docs.core.runner.tests.reporter;
 
-import com.dtsx.docs.core.planner.TestPlan;
-import com.dtsx.docs.core.planner.PlanException;
-import com.dtsx.docs.core.planner.fixtures.JSFixture;
 import com.dtsx.docs.commands.test.TestCtx;
-import com.dtsx.docs.lib.CliLogger;
-import com.dtsx.docs.core.runner.tests.results.TestResults;
+import com.dtsx.docs.core.planner.TestPlan;
+import com.dtsx.docs.core.planner.fixtures.JSFixture;
 import com.dtsx.docs.core.runner.tests.results.TestOutcome;
 import com.dtsx.docs.core.runner.tests.results.TestOutcome.*;
+import com.dtsx.docs.core.runner.tests.results.TestResults;
 import com.dtsx.docs.core.runner.tests.results.TestRootResults;
+import com.dtsx.docs.lib.CliLogger;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.apache.commons.lang3.tuple.Pair;
-import org.jetbrains.annotations.NotNull;
 import picocli.CommandLine.Help.Ansi.Style;
 
 import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
 
-import static com.dtsx.docs.lib.ColorUtils.*;
 import static com.dtsx.docs.core.runner.tests.VerifyMode.DRY_RUN;
+import static com.dtsx.docs.lib.ColorUtils.color;
+import static com.dtsx.docs.lib.ColorUtils.highlight;
 import static java.util.stream.Collectors.joining;
 
 /// The base class for test reporters that format/print test execution results.

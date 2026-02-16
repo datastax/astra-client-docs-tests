@@ -3,6 +3,7 @@ import { Collection, DataAPIClient, Table } from '@datastax/astra-db-ts';
 export const Token = process.env.APPLICATION_TOKEN;
 export const ApiEndpoint = process.env.API_ENDPOINT;
 export const KeyspaceName = process.env.KEYSPACE_NAME;
+export const NameRoot = process.env.NAME_ROOT;
 
 export const client = new DataAPIClient(Token, {
   dbOptions: { keyspace: KeyspaceName },
@@ -13,6 +14,10 @@ export const client = new DataAPIClient(Token, {
 });
 
 export const db = client.db(ApiEndpoint);
+
+export function name(name) {
+  return `${NameRoot}_${name}`;
+}
 
 export function withUtils(schemaObj) {
   schemaObj.truncate = () => truncate(schemaObj);
@@ -26,9 +31,9 @@ export function withUtils(schemaObj) {
 }
 
 async function truncate(schemaObj) {
-  return (schemaObj instanceof Collection)
-    ? truncateCollection(schemaObj)
-    : truncateTable(schemaObj);
+  (schemaObj instanceof Collection)
+    ? await truncateCollection(schemaObj)
+    : await truncateTable(schemaObj);
 }
 
 async function truncateCollection(collection) {
@@ -70,7 +75,7 @@ async function addColumns(table, columns) {
   }
 }
 
-async function dropColumns(table, ...columns) {
+async function dropColumns(table, columns) {
   try {
     await table.alter({
       operation: { drop: { columns } },

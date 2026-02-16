@@ -2,6 +2,7 @@ package com.dtsx.docs.core.runner.tests.strategies.test;
 
 import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.core.planner.TestRoot;
+import com.dtsx.docs.core.planner.fixtures.BaseFixturePool;
 import com.dtsx.docs.core.planner.meta.compiles.CompilesTestMeta;
 import com.dtsx.docs.core.runner.ExecutionEnvironment;
 import com.dtsx.docs.core.runner.ExecutionEnvironment.ExecutionEnvironments;
@@ -19,7 +20,9 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import static com.dtsx.docs.core.runner.tests.VerifyMode.DRY_RUN;
@@ -27,8 +30,8 @@ import static com.dtsx.docs.core.runner.tests.VerifyMode.NO_COMPILE_ONLY;
 
 public final class CompilesTestStrategy extends TestStrategy<CompilesTestMeta> {
     private static final Placeholders FAKE_FIXTURE_MD = new Placeholders(
-        "compiles_test_collection",
-        "compiles_test_table",
+        Optional.of("compiles_test_collection"),
+        Optional.of("compiles_test_table"),
         "compiles_test_keyspace"
     );
 
@@ -37,13 +40,18 @@ public final class CompilesTestStrategy extends TestStrategy<CompilesTestMeta> {
     }
 
     @Override
-    public TestRootResults runTestsInRoot(ExternalProgram tsx, TestRoot testRoot, ExecutionEnvironments execEnvs, Placeholders ignored) {
+    public BaseFixturePool slicePool(BaseFixturePool pool, TestRoot testRoot) {
+        return pool.slice(0, 0);
+    }
+
+    @Override
+    public TestRootResults runTestsInRoot(ExternalProgram tsx, TestRoot testRoot, ExecutionEnvironments execEnvs, BaseFixturePool pool) {
         val displayMsg = "Compiling @!%d!@ file%s in @!%s!@".formatted(testRoot.numFilesToTest(), (testRoot.numFilesToTest() == 1) ? "" : "s", testRoot.rootName());
 
         val outcomes = new ConcurrentHashMap<ClientLanguage, Map<Path, TestOutcome>>();
 
         return CliLogger.loading(displayMsg, (_) -> {
-            try (val executor = executionMode().executor()) {
+            try (val executor = Executors.newVirtualThreadPerTaskExecutor()) {
                 val futures = new ArrayList<Future<?>>();
 
                 testRoot.filesToTest().forEach((lang, paths) -> {

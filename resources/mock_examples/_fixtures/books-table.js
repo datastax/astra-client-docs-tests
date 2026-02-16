@@ -3,15 +3,14 @@ import {
   Table,
 } from "@datastax/astra-db-ts";
 
-export const booksTable = $.db.table(Meta().TableName);
-
-booksTable.truncate = async function () {
-  await $.truncate(this);
-};
+export const booksTable = $.withUtils(
+  $.db.table(Meta().TableName)
+);
 
 export function Meta() {
   return {
-    TableName: "books_table",
+    TableName: $.name("books_table"),
+    Initialization: "parallel",
   };
 }
 
@@ -41,19 +40,23 @@ export async function Setup() {
           modelName: "nvidia/nv-embedqa-e5-v5",
         },
       },
+      summary_genres_original_text: "text",
     },
     primaryKey: {
       partitionBy: ["title", "author"],
     },
   });
 
+  await booksTable.drop({ ifExists: true }); // in case it was modified and still exists from a previous test run
+
   await $.db.createTable(booksTable.name, {
     definition: tableDefinition,
+    ifNotExists: true,
   });
 
-  await booksTable.createIndex(`${booksTable.name}_rating_index`, "rating");
-
-  await booksTable.createIndex(`${booksTable.name}_number_of_pages_index`, "number_of_pages");
+  await booksTable.createIndex(`${booksTable.name}_rating_index`, "rating", { ifNotExists: true });
+  await booksTable.createIndex(`${booksTable.name}_genres_index`, "genres", { ifNotExists: true });
+  await booksTable.createIndex(`${booksTable.name}_number_of_pages_index`, "number_of_pages", { ifNotExists: true });
 
   await booksTable.createVectorIndex(
     `${booksTable.name}_summary_genres_vector_index`,
@@ -62,6 +65,7 @@ export async function Setup() {
       options: {
         metric: "cosine",
       },
+      ifNotExists: true,
     },
   );
 }

@@ -3,7 +3,6 @@ package com.dtsx.docs.core.runner.tests.snapshots.sources.records;
 import com.datastax.astra.client.collections.commands.options.CollectionFindOptions;
 import com.datastax.astra.client.collections.definition.documents.Document;
 import com.dtsx.docs.commands.test.TestCtx;
-import com.dtsx.docs.core.planner.meta.snapshot.meta.RecordSourceMeta;
 import com.dtsx.docs.core.planner.meta.snapshot.meta.RecordSourceMeta.DocumentsSourceMeta;
 import com.dtsx.docs.core.runner.Placeholders;
 import com.dtsx.docs.lib.DataAPIUtils;
