@@ -28,7 +28,7 @@ public class IsolatedExecutionStrategy extends ExecutionStrategy {
     }
 
     @Override
-    protected void executeImpl(Map<ClientLanguage, Set<Path>> testFiles, MessageUpdater msgUpdater, TestFileRunner testFileRunner) {
+    protected void executeImpl(Map<ClientLanguage, Set<Path>> testFiles, MessageUpdater ignored, TestFileRunner testFileRunner) {
         try (val executor = Executors.newVirtualThreadPerTaskExecutor()) {
             val futures = ExecutorUtils.emptyFuturesList();
 

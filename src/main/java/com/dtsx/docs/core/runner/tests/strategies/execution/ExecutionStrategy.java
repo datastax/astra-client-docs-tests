@@ -1,7 +1,6 @@
 package com.dtsx.docs.core.runner.tests.strategies.execution;
 
-import com.dtsx.docs.core.planner.fixtures.BaseFixturePool;
-import com.dtsx.docs.core.planner.fixtures.BaseFixturePool.FixtureIndex;
+import com.dtsx.docs.core.planner.fixtures.FixtureMetadata;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import com.dtsx.docs.core.runner.tests.results.TestOutcome;
 import com.dtsx.docs.lib.CliLogger.MessageUpdater;
@@ -22,6 +21,10 @@ public abstract class ExecutionStrategy {
     protected abstract void executeImpl(Map<ClientLanguage, Set<Path>> testFiles, MessageUpdater msgUpdater, TestFileRunner testFileRunner);
 
     public interface TestFileRunner {
-        TestOutcome run(BaseFixturePool pool, ClientLanguage language, Path path, FixtureIndex index);
+        TestOutcome run(ClientLanguage language, Set<Path> filesForLang, FixtureMetadata md, TestResetter resetter, MessageUpdater msgUpdater);
+    }
+
+    public record TestResetter(Runnable beforeEach, Runnable afterEach) {
+        public static TestResetter NOOP = new TestResetter(() -> {}, () -> {});
     }
 }

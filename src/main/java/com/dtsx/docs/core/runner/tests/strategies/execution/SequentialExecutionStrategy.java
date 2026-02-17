@@ -15,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -49,20 +48,16 @@ public class SequentialExecutionStrategy extends ExecutionStrategy {
             pool.afterEach(tsx);
         }
     }
-    
+
     private void executeLanguage(ClientLanguage language, Set<Path> filesForLang, MessageUpdater msgUpdater, TestFileRunner testFileRunner) {
         try {
-            for (val path : filesForLang) {
-                try {
-                    msgUpdater.update(_ -> "Verifying @!%s!@".formatted(testRoot.displayPath(path)));
-                    testFixture.beforeEach(tsx, md());
+            val resetter = new TestResetter(
+                () -> testFixture.beforeEach(tsx, md()),
+                () -> testFixture.afterEach(tsx, md())
+            );
 
-                    val result = testFileRunner.run(pool, language, path, index);
-                    outcomes.computeIfAbsent(language, _ -> new HashMap<>()).put(path, result);
-                } finally {
-                    testFixture.afterEach(tsx, md());
-                }
-            }
+            val result = testFileRunner.run(language, filesForLang, md(), resetter, msgUpdater);
+            outcomes.put(language, filesForLang.stream().collect(toMap(p -> p, _ -> result)));
         } catch (Exception ex) {
             CliLogger.exception("Error running snapshot tests for language '%s' in test root '%s'".formatted(language, testRoot.rootName()));
             outcomes.put(language, filesForLang.stream().collect(toMap(p -> p, _ -> new TestOutcome.Errored(ex).alsoLog(testRoot, language))));

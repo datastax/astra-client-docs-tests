@@ -3,7 +3,7 @@ package com.dtsx.docs.core.runner.tests.strategies.test;
 import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.core.planner.TestRoot;
 import com.dtsx.docs.core.planner.fixtures.BaseFixturePool;
-import com.dtsx.docs.core.planner.fixtures.BaseFixturePool.FixtureIndex;
+import com.dtsx.docs.core.planner.fixtures.FixtureMetadata;
 import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMeta;
 import com.dtsx.docs.core.runner.ExecutionEnvironment.ExecutionEnvironments;
 import com.dtsx.docs.core.runner.ExecutionEnvironment.TestFileModifiers;
@@ -14,12 +14,15 @@ import com.dtsx.docs.core.runner.tests.results.TestRootResults;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.output.OutputJsonifySource;
 import com.dtsx.docs.core.runner.tests.snapshots.verifier.SnapshotVerifier;
 import com.dtsx.docs.core.runner.tests.strategies.execution.ExecutionStrategy;
+import com.dtsx.docs.core.runner.tests.strategies.execution.ExecutionStrategy.TestResetter;
 import com.dtsx.docs.lib.CliLogger;
+import com.dtsx.docs.lib.CliLogger.MessageUpdater;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import lombok.Getter;
 import lombok.val;
 
 import java.nio.file.Path;
+import java.util.Set;
 
 @Getter
 public final class SnapshotTestStrategy extends TestStrategy<SnapshotTestMeta> {
@@ -78,14 +81,15 @@ public final class SnapshotTestStrategy extends TestStrategy<SnapshotTestMeta> {
             );
         }
 
-        private TestOutcome run(BaseFixturePool pool, ClientLanguage language, Path path, FixtureIndex index) {
+        private TestOutcome run(ClientLanguage language, Set<Path> filesForLang, FixtureMetadata md, TestResetter resetter, MessageUpdater msgUpdater) {
             val driver = ctx.drivers().get(language);
             val execEnv = execEnvs.forLanguage(language);
 
-            val md = pool.meta(tsx, index);
             val envVars = PlaceholderResolver.mkEnvVars(ctx, md);
 
-            return verifier.verify(driver, testRoot, md, path, () -> {
+            return verifier.verify(driver, testRoot, md, filesForLang, resetter, (path) -> {
+                msgUpdater.update(_ -> "Verifying @!%s!@".formatted(testRoot.displayPath(path)));
+
                 val testFileModifiers = (meta.snapshotSources().stream().anyMatch(OutputJsonifySource.class::isInstance))
                     ? TestFileModifiers.JSONIFY_OUTPUT
                     : TestFileModifiers.NONE;

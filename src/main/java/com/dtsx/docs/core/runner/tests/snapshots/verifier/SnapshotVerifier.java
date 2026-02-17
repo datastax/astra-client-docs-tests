@@ -3,12 +3,16 @@ package com.dtsx.docs.core.runner.tests.snapshots.verifier;
 import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.core.planner.TestRoot;
 import com.dtsx.docs.core.planner.meta.snapshot.SnapshotsShareConfig;
+import com.dtsx.docs.core.planner.meta.snapshot.meta.WithNameAndKeyspace;
+import com.dtsx.docs.core.planner.meta.snapshot.meta.WithNameAndKeyspace.TableImpl;
 import com.dtsx.docs.core.runner.Placeholders;
 import com.dtsx.docs.core.runner.drivers.ClientDriver;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import com.dtsx.docs.core.runner.tests.results.TestOutcome;
 import com.dtsx.docs.core.runner.tests.results.TestOutcome.FailedToVerify;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.SnapshotSource;
+import com.dtsx.docs.core.runner.tests.snapshots.sources.schema.definitions.TableDefinitionSource;
+import com.dtsx.docs.core.runner.tests.strategies.execution.ExecutionStrategy.TestResetter;
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import lombok.RequiredArgsConstructor;
@@ -25,8 +29,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 
 import static com.dtsx.docs.core.runner.tests.VerifyMode.DRY_RUN;
@@ -53,31 +57,41 @@ public class SnapshotVerifier {
 
     @SneakyThrows
     @SuppressWarnings("BusyWait")
-    public TestOutcome verify(ClientDriver driver, TestRoot testRoot, Placeholders placeholders, Path filePath, ThrowingSupplier<RunResult> result) {
+    public TestOutcome verify(ClientDriver driver, TestRoot testRoot, Placeholders placeholders, Set<Path> filesForLang, TestResetter resetter, Function<Path, RunResult> result) {
         if (ctx.verifyMode() == DRY_RUN) {
             return TestOutcome.DryPassed.INSTANCE;
         }
 
-        for (var i = 0; true; i++) {
-            try {
-                val runResult = result.get();
-                val snapshot = mkSnapshot(driver, placeholders, runResult);
-                return verifySnapshot(driver, testRoot, snapshot);
-            } catch (Exception e) {
-                val lowercaseMessage = e.getMessage().toLowerCase();
-                if (i < 2 && (lowercaseMessage.contains("timeout") || lowercaseMessage.contains("timed out"))) {
-                    CliLogger.exception("Retrying due to timeout when verifying file '" + filePath + "'", e);
-                    Thread.sleep(1000);
-                    continue;
+        val snapshots = new HashMap<String, Set<Path>>();
+
+        for (val filePath : filesForLang) {
+            for (var i = 0; true; i++) {
+                try {
+                    resetter.beforeEach().run();
+                    val runResult = result.apply(filePath);
+                    val fileSnapshot = mkSnapshot(driver, placeholders, runResult);
+                    snapshots.computeIfAbsent(fileSnapshot, _ -> new HashSet<>()).add(filePath);
+                    break;
+                } catch (Exception e) {
+                    val lowercaseMessage = e.getMessage().toLowerCase();
+                    if (i < 2 && (lowercaseMessage.contains("timeout") || lowercaseMessage.contains("timed out"))) {
+                        CliLogger.exception("Retrying due to timeout when verifying file '" + filePath + "'", e);
+                        Thread.sleep(1000);
+                        continue;
+                    }
+                    throw e;
+                } finally {
+                    resetter.afterEach().run();
                 }
-                throw e;
             }
         }
-    }
-    
-    @FunctionalInterface
-    public interface ThrowingSupplier<T> {
-        T get() throws Exception;
+
+        if (snapshots.size() > 1) {
+            return TestOutcome.Mismatch.Mismatch.Mismatch.Mismatch.Mismatch.Mismatch.Mismatch.Mismatch.INSTANCE.alsoLog(testRoot, driver.language(), snapshots);
+        }
+
+        val snapshot = snapshots.keySet().iterator().next();
+        return verifySnapshot(driver, testRoot, snapshot);
     }
 
     private String mkSnapshot(ClientDriver driver, Placeholders placeholders, RunResult result) {

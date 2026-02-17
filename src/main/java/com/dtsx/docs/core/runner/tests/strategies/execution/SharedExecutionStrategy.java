@@ -15,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executors;
@@ -23,7 +22,7 @@ import java.util.concurrent.Executors;
 import static java.util.stream.Collectors.toMap;
 
 @RequiredArgsConstructor
-public class SharedExecutionStrategy extends ExecutionStrategy{
+public class SharedExecutionStrategy extends ExecutionStrategy {
     private final ExternalProgram tsx;
     private final JSFixture testFixture;
     private final BaseFixturePool pool;
@@ -36,7 +35,7 @@ public class SharedExecutionStrategy extends ExecutionStrategy{
     }
 
     @Override
-    protected void executeImpl(Map<ClientLanguage, Set<Path>> testFiles, MessageUpdater msgUpdater, TestFileRunner testFileRunner) {
+    protected void executeImpl(Map<ClientLanguage, Set<Path>> testFiles, MessageUpdater ignored, TestFileRunner testFileRunner) {
         try (val executor = Executors.newVirtualThreadPerTaskExecutor()) {
             pool.beforeEach(tsx);
             testFixture.setup(tsx, md());
@@ -60,10 +59,8 @@ public class SharedExecutionStrategy extends ExecutionStrategy{
 
     private void executeLanguage(ClientLanguage language, Set<Path> filesForLang, TestFileRunner testFileRunner) {
         try {
-            for (val path : filesForLang) {
-                val result = testFileRunner.run(pool, language, path, index);
-                outcomes.computeIfAbsent(language, _ -> new HashMap<>()).put(path, result);
-            }
+            val result = testFileRunner.run(language, filesForLang, md(), TestResetter.NOOP, (_) -> {});
+            outcomes.put(language, filesForLang.stream().collect(toMap(p -> p, _ -> result)));
         } catch (Exception ex) {
             CliLogger.exception("Error running snapshot tests for language '%s' in test root '%s'".formatted(language, testRoot.rootName()));
             outcomes.put(language, filesForLang.stream().collect(toMap(p -> p, _ -> new TestOutcome.Errored(ex).alsoLog(testRoot, language))));
