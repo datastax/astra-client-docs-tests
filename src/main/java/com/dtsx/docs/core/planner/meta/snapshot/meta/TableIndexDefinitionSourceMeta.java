@@ -7,7 +7,7 @@ import java.util.Optional;
 import java.util.Set;
 
 public record TableIndexDefinitionSourceMeta(
-    @NonNull Optional<Set<String>> indexes,
+    @NonNull List<String> indexes,
     @NonNull Optional<String> table,
     @NonNull Optional<String> keyspace
 ) implements WithNameAndKeyspace {

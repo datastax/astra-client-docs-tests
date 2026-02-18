@@ -40,12 +40,12 @@ public class RunArgs extends BaseScriptRunnerArgs<RunCtx> {
     public String $keyspace;
 
     @Option(
-        names = { "-v", "--var" },
+        names = { "-r", "--replace" },
         description = "Custom variables for placeholder replacement in the format `-v KEY=value`. Can be specified multiple times.",
         paramLabel = "KEY=value",
         split = ","
     )
-    public Map<String, String> $vars;
+    public Map<String, String> $replace;
 
     @Option(
         names = { "-p", "--plain" },

@@ -12,6 +12,7 @@ import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import com.dtsx.docs.lib.JacksonUtils;
 import lombok.val;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -20,15 +21,13 @@ import static com.dtsx.docs.core.runner.tests.snapshots.sources.SnapshotSourceUt
 import static java.util.stream.Collectors.toMap;
 
 public class TableIndexDefinitionsSource extends SnapshotSource {
-    private final Set<String> indexes;
+    private final List<String> indexes;
     protected final Optional<String> overrideKeyspace;
     protected final Optional<String> overrideName;
 
-    private static final Set<String> DEFAULT_INDEXES = Set.of("INDEX_NAME");
-
     public TableIndexDefinitionsSource(String name, TableIndexDefinitionSourceMeta meta) {
         super(name);
-        this.indexes = meta.indexes().orElse(DEFAULT_INDEXES);
+        this.indexes = meta.indexes();
         this.overrideKeyspace = meta.keyspace();
         this.overrideName = meta.name();
     }
@@ -48,11 +47,10 @@ public class TableIndexDefinitionsSource extends SnapshotSource {
 
         val capturesIndexes = resolveIndexes(md, driver)
             .map((i) -> {
-                return existingIndexes.computeIfAbsent(i, (indexName) -> {
-                    throw new RunException("Could not find index matching '" + indexName + "' for table '" + tableName + "'. Available indexes: " + existingIndexes.keySet());
-                });
+                return Optional.ofNullable(existingIndexes.get(i))
+                    .<Object>map(desc -> desc.name("example_index_name"))
+                    .orElse("index not found");
             })
-            .map(i -> i.name("example_index_name"))
             .toList();
 
         return JacksonUtils.formatJsonPretty(

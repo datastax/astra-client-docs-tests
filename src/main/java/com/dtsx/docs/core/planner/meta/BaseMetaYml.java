@@ -3,6 +3,7 @@ package com.dtsx.docs.core.planner.meta;
 import com.dtsx.docs.core.planner.fixtures.JSFixture;
 import com.dtsx.docs.core.planner.meta.BaseMetaYml.BaseMetaYmlRep.TestBlock.SkipConfig;
 import com.dtsx.docs.core.planner.meta.BaseMetaYml.BaseMetaYmlRep.TestBlock.SkipConfig.SkipTestType;
+import com.dtsx.docs.core.runner.PlaceholderVars;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import lombok.NonNull;
 import lombok.val;
@@ -17,7 +18,7 @@ public interface BaseMetaYml {
 
     SkipConfig skipConfig();
 
-    Map<String, String> vars();
+    PlaceholderVars vars();
 
     interface BaseMetaYmlRep {
         String $schema();
@@ -26,7 +27,7 @@ public interface BaseMetaYml {
 
         TestType expectTestType();
 
-        record TestBlock(@NonNull TestType type, @NonNull Optional<Object> skip, @NonNull Optional<Map<String, String>> vars) {
+        record TestBlock(@NonNull TestType type, @NonNull Optional<Object> skip, @NonNull Optional<PlaceholderVars> vars) {
             public static class SkipConfig extends PerLanguageToggle<SkipTestType> {
                 public enum SkipTestType {
                     SNAPSHOT,

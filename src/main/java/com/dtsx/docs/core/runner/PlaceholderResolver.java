@@ -39,8 +39,8 @@ public class PlaceholderResolver {
     );
 
     public static String replacePlaceholders(BaseScriptRunnerCtx ctx, Placeholders placeholders, ClientLanguage lang, String src) {
-        for (val entry : placeholders.vars().getAll(lang)) {
-            src = src.replace(entry.getKey(), entry.getValue());
+        for (val var : placeholders.vars().getAll(lang).values()) {
+            src = src.replaceAll(var.regex(), var.value());
         }
 
         val m = PLACEHOLDER.matcher(src);
@@ -82,8 +82,8 @@ public class PlaceholderResolver {
         envVars.putAll(STATIC_PLACEHOLDERS);
 
         maybeLang.ifPresent((lang) -> {
-            placeholders.vars().getAll(lang).forEach((e) -> {
-                envVars.put(e.getKey(), e.getValue());
+            placeholders.vars().getAll(lang).forEach((key, var) -> {
+                envVars.put(key, var.value());
             });
         });
 

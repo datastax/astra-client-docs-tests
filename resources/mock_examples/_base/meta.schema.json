@@ -66,12 +66,24 @@
           "$ref": "#/$defs/perLanguageToggleSkipTestType",
           "description": "Whether to skip this test (boolean for all languages, or per-language object)"
         },
-        "replace": {
+        "vars": {
           "type": "object",
           "additionalProperties": {
-            "type": "string"
+            "type": "object",
+            "required": ["regex", "value"],
+            "properties": {
+              "regex": {
+                "type": "string",
+                "description": "Regular expression pattern for the placeholder variable"
+              },
+              "value": {
+                "type": "string",
+                "description": "Value to replace the placeholder with (can contain other variables like ${LANGUAGE}, ${NAME_ROOT}, or other user-defined variables)"
+              }
+            },
+            "additionalProperties": false
           },
-          "description": "Optional variables map for test configuration"
+          "description": "Optional variables map for test configuration. Each variable is an object with 'regex' and 'value' properties."
         }
       },
       "additionalProperties": false

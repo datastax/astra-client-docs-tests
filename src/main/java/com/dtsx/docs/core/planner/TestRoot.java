@@ -2,7 +2,7 @@ package com.dtsx.docs.core.planner;
 
 import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaRep;
-import com.dtsx.docs.core.runner.Placeholders.PlaceholderVars;
+import com.dtsx.docs.core.runner.PlaceholderVars;
 import com.dtsx.docs.core.runner.RunException;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import com.dtsx.docs.core.runner.tests.strategies.test.TestStrategy;
@@ -10,7 +10,6 @@ import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -55,7 +54,7 @@ public class TestRoot implements Comparable<TestRoot> {
         this.rootName = ctx.examplesFolder().relativize(path).toString();
         this.numLanguagesToTest = filesToTest.size();
         this.numFilesToTest = filesToTest.values().stream().mapToInt(Set::size).sum();
-        this.vars = new PlaceholderVars(testStrategy.meta().vars());
+        this.vars = testStrategy.meta().vars();
     }
 
     /// Returns the relative path of the example file for the specified file to test from this test root.

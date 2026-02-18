@@ -7,6 +7,6 @@ import java.util.Optional;
 import java.util.Set;
 
 public record UdtDefinitionSourceMeta(
-    @NonNull Optional<Set<String>> types,
+    @NonNull List<String> types,
     @NonNull Optional<String> keyspace
 ) implements WithKeyspace {}

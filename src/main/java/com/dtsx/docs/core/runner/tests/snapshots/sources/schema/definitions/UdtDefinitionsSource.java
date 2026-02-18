@@ -6,7 +6,6 @@ import com.datastax.astra.client.tables.commands.options.ListTypesOptions;
 import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.core.planner.fixtures.FixtureMetadata;
 import com.dtsx.docs.core.planner.meta.snapshot.meta.UdtDefinitionSourceMeta;
-import com.dtsx.docs.core.runner.RunException;
 import com.dtsx.docs.core.runner.drivers.ClientDriver;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.SnapshotSource;
 import com.dtsx.docs.lib.DataAPIUtils;
@@ -14,22 +13,20 @@ import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import com.dtsx.docs.lib.JacksonUtils;
 import lombok.val;
 
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Stream;
 
 import static com.dtsx.docs.core.runner.tests.snapshots.sources.SnapshotSourceUtils.mkJsonDeterministic;
 import static java.util.stream.Collectors.toMap;
 
 public class UdtDefinitionsSource extends SnapshotSource {
-    private final Set<String> types;
+    private final List<String> types;
     protected final Optional<String> overrideKeyspace;
-
-    public static final Set<String> DEFAULT_TYPES = Set.of("UDT_NAME");
 
     public UdtDefinitionsSource(String name, UdtDefinitionSourceMeta meta) {
         super(name);
-        this.types = meta.types().orElse(DEFAULT_TYPES);
+        this.types = meta.types();
         this.overrideKeyspace = meta.keyspace();
     }
 
@@ -53,9 +50,7 @@ public class UdtDefinitionsSource extends SnapshotSource {
 
         val capturesIndexes = resolveTypes(md, driver)
             .map((t) -> {
-                return existingTypes.computeIfAbsent(t, (typeName) -> {
-                    throw new RunException("Could not find UDT matching '" + typeName + "'. Available types: " + existingTypes.keySet());
-                });
+                return existingTypes.getOrDefault(t, "type not found");
             })
             .toList();
 

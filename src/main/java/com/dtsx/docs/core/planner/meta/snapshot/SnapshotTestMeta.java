@@ -10,6 +10,7 @@ import com.dtsx.docs.core.planner.meta.BaseMetaYml.BaseMetaYmlRep.TestBlock.Skip
 import com.dtsx.docs.core.planner.meta.BaseMetaYml.BaseMetaYmlRep.TestBlock.SkipConfig.SkipTestType;
 import com.dtsx.docs.core.planner.meta.BaseMetaYml.BaseMetaYmlRep.TestType;
 import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaRep.FixturesConfig;
+import com.dtsx.docs.core.runner.PlaceholderVars;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.SnapshotSource;
 import lombok.Getter;
@@ -34,7 +35,7 @@ public final class SnapshotTestMeta implements BaseMetaYml {
     private final List<SnapshotSource> snapshotSources;
     private final SnapshotsShareConfig shareConfig;
     private final ExecutionMode executionMode;
-    private final Map<String, String> vars;
+    private final PlaceholderVars vars;
 
     public SnapshotTestMeta(TestCtx ctx, Path testRoot, SnapshotTestMetaRep meta) {
         this.skipConfig = SkipConfig.parse((Map<ClientLanguage, SkipTestType> l) -> new SkipConfig(TestType.SNAPSHOT, l), ctx, meta.test().skip(), new TypeReference<>() {});
@@ -43,7 +44,7 @@ public final class SnapshotTestMeta implements BaseMetaYml {
         this.snapshotSources = SnapshotSourcesParser.parseSources(meta.snapshots());
         this.shareConfig = SnapshotsShareConfig.parse(SnapshotsShareConfig::new, ctx, meta.snapshots().share(), new TypeReference<>() {});
         this.executionMode = meta.execution().orElse(ExecutionMode.SEQUENTIAL);
-        this.vars = meta.test().vars().orElse(Map.of());
+        this.vars = meta.test().vars().orElse(PlaceholderVars.EMPTY);
     }
 
     /// Resolves a base fixture from the `_fixtures/` directory.

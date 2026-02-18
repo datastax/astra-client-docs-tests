@@ -5,18 +5,15 @@ Matches '^(|\{"status":\{"ok":1\}\})$'
 ---udt::definitions---
 [
   {
-    "udtName" : "member",
-    "definition" : {
-      "fields" : {
-        "date_joined" : {
-          "type" : "date"
-        },
-        "is_active" : {
-          "type" : "boolean"
-        },
-        "name" : {
-          "type" : "text"
-        }
+    "fields" : {
+      "date_joined" : {
+        "type" : "date"
+      },
+      "is_active" : {
+        "type" : "boolean"
+      },
+      "name" : {
+        "type" : "text"
       }
     }
   }

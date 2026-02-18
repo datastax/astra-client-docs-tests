@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.*;
 import java.util.function.Consumer;
+import java.util.stream.IntStream;
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
 public class BaseFixturePool implements Comparable<BaseFixturePool> {
@@ -33,11 +34,12 @@ public class BaseFixturePool implements Comparable<BaseFixturePool> {
     private BaseFixturePool(JSFixture baseFixture, int start, int end, ConcurrentMap<FixtureIndex, FixtureMetadata> metadataCache) {
         this.baseFixture = baseFixture;
         this.metadataCache = metadataCache;
-        this.available = new LinkedBlockingQueue<>();
 
-        for (var i = start; i < end; i++) {
-            available.offer(new FixtureIndex(i));
-        }
+        this.available = new LinkedBlockingQueue<>(
+            IntStream.range(start, end)
+                .mapToObj(FixtureIndex::new)
+                .toList()
+        );
     }
 
     public BaseFixturePool slice(int start, int end) {

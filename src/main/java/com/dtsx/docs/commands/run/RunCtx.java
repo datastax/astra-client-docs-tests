@@ -2,8 +2,9 @@ package com.dtsx.docs.commands.run;
 
 import com.dtsx.docs.config.ctx.BaseCtx;
 import com.dtsx.docs.config.ctx.BaseScriptRunnerCtx;
+import com.dtsx.docs.core.runner.PlaceholderVars.PlaceholderVar;
 import com.dtsx.docs.core.runner.Placeholders;
-import com.dtsx.docs.core.runner.Placeholders.PlaceholderVars;
+import com.dtsx.docs.core.runner.PlaceholderVars;
 import com.dtsx.docs.core.runner.drivers.ClientDriver;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import com.dtsx.docs.core.runner.scripts.reporter.DetailedScriptReporter;
@@ -48,7 +49,13 @@ public class RunCtx extends BaseScriptRunnerCtx {
     }
 
     private Placeholders mkPlaceholders(RunArgs args) {
-        return new Placeholders(args.$collection, args.$table, args.$keyspace, new PlaceholderVars(args.$vars));
+        val vars = new HashMap<String, PlaceholderVar>();
+
+        args.$replace.forEach((regex, value) -> {
+            vars.put(regex, new PlaceholderVar(regex, value));
+        });
+
+        return new Placeholders(args.$collection, args.$table, args.$keyspace, new PlaceholderVars(vars));
     }
 
     private Set<Path> mkScriptPaths(RunArgs args) {
