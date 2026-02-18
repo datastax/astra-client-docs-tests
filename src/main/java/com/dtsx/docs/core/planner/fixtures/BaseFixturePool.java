@@ -16,6 +16,10 @@ import java.util.function.Consumer;
 public class BaseFixturePool implements Comparable<BaseFixturePool> {
     public record FixtureIndex(int unwrap) {
         public static final FixtureIndex ZERO = new FixtureIndex(0);
+
+        public String toNameRoot() {
+            return "n" + unwrap;
+        }
     }
 
     private final JSFixture baseFixture;

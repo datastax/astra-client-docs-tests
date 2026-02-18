@@ -4,6 +4,7 @@ import com.datastax.astra.client.core.query.Filter;
 import com.datastax.astra.client.core.query.Projection;
 import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.core.planner.PlanException;
+import com.dtsx.docs.core.planner.fixtures.FixtureMetadata;
 import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaRep;
 import com.dtsx.docs.core.planner.meta.snapshot.meta.RecordSourceMeta;
 import com.dtsx.docs.core.runner.Placeholders;
@@ -105,14 +106,9 @@ public abstract class RecordSource extends SnapshotSource {
     protected abstract Stream<Map<String, Object>> streamRecords(TestCtx ctx, String name, String keyspace);
 
     @Override
-    public String mkSnapshot(TestCtx ctx, ClientDriver driver, RunResult res, Placeholders placeholders) {
-        // error should never be thrown since it would've been caught earlier in PlaceholderResolver.resolvePlaceholders
-        // since the snapshot shouldn't be depending on a collection/table that the example file doesn't explicitly use anyway
-        val schemaObjName = overrideName
-            .or(() -> extractSchemaObjectName(placeholders))
-            .orElseThrow(() -> new PlanException("Could not determine schema object name from fixture metadata or override for source: " + name));
-
-        val schemaObjKeyspace = overrideKeyspace.orElse(placeholders.keyspaceName());
+    public String mkSnapshot(TestCtx ctx, ClientDriver driver, RunResult res, FixtureMetadata md) {
+        val schemaObjName = resolveName("schema object name", md, driver, overrideName, () -> extractSchemaObjectName(md));
+        val schemaObjKeyspace = resolveName("keyspace", md, driver, overrideKeyspace, () -> Optional.of(md.keyspaceName()));
 
         return JacksonUtils.formatJsonPretty(
             mkJsonDeterministic(streamRecords(ctx, schemaObjName, schemaObjKeyspace).toList())

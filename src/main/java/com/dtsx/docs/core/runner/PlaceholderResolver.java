@@ -17,9 +17,7 @@ public class PlaceholderResolver {
         "PASSWORD", (ctx, _, _) -> ctx.connectionInfo().password(),
         "KEYSPACE_NAME", (_, phs, _) -> Optional.of(phs.keyspaceName()),
         "TABLE_NAME", (_, phs, _) -> phs.tableName(),
-        "COLLECTION_NAME", (_, phs, _) -> phs.collectionName(),
-        "UDT_NAME", (_, _, lang) -> lang.map(PlaceholderResolver::mkUDTName),
-        "INDEX_NAME", (_, _, lang) -> lang.map(PlaceholderResolver::mkIndexName)
+        "COLLECTION_NAME", (_, phs, _) -> phs.collectionName()
     );
 
     private static final Map<String, String> STATIC_PLACEHOLDERS = Map.of(
@@ -40,24 +38,18 @@ public class PlaceholderResolver {
         "PfXCjz8HrhQ+o9cK", randomVectorBinary("bin2")
     );
 
-    public static String mkUDTName(ClientLanguage lang) {
-        return lang.name().toLowerCase() + "_index";
-    }
-
-    public static String mkIndexName(ClientLanguage lang) {
-        return lang.name().toLowerCase() + "_index";
-    }
-
     public static String replacePlaceholders(BaseScriptRunnerCtx ctx, Placeholders placeholders, ClientLanguage lang, String src) {
+        for (val entry : placeholders.vars().getAll(lang)) {
+            src = src.replace(entry.getKey(), entry.getValue());
+        }
+
         val m = PLACEHOLDER.matcher(src);
         val out = new StringBuilder(src.length());
 
         while (m.find()) {
             val key = m.group(1);
 
-            if (placeholders.vars().containsKey(key)) {
-                m.appendReplacement(out, Matcher.quoteReplacement(placeholders.vars().get(key)));
-            } else if (DYNAMIC_PLACEHOLDERS.containsKey(key)) {
+            if (DYNAMIC_PLACEHOLDERS.containsKey(key)) {
                 val value = DYNAMIC_PLACEHOLDERS.get(key).apply(ctx, placeholders, Optional.of(lang)).orElseThrow(() -> new RunException("Missing value for placeholder: **" + key + "**"));
                 m.appendReplacement(out, Matcher.quoteReplacement(value));
             } else if (STATIC_PLACEHOLDERS.containsKey(key)) {
@@ -80,15 +72,21 @@ public class PlaceholderResolver {
         return out.toString();
     }
 
-    public static HashMap<String, String> mkEnvVars(BaseScriptRunnerCtx ctx, Placeholders placeholders, Optional<ClientLanguage> lang) {
+    public static HashMap<String, String> mkEnvVars(BaseScriptRunnerCtx ctx, Placeholders placeholders, Optional<ClientLanguage> maybeLang) {
         val envVars = new HashMap<String, String>();
 
         DYNAMIC_PLACEHOLDERS.forEach((key, func) -> {
-            func.apply(ctx, placeholders, lang).ifPresent(v -> envVars.put(key, v));
+            func.apply(ctx, placeholders, maybeLang).ifPresent(v -> envVars.put(key, v));
         });
 
         envVars.putAll(STATIC_PLACEHOLDERS);
-        envVars.putAll(placeholders.vars());
+
+        maybeLang.ifPresent((lang) -> {
+            placeholders.vars().getAll(lang).forEach((e) -> {
+                envVars.put(e.getKey(), e.getValue());
+            });
+        });
+
         return envVars;
     }
 

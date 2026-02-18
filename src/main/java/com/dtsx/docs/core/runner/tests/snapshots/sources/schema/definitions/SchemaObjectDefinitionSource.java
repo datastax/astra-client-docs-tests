@@ -1,7 +1,7 @@
 package com.dtsx.docs.core.runner.tests.snapshots.sources.schema.definitions;
 
 import com.dtsx.docs.commands.test.TestCtx;
-import com.dtsx.docs.core.planner.PlanException;
+import com.dtsx.docs.core.planner.fixtures.FixtureMetadata;
 import com.dtsx.docs.core.planner.meta.snapshot.meta.WithNameAndKeyspace;
 import com.dtsx.docs.core.runner.Placeholders;
 import com.dtsx.docs.core.runner.drivers.ClientDriver;
@@ -28,14 +28,9 @@ public abstract class SchemaObjectDefinitionSource extends SnapshotSource {
     protected abstract Object getDefinition(TestCtx ctx, String name, String keyspace);
 
     @Override
-    public String mkSnapshot(TestCtx ctx, ClientDriver driver, RunResult res, Placeholders placeholders) {
-        // error should never be thrown since it would've been caught earlier in PlaceholderResolver.resolvePlaceholders
-        // since the snapshot shouldn't be depending on a collection/table that the example file doesn't explicitly use anyway
-        val schemaObjName = overrideName
-            .or(() -> extractSchemaObjectName(placeholders))
-            .orElseThrow(() -> new PlanException("Could not determine schema object name from fixture metadata or override for source: " + name));
-
-        val schemaObjKeyspace = overrideKeyspace.orElse(placeholders.keyspaceName());
+    public String mkSnapshot(TestCtx ctx, ClientDriver driver, RunResult res, FixtureMetadata md) {
+        val schemaObjName = resolveName("schema object name", md, driver, overrideName, () -> extractSchemaObjectName(md));
+        val schemaObjKeyspace = resolveName("keyspace", md, driver, overrideKeyspace, () -> Optional.of(md.keyspaceName()));
 
         return JacksonUtils.formatJsonPretty(
             mkJsonDeterministic(getDefinition(ctx, schemaObjName, schemaObjKeyspace))

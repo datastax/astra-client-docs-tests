@@ -8,6 +8,7 @@ import com.dtsx.docs.core.runner.ExecutionEnvironment;
 import com.dtsx.docs.core.runner.ExecutionEnvironment.ExecutionEnvironments;
 import com.dtsx.docs.core.runner.ExecutionEnvironment.TestFileModifiers;
 import com.dtsx.docs.core.runner.Placeholders;
+import com.dtsx.docs.core.runner.Placeholders.PlaceholderVars;
 import com.dtsx.docs.core.runner.drivers.ClientDriver;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import com.dtsx.docs.core.runner.tests.results.TestOutcome;

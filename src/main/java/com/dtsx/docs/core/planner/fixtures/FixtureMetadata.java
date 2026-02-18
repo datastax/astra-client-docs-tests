@@ -31,7 +31,7 @@ public class FixtureMetadata extends Placeholders {
         @JsonProperty("KeyspaceName") Optional<String> keyspaceName,
         @JsonProperty("Initialization") Initialization initialization
     ) {
-        super(collectionName, tableName, keyspaceName.orElse("default_keyspace"), Map.of());
+        super(collectionName, tableName, keyspaceName.orElse("default_keyspace"), new PlaceholderVars());
         this.initialization = initialization;
     }
 
@@ -40,7 +40,7 @@ public class FixtureMetadata extends Placeholders {
         return this;
     }
 
-    public FixtureMetadata withVars(Map<String, String> vars) {
+    public FixtureMetadata withVars(PlaceholderVars vars) {
         this.vars = vars;
         return this;
     }

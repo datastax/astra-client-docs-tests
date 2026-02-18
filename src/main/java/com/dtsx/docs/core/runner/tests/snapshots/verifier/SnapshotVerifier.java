@@ -2,16 +2,14 @@ package com.dtsx.docs.core.runner.tests.snapshots.verifier;
 
 import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.core.planner.TestRoot;
+import com.dtsx.docs.core.planner.fixtures.FixtureMetadata;
 import com.dtsx.docs.core.planner.meta.snapshot.SnapshotsShareConfig;
-import com.dtsx.docs.core.planner.meta.snapshot.meta.WithNameAndKeyspace;
-import com.dtsx.docs.core.planner.meta.snapshot.meta.WithNameAndKeyspace.TableImpl;
 import com.dtsx.docs.core.runner.Placeholders;
 import com.dtsx.docs.core.runner.drivers.ClientDriver;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import com.dtsx.docs.core.runner.tests.results.TestOutcome;
 import com.dtsx.docs.core.runner.tests.results.TestOutcome.FailedToVerify;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.SnapshotSource;
-import com.dtsx.docs.core.runner.tests.snapshots.sources.schema.definitions.TableDefinitionSource;
 import com.dtsx.docs.core.runner.tests.strategies.execution.ExecutionStrategy.TestResetter;
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
@@ -57,7 +55,7 @@ public class SnapshotVerifier {
 
     @SneakyThrows
     @SuppressWarnings("BusyWait")
-    public TestOutcome verify(ClientDriver driver, TestRoot testRoot, Placeholders placeholders, Set<Path> filesForLang, TestResetter resetter, Function<Path, RunResult> result) {
+    public TestOutcome verify(ClientDriver driver, TestRoot testRoot, FixtureMetadata md, Set<Path> filesForLang, TestResetter resetter, Function<Path, RunResult> result) {
         if (ctx.verifyMode() == DRY_RUN) {
             return TestOutcome.DryPassed.INSTANCE;
         }
@@ -69,7 +67,7 @@ public class SnapshotVerifier {
                 try {
                     resetter.beforeEach().run();
                     val runResult = result.apply(filePath);
-                    val fileSnapshot = mkSnapshot(driver, placeholders, runResult);
+                    val fileSnapshot = mkSnapshot(driver, md, runResult);
                     snapshots.computeIfAbsent(fileSnapshot, _ -> new HashSet<>()).add(filePath);
                     break;
                 } catch (Exception e) {
@@ -94,11 +92,11 @@ public class SnapshotVerifier {
         return verifySnapshot(driver, testRoot, snapshot);
     }
 
-    private String mkSnapshot(ClientDriver driver, Placeholders placeholders, RunResult result) {
+    private String mkSnapshot(ClientDriver driver, FixtureMetadata md, RunResult result) {
         val sb = new StringBuilder();
 
         for (val source : snapshotSources) {
-            val snapshot = source.mkSnapshot(ctx, driver, result, placeholders);
+            val snapshot = source.mkSnapshot(ctx, driver, result, md);
             sb.append("---").append(source.name().toLowerCase()).append("---\n");
             sb.append(snapshot).append("\n");
         }

@@ -2,6 +2,7 @@ package com.dtsx.docs.core.runner.tests.snapshots.sources.schema.names;
 
 import com.datastax.astra.client.databases.Database;
 import com.dtsx.docs.commands.test.TestCtx;
+import com.dtsx.docs.core.planner.fixtures.FixtureMetadata;
 import com.dtsx.docs.core.planner.meta.snapshot.meta.WithKeyspace;
 import com.dtsx.docs.core.runner.Placeholders;
 import com.dtsx.docs.core.runner.drivers.ClientDriver;
@@ -22,17 +23,17 @@ public abstract class NamesSource extends SnapshotSource {
         this.keyspace = keyspace.keyspace();
     }
 
-    public abstract List<String> names(Database db, Placeholders placeholders);
+    public abstract List<String> names(Database db, ClientDriver driver, FixtureMetadata md);
 
     @Override
-    public String mkSnapshot(TestCtx ctx, ClientDriver driver, RunResult res, Placeholders placeholders) {
+    public String mkSnapshot(TestCtx ctx, ClientDriver driver, RunResult res, FixtureMetadata md) {
         val db = DataAPIUtils.getDatabase(
             ctx.connectionInfo(),
-            this.keyspace.orElse(placeholders.keyspaceName())
+            this.keyspace.orElse(md.keyspaceName())
         );
 
         return JacksonUtils.formatJsonPretty(
-            names(db, placeholders).stream()
+            names(db, driver, md).stream()
                 .sorted()
                 .toList()
         );

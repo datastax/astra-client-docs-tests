@@ -1,9 +1,9 @@
 package com.dtsx.docs.core.runner.tests.snapshots.sources.schema.names;
 
 import com.datastax.astra.client.databases.Database;
-import com.dtsx.docs.core.planner.PlanException;
+import com.dtsx.docs.core.planner.fixtures.FixtureMetadata;
 import com.dtsx.docs.core.planner.meta.snapshot.meta.WithNameAndKeyspace;
-import com.dtsx.docs.core.runner.Placeholders;
+import com.dtsx.docs.core.runner.drivers.ClientDriver;
 import lombok.val;
 
 import java.util.List;
@@ -18,11 +18,8 @@ public class TableIndexNamesSource extends NamesSource {
     }
 
     @Override
-    public List<String> names(Database db, Placeholders placeholders) {
-        val tableName = overrideName
-            .or(placeholders::tableName)
-            .orElseThrow(() -> new PlanException("Could not determine table name from fixture metadata or override for source: " + name));
-
+    public List<String> names(Database db, ClientDriver driver, FixtureMetadata md) {
+        val tableName = resolveName("table name", md, driver, overrideName, md::tableName);
         return db.getTable(tableName).listIndexesNames();
     }
 }

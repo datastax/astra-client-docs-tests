@@ -95,18 +95,20 @@ public final class JSFixtureImpl extends JSFixture {
         val displayPath = ctx.examplesFolder().relativize(path);
 
         val envVars = PlaceholderResolver.mkEnvVars(ctx, md, Optional.ofNullable(lang));
-        envVars.put("NAME_ROOT", "n" + md.index().unwrap());
+        envVars.put("NAME_ROOT", "n" + md.index().toNameRoot());
 
         val code = """
           import * as m from '%s';
         
           const fn = m.%s;
         
-          if (fn) {
-            console.log(fn());
-          } else {
-            console.error("function_not_found");
-          }
+          (async () => {
+            if (fn) {
+              console.log(await fn());
+            } else {
+              console.error("function_not_found");
+            }
+          })();
         """.formatted(path.toAbsolutePath(), function);
 
         // Calls the function if it exists
