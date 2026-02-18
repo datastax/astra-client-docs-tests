@@ -72,7 +72,7 @@ public abstract class TestReporter {
     ///     - ✓ <examples_dir>/delete-many/example.ts
     ///     - ✗ <examples_dir>/delete-many/java/src/main/java/Example.java
     /// ```
-    public abstract void printTestRootResults(JSFixture baseFixture, TestRootResults result, TestResults history);
+    public abstract void printTestRootResults(JSFixture baseFixture, TestRootResults result, TestResults history, long duration);
 
     /// Prints the final summary after all tests complete (total, passed, failed, potentially bailed counts)
     ///
@@ -120,7 +120,7 @@ public abstract class TestReporter {
     ///   ✗ ./path/to/example.py
     ///   ! ./path/to/example.java
     /// ```
-    protected void printTestRootResults(TestRootResults results) {
+    protected void printTestRootResults(TestRootResults results, long duration) {
         val sb = new StringBuilder("  "); // this is not a weird face I promise
 
         val allResultsTheSame = results.outcomes().values().stream()
@@ -132,12 +132,12 @@ public abstract class TestReporter {
         CliLogger.println(
             false,
             (allResultsTheSame)
-                ? mkShorthandReport(results, sb)
-                : mkDetailedReport(results, sb)
+                ? mkShorthandReport(results, sb, duration)
+                : mkDetailedReport(results, sb, duration)
         );
     }
 
-    private String mkShorthandReport(TestRootResults results, StringBuilder sb) {
+    private String mkShorthandReport(TestRootResults results, StringBuilder sb, long duration) {
         val outcome = results.outcomes().values().stream().findFirst().flatMap(r -> r.values().stream().findFirst()).orElseThrow();
 
         val languages = results.outcomes().entrySet().stream()
@@ -155,19 +155,20 @@ public abstract class TestReporter {
             })
             .collect(joining(","));
 
-        return sb
-            .append(outputPrefix(outcome))
+        sb.append(outputPrefix(outcome))
             .append(" ")
             .append(results.testRoot().rootName())
             .append(Style.faint.on())
             .append(" (")
             .append(languages)
             .append(")")
-            .append(Style.faint.off())
-            .toString();
+            .append(Style.faint.off());
+
+        appendDuration(sb, duration);
+        return sb.toString();
     }
 
-    private String mkDetailedReport(TestRootResults results, StringBuilder sb) {
+    private String mkDetailedReport(TestRootResults results, StringBuilder sb, long duration) {
         val shorthandSymbol = results.allPassed()
             ? "@|green ✓|@"
             : "@|red ✗|@";
@@ -176,6 +177,8 @@ public abstract class TestReporter {
             .append(shorthandSymbol)
             .append(" ")
             .append(results.testRoot().rootName());
+
+        appendDuration(sb, duration);
 
         results.outcomes().forEach((_, outcomes) -> {
             outcomes.forEach((path, outcome) -> {
@@ -187,6 +190,20 @@ public abstract class TestReporter {
         });
 
         return sb.toString();
+    }
+
+    private void appendDuration(StringBuilder sb, long duration) {
+        if (duration < 5000) {
+            return;
+        }
+
+        sb
+            .append(" ")
+            .append(Style.fg_red.on())
+            .append("(")
+            .append(duration)
+            .append("ms)"
+            ).append(Style.fg_red.off());
     }
 
     private String outputPrefix(TestOutcome outcome) {

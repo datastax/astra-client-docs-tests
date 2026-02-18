@@ -14,10 +14,10 @@ import java.util.function.BiConsumer;
 
 @RequiredArgsConstructor
 public class TestPlan {
-    private final SortedMap<BaseFixturePool, SequencedSet<TestRoot>> plan;
+    private final SortedMap<BaseFixturePool, SortedSet<TestRoot>> plan;
     private final Set<ClientLanguage> usedLanguages;
 
-    public void forEachPool(BiConsumer<BaseFixturePool, SequencedSet<TestRoot>> consumer) {
+    public void forEachPool(BiConsumer<BaseFixturePool, SortedSet<TestRoot>> consumer) {
         plan.forEach(consumer);
     }
 
@@ -32,7 +32,7 @@ public class TestPlan {
     public static class Builder {
         private final Map<JSFixture, PoolInfo> poolInfos = new HashMap<>();
         private final Set<ClientLanguage> usedLanguages = new HashSet<>();
-        
+
         private static class PoolInfo {
             final List<TestRoot> testRoots = new ArrayList<>();
             int maxNeededFixtures = 0;
@@ -50,11 +50,11 @@ public class TestPlan {
         }
 
         public TestPlan build(int maxFixtureInstances) {
-            val plan = new TreeMap<BaseFixturePool, SequencedSet<TestRoot>>();
+            val plan = new TreeMap<BaseFixturePool, SortedSet<TestRoot>>();
 
             for (val entry : poolInfos.entrySet()) {
                 val pool = mkPool(entry.getKey(), entry.getValue(), maxFixtureInstances);
-                plan.put(pool, new LinkedHashSet<>(entry.getValue().testRoots));
+                plan.put(pool, new TreeSet<>(entry.getValue().testRoots));
             }
 
             return new TestPlan(plan, usedLanguages);

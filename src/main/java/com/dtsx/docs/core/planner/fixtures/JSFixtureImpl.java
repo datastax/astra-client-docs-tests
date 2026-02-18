@@ -4,6 +4,7 @@ import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.core.planner.fixtures.BaseFixturePool.FixtureIndex;
 import com.dtsx.docs.core.runner.PlaceholderResolver;
 import com.dtsx.docs.core.runner.RunException;
+import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
@@ -12,10 +13,10 @@ import com.dtsx.docs.lib.JacksonUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.val;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -35,7 +36,7 @@ public final class JSFixtureImpl extends JSFixture {
     public FixtureMetadata meta(ExternalProgram tsx, FixtureIndex index) {
         val emptyMd = FixtureMetadata.emptyForIndex(index);
 
-        val maybeOutput = tryCallJsFunction(tsx, emptyMd, "Meta");
+        val maybeOutput = tryCallJsFunction(tsx, emptyMd, "Meta", null);
 
         if (maybeOutput.isEmpty()) {
             return emptyMd;
@@ -53,35 +54,35 @@ public final class JSFixtureImpl extends JSFixture {
     @Override
     public void setup(ExternalProgram tsx, FixtureMetadata md) {
         if (!dryRun) {
-            tryCallJsFunction(tsx, md, "Setup");
+            tryCallJsFunction(tsx, md, "Setup", null);
         }
     }
 
     @Override
-    public void beforeEach(ExternalProgram tsx, FixtureMetadata md) {
+    public void beforeEach(ExternalProgram tsx, FixtureMetadata md, @Nullable ClientLanguage lang) {
         if (!dryRun) {
-            tryCallJsFunction(tsx, md, "BeforeEach");
+            tryCallJsFunction(tsx, md, "BeforeEach", lang);
         }
     }
 
     @Override
-    public void afterEach(ExternalProgram tsx, FixtureMetadata md) {
+    public void afterEach(ExternalProgram tsx, FixtureMetadata md, @Nullable ClientLanguage lang) {
         if (!dryRun) {
-            tryCallJsFunction(tsx, md, "AfterEach");
+            tryCallJsFunction(tsx, md, "AfterEach", lang);
         }
     }
 
     @Override
     public void teardown(ExternalProgram tsx, FixtureMetadata md) {
         if (!dryRun) {
-            tryCallJsFunction(tsx, md, "Teardown");
+            tryCallJsFunction(tsx, md, "Teardown", null);
         }
     }
 
     private final Set<String> nonexistentFunctions = new HashSet<>();
 
     @SneakyThrows
-    private Optional<RunResult> tryCallJsFunction(ExternalProgram tsx, FixtureMetadata md, String function) {
+    private Optional<RunResult> tryCallJsFunction(ExternalProgram tsx, FixtureMetadata md, String function, @Nullable ClientLanguage lang) {
         if (nonexistentFunctions.contains(function)) {
             return Optional.empty();
         }
@@ -93,7 +94,7 @@ public final class JSFixtureImpl extends JSFixture {
 
         val displayPath = ctx.examplesFolder().relativize(path);
 
-        val envVars = new HashMap<>(PlaceholderResolver.mkEnvVars(ctx, md));
+        val envVars = PlaceholderResolver.mkEnvVars(ctx, md, Optional.ofNullable(lang));
         envVars.put("NAME_ROOT", "n" + md.index().unwrap());
 
         val code = """

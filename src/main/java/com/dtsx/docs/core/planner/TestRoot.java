@@ -6,6 +6,7 @@ import com.dtsx.docs.core.runner.RunException;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import com.dtsx.docs.core.runner.tests.strategies.test.TestStrategy;
 import lombok.Getter;
+import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
 import java.util.Set;
@@ -36,7 +37,7 @@ import java.util.TreeMap;
 ///
 /// @see SnapshotTestMetaRep
 @Getter
-public class TestRoot {
+public class TestRoot implements Comparable<TestRoot> {
     private final Path path;
     private final TreeMap<ClientLanguage, Set<Path>> filesToTest;
     private final int numLanguagesToTest;
@@ -69,5 +70,10 @@ public class TestRoot {
             throw new RunException("File to test is not within the test root path"); // sanity check; should never be thrown
         }
         return rootName + "/" + path.relativize(fileToTest);
+    }
+
+    @Override
+    public int compareTo(@NotNull TestRoot o) {
+        return rootName.compareTo(o.rootName);
     }
 }

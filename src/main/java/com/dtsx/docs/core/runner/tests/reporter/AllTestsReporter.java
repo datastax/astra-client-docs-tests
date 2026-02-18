@@ -27,7 +27,7 @@ public class AllTestsReporter extends TestReporter {
     }
 
     @Override
-    public void printTestRootResults(JSFixture baseFixture, TestRootResults results, TestResults history) {
-        printTestRootResults(results);
+    public void printTestRootResults(JSFixture baseFixture, TestRootResults results, TestResults history, long duration) {
+        printTestRootResults(results, duration);
     }
 }

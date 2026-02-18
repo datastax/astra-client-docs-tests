@@ -1,9 +1,11 @@
 package com.dtsx.docs.core.planner.fixtures;
 
 import com.dtsx.docs.core.planner.fixtures.BaseFixturePool.FixtureIndex;
+import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.Nullable;
 
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public final class NoopFixture extends JSFixture {
@@ -28,12 +30,12 @@ public final class NoopFixture extends JSFixture {
     }
 
     @Override
-    public void beforeEach(ExternalProgram tsx, FixtureMetadata md) {
+    public void beforeEach(ExternalProgram tsx, FixtureMetadata md, @Nullable ClientLanguage lang) {
         // noop
     }
 
     @Override
-    public void afterEach(ExternalProgram tsx, FixtureMetadata md) {
+    public void afterEach(ExternalProgram tsx, FixtureMetadata md, @Nullable ClientLanguage lang) {
         // noop
     }
 

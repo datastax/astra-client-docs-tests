@@ -19,6 +19,10 @@ public class TableDefinitionSource extends SchemaObjectDefinitionSource {
 
     @Override
     protected Object getDefinition(TestCtx ctx, String name, String keyspace) {
+        try {
+            Thread.sleep(1000); // gives a sec for schema changes to propagate, making certain tests more consistent
+        } catch (InterruptedException _) {}
+
         return DataAPIUtils.getTable(ctx.connectionInfo(), name, keyspace).getDefinition();
     }
 }

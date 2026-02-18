@@ -2,6 +2,7 @@ package com.dtsx.docs.core.planner.fixtures;
 
 import com.dtsx.docs.core.planner.fixtures.BaseFixturePool.FixtureIndex;
 import com.dtsx.docs.core.runner.Placeholders;
+import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;

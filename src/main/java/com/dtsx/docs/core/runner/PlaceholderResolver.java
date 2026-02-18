@@ -1,29 +1,34 @@
 package com.dtsx.docs.core.runner;
 
 import com.dtsx.docs.config.ctx.BaseScriptRunnerCtx;
+import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import lombok.val;
+import org.apache.commons.lang3.function.TriFunction;
 
 import java.util.*;
-import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PlaceholderResolver {
-    private static final Map<String, BiFunction<BaseScriptRunnerCtx, Placeholders, Optional<String>>> PLACEHOLDERS = new HashMap<>() {{
-        put("APPLICATION_TOKEN", (ctx, _) -> Optional.of(ctx.connectionInfo().token()));
-        put("API_ENDPOINT", (ctx, _) -> Optional.of(ctx.connectionInfo().endpoint()));
-        put("USERNAME", (ctx, _) -> ctx.connectionInfo().username());
-        put("PASSWORD", (ctx, _) -> ctx.connectionInfo().password());
-        put("KEYSPACE_NAME", (_, phs) -> Optional.of(phs.keyspaceName()));
-        put("TABLE_NAME", (_, phs) -> phs.tableName());
-        put("COLLECTION_NAME", (_, phs) -> phs.collectionName());
-        put("UDT_NAME", (_, _) -> Optional.of("placeholder_udt_name")); // can be actually implemented later if needed
-        put("INDEX_NAME", (_, _) -> Optional.of("placeholder_index_name"));
-        put("DATABASE_NAME", (_, _) -> Optional.of("whatever_db_name"));
-        put("DATABASE_ID", (_, _) -> Optional.of("whatever_db_id"));
-        put("OLD_COLLECTION_NAME", (_, _) -> Optional.of("whatever_old_name"));
-        put("NEW_COLLECTION_NAME", (_, _) -> Optional.of("whatever_new_name"));
-    }};
+    private static final Map<String, TriFunction<BaseScriptRunnerCtx, Placeholders, Optional<ClientLanguage>, Optional<String>>> DYNAMIC_PLACEHOLDERS = Map.of(
+        "APPLICATION_TOKEN", (ctx, _, _) -> Optional.of(ctx.connectionInfo().token()),
+        "API_ENDPOINT", (ctx, _, _) -> Optional.of(ctx.connectionInfo().endpoint()),
+        "USERNAME", (ctx, _, _) -> ctx.connectionInfo().username(),
+        "PASSWORD", (ctx, _, _) -> ctx.connectionInfo().password(),
+        "KEYSPACE_NAME", (_, phs, _) -> Optional.of(phs.keyspaceName()),
+        "TABLE_NAME", (_, phs, _) -> phs.tableName(),
+        "COLLECTION_NAME", (_, phs, _) -> phs.collectionName(),
+        "UDT_NAME", (_, _, lang) -> lang.map(PlaceholderResolver::mkUDTName),
+        "INDEX_NAME", (_, _, lang) -> lang.map(PlaceholderResolver::mkIndexName)
+    );
+
+    private static final Map<String, String> STATIC_PLACEHOLDERS = Map.of(
+        "DATABASE_NAME", "whatever_db_name",
+        "DATABASE_ID", "whatever_db_id",
+        "OLD_COLLECTION_NAME", "whatever_old_name",
+        "NEW_COLLECTION_NAME", "whatever_new_name",
+        "COLUMN_NAME", "example_column"
+    );
 
     private static final Pattern PLACEHOLDER = Pattern.compile("\\*\\*(\\w+)\\*\\*");
 
@@ -36,20 +41,29 @@ public class PlaceholderResolver {
         "PfXCjz8HrhQ+o9cK", randomVectorBinary("bin2")
     );
 
-    public static String replacePlaceholders(BaseScriptRunnerCtx ctx, Placeholders placeholders, String src) {
+    public static String mkUDTName(ClientLanguage lang) {
+        return lang.name().toLowerCase() + "_index";
+    }
+
+    public static String mkIndexName(ClientLanguage lang) {
+        return lang.name().toLowerCase() + "_index";
+    }
+
+    public static String replacePlaceholders(BaseScriptRunnerCtx ctx, Placeholders placeholders, ClientLanguage lang, String src) {
         val m = PLACEHOLDER.matcher(src);
         val out = new StringBuilder(src.length());
 
         while (m.find()) {
             val key = m.group(1);
 
-            if (!PLACEHOLDERS.containsKey(key)) {
+            if (DYNAMIC_PLACEHOLDERS.containsKey(key)) {
+                val value = DYNAMIC_PLACEHOLDERS.get(key).apply(ctx, placeholders, Optional.of(lang)).orElseThrow(() -> new RunException("Missing value for placeholder: **" + key + "**"));
+                m.appendReplacement(out, Matcher.quoteReplacement(value));
+            } else if (STATIC_PLACEHOLDERS.containsKey(key)) {
+                m.appendReplacement(out, Matcher.quoteReplacement(STATIC_PLACEHOLDERS.get(key)));
+            } else {
                 throw new RunException("Unknown placeholder: **" + key + "**");
             }
-
-            val value = PLACEHOLDERS.get(key).apply(ctx, placeholders).orElseThrow(() -> new RunException("Missing value for placeholder: **" + key + "**"));
-
-            m.appendReplacement(out, Matcher.quoteReplacement(value));
         }
 
         m.appendTail(out);
@@ -65,13 +79,14 @@ public class PlaceholderResolver {
         return out.toString();
     }
 
-    public static Map<String, String> mkEnvVars(BaseScriptRunnerCtx ctx, Placeholders placeholders) {
+    public static HashMap<String, String> mkEnvVars(BaseScriptRunnerCtx ctx, Placeholders placeholders, Optional<ClientLanguage> lang) {
         val envVars = new HashMap<String, String>();
 
-        for (val entry : PLACEHOLDERS.entrySet()) {
-            entry.getValue().apply(ctx, placeholders).ifPresent(v -> envVars.put(entry.getKey(), v));
-        }
+        DYNAMIC_PLACEHOLDERS.forEach((key, func) -> {
+            func.apply(ctx, placeholders, lang).ifPresent(v -> envVars.put(key, v));
+        });
 
+        envVars.putAll(STATIC_PLACEHOLDERS);
         return envVars;
     }
 

@@ -52,8 +52,8 @@ public class SequentialExecutionStrategy extends ExecutionStrategy {
     private void executeLanguage(ClientLanguage language, Set<Path> filesForLang, MessageUpdater msgUpdater, TestFileRunner testFileRunner) {
         try {
             val resetter = new TestResetter(
-                () -> testFixture.beforeEach(tsx, md()),
-                () -> testFixture.afterEach(tsx, md())
+                () -> testFixture.beforeEach(tsx, md(), language),
+                () -> testFixture.afterEach(tsx, md(), language)
             );
 
             val result = testFileRunner.run(language, filesForLang, md(), resetter, msgUpdater);

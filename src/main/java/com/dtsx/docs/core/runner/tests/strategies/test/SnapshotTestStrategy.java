@@ -22,6 +22,7 @@ import lombok.Getter;
 import lombok.val;
 
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.Set;
 
 @Getter
@@ -85,7 +86,7 @@ public final class SnapshotTestStrategy extends TestStrategy<SnapshotTestMeta> {
             val driver = ctx.drivers().get(language);
             val execEnv = execEnvs.forLanguage(language);
 
-            val envVars = PlaceholderResolver.mkEnvVars(ctx, md);
+            val envVars = PlaceholderResolver.mkEnvVars(ctx, md, Optional.of(language));
 
             return verifier.verify(driver, testRoot, md, filesForLang, resetter, (path) -> {
                 msgUpdater.update(_ -> "Verifying @!%s!@".formatted(testRoot.displayPath(path)));

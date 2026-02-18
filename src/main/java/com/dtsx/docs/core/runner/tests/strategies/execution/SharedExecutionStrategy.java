@@ -39,7 +39,7 @@ public class SharedExecutionStrategy extends ExecutionStrategy {
         try (val executor = Executors.newVirtualThreadPerTaskExecutor()) {
             pool.beforeEach(tsx);
             testFixture.setup(tsx, md());
-            testFixture.beforeEach(tsx, md());
+            testFixture.beforeEach(tsx, md(), null);
 
             val futures = ExecutorUtils.emptyFuturesList();
 
@@ -51,7 +51,7 @@ public class SharedExecutionStrategy extends ExecutionStrategy {
 
             ExecutorUtils.awaitAll(futures);
         } finally {
-            testFixture.afterEach(tsx, md());
+            testFixture.afterEach(tsx, md(), null);
             testFixture.teardown(tsx, md());
             pool.afterEach(tsx);
         }

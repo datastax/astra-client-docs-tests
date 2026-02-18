@@ -75,13 +75,13 @@ public class BaseFixturePool implements Comparable<BaseFixturePool> {
 
     public void beforeEach(ExternalProgram tsx) {
         executeAll(tsx, "BeforeEach", (meta) -> {
-            baseFixture.beforeEach(tsx, meta);
+            baseFixture.beforeEach(tsx, meta, null);
         });
     }
 
     public void afterEach(ExternalProgram tsx) {
         executeAll(tsx, "AfterEach", (meta) -> {
-            baseFixture.afterEach(tsx, meta);
+            baseFixture.afterEach(tsx, meta, null);
         });
     }
 

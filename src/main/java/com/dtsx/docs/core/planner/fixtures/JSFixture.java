@@ -5,12 +5,14 @@ import com.dtsx.docs.core.planner.TestRoot;
 import com.dtsx.docs.core.planner.fixtures.BaseFixturePool.FixtureIndex;
 import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMetaRep;
 import com.dtsx.docs.core.runner.RunException;
+import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import lombok.EqualsAndHashCode;
 import lombok.val;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 
@@ -68,8 +70,8 @@ public sealed abstract class JSFixture implements Comparable<JSFixture> permits 
     public abstract FixtureMetadata meta(ExternalProgram tsx, FixtureIndex index);
 
     public abstract void setup(ExternalProgram tsx, FixtureMetadata md);
-    public abstract void beforeEach(ExternalProgram tsx, FixtureMetadata md);
-    public abstract void afterEach(ExternalProgram tsx, FixtureMetadata md);
+    public abstract void beforeEach(ExternalProgram tsx, FixtureMetadata md, @Nullable ClientLanguage lang);
+    public abstract void afterEach(ExternalProgram tsx, FixtureMetadata md, @Nullable ClientLanguage lang);
     public abstract void teardown(ExternalProgram tsx, FixtureMetadata md);
 
     public static void installDependencies(TestCtx ctx) {

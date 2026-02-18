@@ -11,18 +11,17 @@ import lombok.val;
 
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class ScriptRunner {
     private final RunCtx ctx;
     private final Map<ClientDriver, Set<Path>> scripts;
-    private final Map<String, String> envVars;
     private final ScriptReporter reporter;
 
     private ScriptRunner(RunCtx ctx) {
         this.ctx = ctx;
         this.scripts = ctx.scripts();
-        this.envVars = PlaceholderResolver.mkEnvVars(ctx, ctx.placeholders());
         this.reporter = ctx.reporter();
     }
 
@@ -64,6 +63,8 @@ public class ScriptRunner {
         CliLogger.debug("Running script '" + script + "'");
 
         val scriptName = resolveScriptDisplayName(script);
+
+        val envVars = PlaceholderResolver.mkEnvVars(ctx, ctx.placeholders(), Optional.of(driver.language()));
 
         val result = execEnv.withTestFileCopied(driver, script, ctx.placeholders(), TestFileModifiers.NONE, () -> {
             return CliLogger.loading("Running @!" + scriptName + "!@", (_) -> {

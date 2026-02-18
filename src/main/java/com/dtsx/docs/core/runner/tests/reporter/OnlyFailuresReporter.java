@@ -34,7 +34,7 @@ public class OnlyFailuresReporter extends TestReporter {
     }
 
     @Override
-    public void printTestRootResults(JSFixture baseFixture, TestRootResults results, TestResults history) {
+    public void printTestRootResults(JSFixture baseFixture, TestRootResults results, TestResults history, long duration) {
         if (results.allPassed()) {
             return;
         }
@@ -45,6 +45,6 @@ public class OnlyFailuresReporter extends TestReporter {
             printBaseFixtureName = null;
         }
 
-        printTestRootResults(results);
+        printTestRootResults(results, duration);
     }
 }

@@ -140,7 +140,7 @@ public class ExecutionEnvironment {
     @SneakyThrows
     private Path setupFileForTesting(ClientDriver driver, Path sourceFile, Placeholders placeholders, @TestFileModifierFlags int mods) {
         var content = Files.readString(sourceFile);
-        content = PlaceholderResolver.replacePlaceholders(ctx, placeholders, content);
+        content = PlaceholderResolver.replacePlaceholders(ctx, placeholders, driver.language(), content);
         content = driver.preprocessScript(ctx, content, mods);
 
         Files.createDirectories(testFileCopyPath.getParent());
