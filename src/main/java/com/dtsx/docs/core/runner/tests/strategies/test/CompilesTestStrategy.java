@@ -29,18 +29,12 @@ import static com.dtsx.docs.core.runner.tests.VerifyMode.DRY_RUN;
 import static com.dtsx.docs.core.runner.tests.VerifyMode.NO_COMPILE_ONLY;
 
 public final class CompilesTestStrategy extends TestStrategy<CompilesTestMeta> {
-    private static final Placeholders FAKE_FIXTURE_MD = new Placeholders(
-        Optional.of("compiles_test_collection"),
-        Optional.of("compiles_test_table"),
-        "compiles_test_keyspace"
-    );
-
     public CompilesTestStrategy(TestCtx ctx, CompilesTestMeta m) {
         super(ctx, m);
     }
 
     @Override
-    public BaseFixturePool slicePool(BaseFixturePool pool, TestRoot testRoot) {
+    public BaseFixturePool slicePool(TestRoot testRoot, BaseFixturePool pool) {
         return pool.slice(0, 0);
     }
 
@@ -60,7 +54,7 @@ public final class CompilesTestStrategy extends TestStrategy<CompilesTestMeta> {
 
                     futures.add(executor.submit(() -> {
                         paths.forEach(path -> {
-                            runSingleTest(testRoot, outcomes, lang, path, driver, execEnv);
+                            runSingleTest(testRoot, outcomes, path, driver, execEnv);
                         });
                     }));
                 });
@@ -74,7 +68,9 @@ public final class CompilesTestStrategy extends TestStrategy<CompilesTestMeta> {
         });
     }
 
-    private void runSingleTest(TestRoot testRoot, Map<ClientLanguage, Map<Path, TestOutcome>> outcomes, ClientLanguage lang, Path path, ClientDriver driver, ExecutionEnvironment execEnv) {
+    private void runSingleTest(TestRoot testRoot, Map<ClientLanguage, Map<Path, TestOutcome>> outcomes, Path path, ClientDriver driver, ExecutionEnvironment execEnv) {
+        val lang = driver.language();
+
         outcomes.computeIfAbsent(lang, _ -> new HashMap<>());
 
         if (ctx.verifyMode() == DRY_RUN || ctx.verifyMode() == NO_COMPILE_ONLY) {
@@ -82,7 +78,7 @@ public final class CompilesTestStrategy extends TestStrategy<CompilesTestMeta> {
             return;
         }
 
-        execEnv.withTestFileCopied(driver, path, FAKE_FIXTURE_MD, TestFileModifiers.NONE, () -> {
+        execEnv.withTestFileCopied(driver, path, mkPlaceholders(testRoot), TestFileModifiers.NONE, () -> {
             val res = driver.compileScript(ctx, execEnv);
 
             val outcome = (res.notOk())
@@ -92,5 +88,14 @@ public final class CompilesTestStrategy extends TestStrategy<CompilesTestMeta> {
             outcomes.get(lang).put(path, outcome);
             return null;
         });
+    }
+
+    private Placeholders mkPlaceholders(TestRoot testRoot) {
+        return new Placeholders(
+            Optional.of("compiles_test_collection"),
+            Optional.of("compiles_test_table"),
+            "compiles_test_keyspace",
+            testRoot.vars()
+        );
     }
 }

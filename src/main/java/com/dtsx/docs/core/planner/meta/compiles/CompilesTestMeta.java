@@ -16,9 +16,11 @@ import java.util.Map;
 @Getter
 public final class CompilesTestMeta implements BaseMetaYml {
     private final SkipConfig skipConfig;
+    private final Map<String, String> vars;
 
     public CompilesTestMeta(TestCtx ctx, BaseMetaYmlRep meta) {
         this.skipConfig = SkipConfig.parse((Map<ClientLanguage, SkipTestType> l) -> new SkipConfig(TestType.COMPILES, l), ctx, meta.test().skip(), new TypeReference<>() {});
+        this.vars = meta.test().vars().orElse(Map.of());
     }
 
     @Override

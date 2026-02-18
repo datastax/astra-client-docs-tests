@@ -6,6 +6,7 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class RunArgs extends BaseScriptRunnerArgs<RunCtx> {
@@ -37,6 +38,14 @@ public class RunArgs extends BaseScriptRunnerArgs<RunCtx> {
         paramLabel = "NAME"
     )
     public String $keyspace;
+
+    @Option(
+        names = { "-v", "--var" },
+        description = "Custom variables for placeholder replacement in the format `-v KEY=value`. Can be specified multiple times.",
+        paramLabel = "KEY=value",
+        split = ","
+    )
+    public Map<String, String> $vars;
 
     @Option(
         names = { "-p", "--plain" },

@@ -50,7 +50,7 @@ public class TableIndexDefinitionsSource extends SnapshotSource {
 
         val indexes = table.listIndexes().stream()
             .filter(shouldIncludeIndex)
-            .peek(i -> i.name("example_index_name"))
+            .map(i -> i.name("example_index_name"))
             .toList();
         
         return JacksonUtils.formatJsonPretty(

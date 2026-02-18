@@ -60,10 +60,10 @@ public class TestRunner {
 
                     for (val testRoot : testRoots) {
                         try {
-                            val slice = testRoot.testStrategy().slicePool(pool, testRoot);
+                            val adaptedPool = testRoot.testStrategy().slicePool(testRoot, pool);
 
                             val startTime = System.currentTimeMillis();
-                            val result = testRoot.testStrategy().runTestsInRoot(tsx, testRoot, execEnvs, slice);
+                            val result = testRoot.testStrategy().runTestsInRoot(tsx, testRoot, execEnvs, adaptedPool);
                             val duration = System.currentTimeMillis() - startTime;
 
                             ctx.reporter().printTestRootResults(pool.fixture(), result, history, duration);

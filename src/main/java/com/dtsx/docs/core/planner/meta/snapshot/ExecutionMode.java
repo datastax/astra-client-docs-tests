@@ -20,10 +20,10 @@ public enum ExecutionMode {
     ISOLATED(IsolatedExecutionStrategy::new, IsolatedExecutionStrategy::slicePool);
 
     private final Function4<ExternalProgram, JSFixture, BaseFixturePool, TestRoot, ExecutionStrategy> constructor;
-    private final BiFunction<BaseFixturePool, TestRoot, BaseFixturePool> slicePool;
+    private final BiFunction<TestRoot, BaseFixturePool, BaseFixturePool> slicePool;
 
-    public BaseFixturePool slicePool(BaseFixturePool pool, TestRoot testRoot) {
-        return slicePool.apply(pool, testRoot);
+    public BaseFixturePool slicePool(TestRoot testRoot, BaseFixturePool pool) {
+        return slicePool.apply(testRoot, pool);
     }
 
     public ExecutionStrategy createStrategy(ExternalProgram tsx, JSFixture testFixture, BaseFixturePool pool, TestRoot testRoot) {

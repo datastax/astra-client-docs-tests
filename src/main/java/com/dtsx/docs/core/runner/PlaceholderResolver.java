@@ -26,8 +26,7 @@ public class PlaceholderResolver {
         "DATABASE_NAME", "whatever_db_name",
         "DATABASE_ID", "whatever_db_id",
         "OLD_COLLECTION_NAME", "whatever_old_name",
-        "NEW_COLLECTION_NAME", "whatever_new_name",
-        "COLUMN_NAME", "example_column"
+        "NEW_COLLECTION_NAME", "whatever_new_name"
     );
 
     private static final Pattern PLACEHOLDER = Pattern.compile("\\*\\*(\\w+)\\*\\*");
@@ -56,7 +55,9 @@ public class PlaceholderResolver {
         while (m.find()) {
             val key = m.group(1);
 
-            if (DYNAMIC_PLACEHOLDERS.containsKey(key)) {
+            if (placeholders.vars().containsKey(key)) {
+                m.appendReplacement(out, Matcher.quoteReplacement(placeholders.vars().get(key)));
+            } else if (DYNAMIC_PLACEHOLDERS.containsKey(key)) {
                 val value = DYNAMIC_PLACEHOLDERS.get(key).apply(ctx, placeholders, Optional.of(lang)).orElseThrow(() -> new RunException("Missing value for placeholder: **" + key + "**"));
                 m.appendReplacement(out, Matcher.quoteReplacement(value));
             } else if (STATIC_PLACEHOLDERS.containsKey(key)) {
@@ -87,6 +88,7 @@ public class PlaceholderResolver {
         });
 
         envVars.putAll(STATIC_PLACEHOLDERS);
+        envVars.putAll(placeholders.vars());
         return envVars;
     }
 

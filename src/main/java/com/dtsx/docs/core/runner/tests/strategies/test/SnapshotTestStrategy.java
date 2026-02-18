@@ -32,8 +32,8 @@ public final class SnapshotTestStrategy extends TestStrategy<SnapshotTestMeta> {
     }
 
     @Override
-    public BaseFixturePool slicePool(BaseFixturePool pool, TestRoot testRoot) {
-        return meta.executionMode().slicePool(pool, testRoot);
+    public BaseFixturePool slicePool(TestRoot testRoot, BaseFixturePool pool) {
+        return meta.executionMode().slicePool(testRoot, pool);
     }
 
     @Override
@@ -42,7 +42,6 @@ public final class SnapshotTestStrategy extends TestStrategy<SnapshotTestMeta> {
     }
 
     public class Runner {
-        private final ExternalProgram tsx;
         private final TestRoot testRoot;
         private final ExecutionEnvironments execEnvs;
         private final BaseFixturePool pool;
@@ -50,7 +49,6 @@ public final class SnapshotTestStrategy extends TestStrategy<SnapshotTestMeta> {
         private final ExecutionStrategy executionStrategy;
 
         public Runner(ExternalProgram tsx, TestRoot testRoot, ExecutionEnvironments execEnvs, BaseFixturePool pool) {
-            this.tsx = tsx;
             this.testRoot = testRoot;
             this.execEnvs = execEnvs;
             this.pool = pool;

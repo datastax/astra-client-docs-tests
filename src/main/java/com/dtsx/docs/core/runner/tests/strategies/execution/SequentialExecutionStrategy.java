@@ -30,41 +30,39 @@ public class SequentialExecutionStrategy extends ExecutionStrategy {
 
     private FixtureIndex index = FixtureIndex.ZERO;
 
-    public static BaseFixturePool slicePool(BaseFixturePool baseFixturePool, TestRoot ignored) {
+    public static BaseFixturePool slicePool(TestRoot ignored, BaseFixturePool baseFixturePool) {
         return baseFixturePool.slice(0, 1);
     }
 
     @Override
     protected void executeImpl(Map<ClientLanguage, Set<Path>> testFiles, MessageUpdater msgUpdater, TestFileRunner testFileRunner) {
+        val md = pool.meta(tsx, index).withVars(testRoot.vars());
+
         try {
             pool.beforeEach(tsx);
-            testFixture.setup(tsx, md());
+            testFixture.setup(tsx, md);
 
             testFiles.forEach((lang, files) -> {
-                executeLanguage(lang, files, msgUpdater, testFileRunner);
+                executeLanguage(lang, files, md, msgUpdater, testFileRunner);
             });
         } finally {
-            testFixture.teardown(tsx, md());
+            testFixture.teardown(tsx, md);
             pool.afterEach(tsx);
         }
     }
 
-    private void executeLanguage(ClientLanguage language, Set<Path> filesForLang, MessageUpdater msgUpdater, TestFileRunner testFileRunner) {
+    private void executeLanguage(ClientLanguage language, Set<Path> filesForLang, FixtureMetadata md, MessageUpdater msgUpdater, TestFileRunner testFileRunner) {
         try {
             val resetter = new TestResetter(
-                () -> testFixture.beforeEach(tsx, md(), language),
-                () -> testFixture.afterEach(tsx, md(), language)
+                () -> testFixture.beforeEach(tsx, md, language),
+                () -> testFixture.afterEach(tsx, md, language)
             );
 
-            val result = testFileRunner.run(language, filesForLang, md(), resetter, msgUpdater);
+            val result = testFileRunner.run(language, filesForLang, md, resetter, msgUpdater);
             outcomes.put(language, filesForLang.stream().collect(toMap(p -> p, _ -> result)));
         } catch (Exception ex) {
             CliLogger.exception("Error running snapshot tests for language '%s' in test root '%s'".formatted(language, testRoot.rootName()));
             outcomes.put(language, filesForLang.stream().collect(toMap(p -> p, _ -> new TestOutcome.Errored(ex).alsoLog(testRoot, language))));
         }
-    }
-
-    private FixtureMetadata md() {
-        return pool.meta(tsx, index);
     }
 }

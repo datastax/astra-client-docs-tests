@@ -9,6 +9,7 @@ import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -44,6 +45,7 @@ public class TestRoot implements Comparable<TestRoot> {
     private final int numFilesToTest;
     private final TestStrategy<?> testStrategy;
     private final String rootName;
+    private final Map<String, String> vars;
 
     public TestRoot(TestCtx ctx, Path path, TreeMap<ClientLanguage, Set<Path>> filesToTest, TestStrategy<?> testStrategy) {
         this.path = path;
@@ -52,6 +54,7 @@ public class TestRoot implements Comparable<TestRoot> {
         this.rootName = ctx.examplesFolder().relativize(path).toString();
         this.numLanguagesToTest = filesToTest.size();
         this.numFilesToTest = filesToTest.values().stream().mapToInt(Set::size).sum();
+        this.vars = testStrategy.meta().vars();
     }
 
     /// Returns the relative path of the example file for the specified file to test from this test root.

@@ -18,6 +18,6 @@ public sealed abstract class TestStrategy<M extends BaseMetaYml> permits Compile
         return meta;
     }
 
-    public abstract BaseFixturePool slicePool(BaseFixturePool pool, TestRoot testRoot);
+    public abstract BaseFixturePool slicePool(TestRoot testRoot, BaseFixturePool pool);
     public abstract TestRootResults runTestsInRoot(ExternalProgram tsx, TestRoot testRoot, ExecutionEnvironments execEnvs, BaseFixturePool pool);
 }

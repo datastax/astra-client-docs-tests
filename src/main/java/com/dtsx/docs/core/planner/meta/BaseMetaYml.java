@@ -17,6 +17,8 @@ public interface BaseMetaYml {
 
     SkipConfig skipConfig();
 
+    Map<String, String> vars();
+
     interface BaseMetaYmlRep {
         String $schema();
 
@@ -24,7 +26,7 @@ public interface BaseMetaYml {
 
         TestType expectTestType();
 
-        record TestBlock(@NonNull TestType type, @NonNull Optional<Object> skip) {
+        record TestBlock(@NonNull TestType type, @NonNull Optional<Object> skip, @NonNull Optional<Map<String, String>> vars) {
             public static class SkipConfig extends PerLanguageToggle<SkipTestType> {
                 public enum SkipTestType {
                     SNAPSHOT,

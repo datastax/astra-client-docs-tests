@@ -65,6 +65,13 @@
         "skip": {
           "$ref": "#/$defs/perLanguageToggleSkipTestType",
           "description": "Whether to skip this test (boolean for all languages, or per-language object)"
+        },
+        "vars": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Optional variables map for test configuration"
         }
       },
       "additionalProperties": false

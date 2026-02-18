@@ -23,7 +23,7 @@ public class IsolatedExecutionStrategy extends ExecutionStrategy {
     private final BaseFixturePool pool;
     private final TestRoot testRoot;
 
-    public static BaseFixturePool slicePool(BaseFixturePool baseFixturePool, TestRoot testRoot) {
+    public static BaseFixturePool slicePool(TestRoot testRoot, BaseFixturePool baseFixturePool) {
         return baseFixturePool.slice(0, testRoot.numLanguagesToTest());
     }
 
