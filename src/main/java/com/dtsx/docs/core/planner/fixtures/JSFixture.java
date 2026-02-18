@@ -95,7 +95,7 @@ public sealed abstract class JSFixture implements Comparable<JSFixture> permits 
             return Integer.compare(p1, p2);
         }
 
-        return this.fixtureName().compareTo(o.fixtureName());
+        return o.fixtureName().compareTo(fixtureName());
     }
 
     // TODO:

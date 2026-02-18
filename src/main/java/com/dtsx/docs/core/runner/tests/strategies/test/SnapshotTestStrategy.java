@@ -75,7 +75,7 @@ public final class SnapshotTestStrategy extends TestStrategy<SnapshotTestMeta> {
                     : "",
                 testRoot.rootName(),
                 (pool.size() > 1)
-                    ? " (across %s instances)".formatted(pool.size())
+                    ? " @|faint (across %s instances)|@".formatted(pool.size())
                     : ""
             );
         }
