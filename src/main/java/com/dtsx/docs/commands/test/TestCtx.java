@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import static com.dtsx.docs.core.runner.tests.VerifyMode.DRY_RUN;
 
@@ -52,7 +53,7 @@ public class TestCtx extends BaseScriptRunnerCtx {
         this.drivers = mkDrivers(cmd, args);
         this.reporter = args.$reporter.create(this);
         this.verifyMode = resolveVerifyMode(args);
-        this.filter = mkFilter(args.$filters, args.$inverseFilters);
+        this.filter = mkFilter(args);
         this.snapshotsFolder = examplesFolder().resolve("_snapshots");
         this.maxFixtureInstances = args.$maxFixtureInstances;
     }
@@ -105,22 +106,22 @@ public class TestCtx extends BaseScriptRunnerCtx {
             : args.$verifyMode;
     }
 
-    private Predicate<Path> mkFilter(List<String> filters, List<String> inverseFilters) {
-        val includePredicate = mkFilterPredicates(filters)
+    private Predicate<Path> mkFilter(TestArgs args) {
+        val includePredicate = mkFilterPredicates(args.$filters, args.$fand)
             .orElse(_ -> true);
 
-        val excludePredicate = mkFilterPredicates(inverseFilters)
+        val excludePredicate = mkFilterPredicates(args.$inverseFilters, args.$fand)
             .map(Predicate::negate)
             .orElse(_ -> true);
 
         return includePredicate.and(excludePredicate);
     }
 
-    private Optional<Predicate<Path>> mkFilterPredicates(List<String> filter) {
+    private Optional<Predicate<Path>> mkFilterPredicates(List<String> filter, boolean and) {
         return filter.stream()
             .map(String::trim)
             .filter(s -> !s.isBlank())
             .map((s) -> (Predicate<Path>) (path) -> path.toString().matches(".*" + s + ".*"))
-            .reduce(Predicate::and);
+            .reduce(and ? Predicate::and : Predicate::or);
     }
 }

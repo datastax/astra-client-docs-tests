@@ -63,6 +63,12 @@ public class TestArgs extends BaseScriptRunnerArgs<TestCtx> {
     public List<String> $inverseFilters;
 
     @Option(
+        names = { "-fand" },
+        description = "Changes filters to be ANDed instead of ORed (default)."
+    )
+    public boolean $fand;
+
+    @Option(
         names = { "-n", "--max-fixture-instances" },
         description = "Maximum number of base fixture instances to create for isolated execution.",
         defaultValue = "5",
