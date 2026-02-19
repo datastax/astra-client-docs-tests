@@ -31,7 +31,7 @@ npm install
 
 ```bash
 # Absolute path to your snapshots directory
-export SNAPSHOTS_DIR=/absolute/path/to/snapshots
+export EXAMPLES_DIR=/absolute/path/to/snapshots
 
 # Optional: Server port (default: 3000)
 export PORT=3000
@@ -40,7 +40,7 @@ export PORT=3000
 ### Example
 
 ```bash
-export SNAPSHOTS_DIR=/Users/me/work/astra-client-docs-tests/snapshots
+export EXAMPLES_DIR=/Users/me/work/astra-client-docs-tests/snapshots
 export PORT=3000
 ```
 
@@ -93,7 +93,7 @@ Open your browser to: `http://localhost:3000`
 
 ### Test Root Discovery
 
-The dashboard scans the `SNAPSHOTS_DIR` directory to find all test roots with changes:
+The dashboard scans the `EXAMPLES_DIR` directory to find all test roots with changes:
 
 1. Looks for directories containing `*.received.txt` files
 2. Groups shared received files by content hash
@@ -229,10 +229,10 @@ snapshot-dashboard/
 
 ### Server won't start
 
-**Error: SNAPSHOTS_DIR environment variable is not set**
-- Solution: Set the `SNAPSHOTS_DIR` environment variable
+**Error: EXAMPLES_DIR environment variable is not set**
+- Solution: Set the `EXAMPLES_DIR` environment variable
 
-**Error: SNAPSHOTS_DIR does not exist**
+**Error: EXAMPLES_DIR does not exist**
 - Solution: Verify the path exists and is correct
 
 **Error: last-modified.txt not found**

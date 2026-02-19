@@ -31,12 +31,21 @@ async function verifyReceivedContent(
   receivedFiles: string[],
   expectedContent: string
 ): Promise<{ valid: boolean; reason?: string }> {
-  const actualContent = await fs.readFile(receivedFiles[0], 'utf-8');
+  // For shared files with multiple diff groups, we need to check if ANY received file matches
+  // the expected content (since different diff groups have different content)
+  let foundMatch = false;
+  for (const receivedFile of receivedFiles) {
+    const actualContent = await fs.readFile(receivedFile, 'utf-8');
+    if (actualContent === expectedContent) {
+      foundMatch = true;
+      break;
+    }
+  }
   
-  if (actualContent !== expectedContent) {
+  if (!foundMatch) {
     return {
       valid: false,
-      reason: `Received file has been modified externally (${actualContent.length} bytes vs expected ${expectedContent.length} bytes). Please refresh.`
+      reason: `None of the received files match the expected content. Please refresh.`
     };
   }
   
@@ -61,11 +70,11 @@ function parseApprovedFileId(id: string): { filename: string; rootName: string }
  * Find all received files for an approved file
  */
 async function findReceivedFiles(
-  snapshotsDir: string,
+  examplesDir: string,
   rootName: string,
   filename: string
 ): Promise<string[]> {
-  const dirPath = path.join(snapshotsDir, rootName);
+  const dirPath = path.join(examplesDir, rootName, '_snapshots');
   const files = await fs.readdir(dirPath);
   
   if (filename === 'shared.approved.txt') {
@@ -96,7 +105,7 @@ router.post('/', async (req: Request, res: Response) => {
       lastModified: clientLastModified,
       expectedReceivedContent
     } = req.body as RejectRequest;
-    const snapshotsDir = process.env.SNAPSHOTS_DIR!;
+    const examplesDir = process.env.EXAMPLES_DIR!;
     
     if (!approvedFileId || !clientLastModified || !expectedReceivedContent) {
       return res.status(400).json({
@@ -106,7 +115,7 @@ router.post('/', async (req: Request, res: Response) => {
     }
     
     // Validate lastModified
-    const validation = await validateLastModified(snapshotsDir, clientLastModified);
+    const validation = await validateLastModified(examplesDir, clientLastModified);
     if (!validation.valid) {
       const response: StaleDataErrorResponse = {
         error: 'STALE_DATA',
@@ -120,7 +129,7 @@ router.post('/', async (req: Request, res: Response) => {
     const { filename, rootName } = parseApprovedFileId(approvedFileId);
     
     // Find all received files
-    const receivedFiles = await findReceivedFiles(snapshotsDir, rootName, filename);
+    const receivedFiles = await findReceivedFiles(examplesDir, rootName, filename);
     
     if (receivedFiles.length === 0) {
       return res.status(404).json({
@@ -160,7 +169,7 @@ router.post('/', async (req: Request, res: Response) => {
       }
     }
     
-    const newLastModified = await readLastModified(snapshotsDir);
+    const newLastModified = await readLastModified(examplesDir);
     
     const response: ActionSuccessResponse = {
       success: true,

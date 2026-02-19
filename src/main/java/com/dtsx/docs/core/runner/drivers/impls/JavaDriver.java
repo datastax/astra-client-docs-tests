@@ -53,6 +53,8 @@ public class JavaDriver extends ClientDriver {
         if ((mods & TestFileModifiers.JSONIFY_OUTPUT) != 0) {
             content = """
                import com.fasterxml.jackson.databind.json.JsonMapper;
+               import com.fasterxml.jackson.annotation.JsonInclude;
+               import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
                import com.dtsx.astra.sdk.utils.JsonUtils;
                import java.io.PrintStream;
             """ + content;
@@ -73,7 +75,11 @@ public class JavaDriver extends ClientDriver {
                     @Override
                     public void println(Object obj) {
                         try {
-                            super.println(JsonUtils.getObjectMapper().findAndRegisterModules().writeValueAsString(obj));
+                            var mapper = JsonUtils.getObjectMapper()
+                                .setDefaultPropertyInclusion(JsonInclude.Include.ALWAYS)
+                                .registerModule(new Jdk8Module());
+
+                            super.println(mapper.writeValueAsString(obj));
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }

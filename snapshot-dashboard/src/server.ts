@@ -16,40 +16,30 @@ const PORT = process.env.PORT || 3000;
  * Validate environment configuration on startup
  */
 async function validateEnvironment(): Promise<void> {
-  // Check SNAPSHOTS_DIR is set
-  if (!process.env.SNAPSHOTS_DIR) {
-    console.error('ERROR: SNAPSHOTS_DIR environment variable is not set');
-    console.error('Please set SNAPSHOTS_DIR to the absolute path of your snapshots directory');
-    console.error('Example: export SNAPSHOTS_DIR=/Users/me/work/astra-client-docs-tests/snapshots');
+  // Check EXAMPLES_DIR is set
+  if (!process.env.EXAMPLES_DIR) {
+    console.error('ERROR: EXAMPLES_DIR environment variable is not set');
+    console.error('Please set EXAMPLES_DIR to the absolute path of your snapshots directory');
+    console.error('Example: export EXAMPLES_DIR=/Users/me/work/astra-client-docs-tests/resources/mock_examples');
     process.exit(1);
   }
 
-  const snapshotsDir = process.env.SNAPSHOTS_DIR;
+  const examplesDir = process.env.EXAMPLES_DIR;
 
-  // Check SNAPSHOTS_DIR exists
+  // Check EXAMPLES_DIR exists
   try {
-    const stat = await fs.stat(snapshotsDir);
+    const stat = await fs.stat(examplesDir);
     if (!stat.isDirectory()) {
-      console.error(`ERROR: SNAPSHOTS_DIR is not a directory: ${snapshotsDir}`);
+      console.error(`ERROR: EXAMPLES_DIR is not a directory: ${examplesDir}`);
       process.exit(1);
     }
   } catch (error) {
-    console.error(`ERROR: SNAPSHOTS_DIR does not exist: ${snapshotsDir}`);
-    process.exit(1);
-  }
-
-  // Check last-modified.txt exists
-  const lastModifiedPath = path.join(snapshotsDir, 'last-modified.txt');
-  try {
-    await fs.access(lastModifiedPath);
-  } catch (error) {
-    console.error(`ERROR: last-modified.txt not found in snapshots directory: ${lastModifiedPath}`);
-    console.error('The docs testing CLI should create this file when running tests');
+    console.error(`ERROR: EXAMPLES_DIR does not exist: ${examplesDir}`);
     process.exit(1);
   }
 
   console.log('✓ Environment validation passed');
-  console.log(`  SNAPSHOTS_DIR: ${snapshotsDir}`);
+  console.log(`  EXAMPLES_DIR: ${examplesDir}`);
   console.log(`  PORT: ${PORT}`);
 }
 
@@ -110,7 +100,7 @@ async function start(): Promise<void> {
       console.log('  Snapshot Review Dashboard');
       console.log('='.repeat(60));
       console.log(`  Server running at: http://localhost:${PORT}`);
-      console.log(`  Snapshots directory: ${process.env.SNAPSHOTS_DIR}`);
+      console.log(`  Examples directory: ${process.env.EXAMPLES_DIR}`);
       console.log('='.repeat(60));
       console.log('');
       console.log('Press Ctrl+C to stop the server');

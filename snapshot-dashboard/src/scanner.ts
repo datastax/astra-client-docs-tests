@@ -17,8 +17,13 @@ import {
 /**
  * Read the global last-modified timestamp
  */
-export async function readLastModified(snapshotsDir: string): Promise<string> {
-  const lastModifiedPath = path.join(snapshotsDir, 'last-modified.txt');
+export async function readLastModified(examplesDir: string): Promise<string> {
+  const lastModifiedPath = path.join(examplesDir, 'last-modified.txt');
+
+  if (!await fs.stat(lastModifiedPath).catch(() => false)) {
+    return new Date(0).toISOString(); // Return epoch if file doesn't exist
+  }
+
   try {
     const content = await fs.readFile(lastModifiedPath, 'utf-8');
     return content.trim();
@@ -236,8 +241,8 @@ async function createLanguageApprovedFile(
 /**
  * Extract root name from directory path relative to snapshots directory
  */
-function extractRootName(dirPath: string, snapshotsDir: string): string {
-  return path.relative(snapshotsDir, dirPath);
+function extractRootName(dirPath: string, exampleDir: string): string {
+  return path.relative(exampleDir, dirPath);
 }
 
 /**
@@ -274,28 +279,37 @@ async function discoverLanguages(dirPath: string): Promise<string[]> {
  */
 async function scanDirectory(
   dirPath: string,
-  snapshotsDir: string
+  examplesDir: string
 ): Promise<TestRoot | null> {
-  const files = await fs.readdir(dirPath);
+  const snapshotsDir = path.join(dirPath, '_snapshots');
+
+  // Check if _snapshots directory exists
+  try {
+    await fs.access(snapshotsDir);
+  } catch {
+    return null; // No _snapshots directory, skip this directory
+  }
+
+  const files = await fs.readdir(snapshotsDir);
   const hasReceivedFiles = files.some(f => f.endsWith('.received.txt'));
   
   if (!hasReceivedFiles) {
     return null;
   }
   
-  const rootName = extractRootName(dirPath, snapshotsDir);
+  const rootName = extractRootName(dirPath, examplesDir);
   const approvedFiles: ApprovedFile[] = [];
   
   // Check for shared approved file
-  const sharedFile = await createSharedApprovedFile(dirPath, rootName);
+  const sharedFile = await createSharedApprovedFile(snapshotsDir, rootName);
   if (sharedFile) {
     approvedFiles.push(sharedFile);
   }
   
   // Check for language-specific approved files
-  const languages = await discoverLanguages(dirPath);
+  const languages = await discoverLanguages(snapshotsDir);
   for (const language of languages) {
-    const langFile = await createLanguageApprovedFile(dirPath, rootName, language);
+    const langFile = await createLanguageApprovedFile(snapshotsDir, rootName, language);
     if (langFile) {
       approvedFiles.push(langFile);
     }
@@ -317,7 +331,7 @@ async function scanDirectory(
  */
 async function scanDirectoryTree(
   dirPath: string,
-  snapshotsDir: string,
+  examplesDir: string,
   testRoots: TestRoot[]
 ): Promise<void> {
   let entries;
@@ -328,7 +342,7 @@ async function scanDirectoryTree(
   }
   
   // Check current directory
-  const testRoot = await scanDirectory(dirPath, snapshotsDir);
+  const testRoot = await scanDirectory(dirPath, examplesDir);
   if (testRoot) {
     testRoots.push(testRoot);
   }
@@ -337,7 +351,7 @@ async function scanDirectoryTree(
   for (const entry of entries) {
     if (entry.isDirectory()) {
       const subPath = path.join(dirPath, entry.name);
-      await scanDirectoryTree(subPath, snapshotsDir, testRoots);
+      await scanDirectoryTree(subPath, examplesDir, testRoots);
     }
   }
 }
@@ -345,11 +359,11 @@ async function scanDirectoryTree(
 /**
  * Scan snapshots directory and return all test roots with changes
  */
-export async function scanTestRoots(snapshotsDir: string): Promise<TestRootsResponse> {
-  const lastModified = await readLastModified(snapshotsDir);
+export async function scanTestRoots(examplesDir: string): Promise<TestRootsResponse> {
+  const lastModified = await readLastModified(examplesDir);
   const testRoots: TestRoot[] = [];
   
-  await scanDirectoryTree(snapshotsDir, snapshotsDir, testRoots);
+  await scanDirectoryTree(examplesDir, examplesDir, testRoots);
   
   const sortedTestRoots = sortTestRoots(testRoots);
   

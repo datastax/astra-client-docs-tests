@@ -1,0 +1,15 @@
+---collection::documents---
+[
+  {
+    "_id" : "guid_1",
+    "is_checked_out" : false,
+    "number_of_pages" : 300
+  },
+  {
+    "_id" : "guid_2",
+    "is_checked_out" : true,
+    "number_of_pages" : 150
+  }
+]
+---stdout::matches---
+Matches '.*2.*'

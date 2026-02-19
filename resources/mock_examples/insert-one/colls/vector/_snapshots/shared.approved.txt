@@ -1,0 +1,10 @@
+---collection::documents---
+[
+  {
+    "$vector" : "vector_or_binary",
+    "_id" : "guid_1",
+    "name" : "Jane Doe"
+  }
+]
+---stderr::matches---
+Matches '^$'

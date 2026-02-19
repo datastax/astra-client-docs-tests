@@ -170,6 +170,10 @@
                 "jq": {
                   "type": "string",
                   "description": "jq filter for bash to apply to the JSONified output. Stacks with jq-bash"
+                },
+                "sort": {
+                  "type": "boolean",
+                  "description": "Whether to sort the JSON output for consistent snapshotting (defaults to true)"
                 }
               },
               "additionalProperties": false,
@@ -188,6 +192,10 @@
                 "jq": {
                   "type": "string",
                   "description": "jq filter for bash to apply to the JSONified output. Stacks with jq-bash"
+                },
+                "sort": {
+                  "type": "boolean",
+                  "description": "Whether to sort the JSON output for consistent snapshotting (defaults to false)"
                 }
               },
               "additionalProperties": false,

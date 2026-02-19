@@ -1,4 +1,0 @@
----stdout::capture---
-Hello, World!
-
-This is my output!

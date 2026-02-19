@@ -36,12 +36,12 @@ public class ExampleResultNamer implements ApprovalNamer {
 
     @Override
     public String getApprovalName() {
-        return exampleName + "/" + groupName;
+        return exampleName + "/_snapshots/" + groupName;
     }
 
     @Override
     public String getSourceFilePath() {
-        return ctx.snapshotsFolder().toAbsolutePath().toString();
+        return ctx.examplesFolder().toAbsolutePath().toString();
     }
 
     @Override

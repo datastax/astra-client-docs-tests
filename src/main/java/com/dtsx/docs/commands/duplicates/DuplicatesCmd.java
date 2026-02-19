@@ -32,7 +32,7 @@ public class DuplicatesCmd extends BaseCmd<DuplicatesCtx> {
         CliLogger.println(false, "@|bold Scanning for duplicate snapshots...|@");
         CliLogger.println(false);
 
-        val duplicates = findDuplicates(ctx.snapshotsFolder());
+        val duplicates = findDuplicates(ctx.examplesFolder());
 
         if (duplicates.isEmpty()) {
             CliLogger.println(false, "@|green ✓|@ No duplicates found!");
@@ -54,12 +54,12 @@ public class DuplicatesCmd extends BaseCmd<DuplicatesCtx> {
     }
 
     @SneakyThrows
-    private List<Duplicate> findDuplicates(Path snapshotsRoot) {
+    private List<Duplicate> findDuplicates(Path examplesRoot) {
         val duplicates = new ArrayList<Duplicate>();
 
-        try (Stream<Path> paths = Files.walk(snapshotsRoot)) {
+        try (val paths = Files.walk(examplesRoot)) {
             paths.filter(Files::isDirectory)
-                .forEach(dir -> checkDirectoryForDuplicates(snapshotsRoot, dir, duplicates));
+                .forEach(dir -> checkDirectoryForDuplicates(examplesRoot, dir, duplicates));
         }
 
         return duplicates;
@@ -68,6 +68,7 @@ public class DuplicatesCmd extends BaseCmd<DuplicatesCtx> {
     @SneakyThrows
     private void checkDirectoryForDuplicates(Path snapshotsRoot, Path dir, List<Duplicate> duplicates) {
         val sharedFile = dir.resolve("shared.approved.txt");
+
         if (!Files.exists(sharedFile)) {
             return;
         }

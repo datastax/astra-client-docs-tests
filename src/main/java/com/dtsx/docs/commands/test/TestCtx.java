@@ -37,7 +37,6 @@ import static com.dtsx.docs.core.runner.tests.VerifyMode.DRY_RUN;
 /// @see TestArgs
 @Getter
 public class TestCtx extends BaseScriptRunnerCtx {
-    private final Path snapshotsFolder;
     private final Map<ClientLanguage, ClientDriver> drivers;
     private final TestReporter reporter;
     private final VerifyMode verifyMode;
@@ -54,7 +53,6 @@ public class TestCtx extends BaseScriptRunnerCtx {
         this.reporter = args.$reporter.create(this);
         this.verifyMode = resolveVerifyMode(args);
         this.filter = mkFilter(args);
-        this.snapshotsFolder = examplesFolder().resolve("_snapshots");
         this.maxFixtureInstances = args.$maxFixtureInstances;
     }
 

@@ -14,10 +14,10 @@ const router = Router();
  * Validate that client's lastModified matches current timestamp
  */
 async function validateLastModified(
-  snapshotsDir: string,
+  examplesDir: string,
   clientLastModified: string
 ): Promise<{ valid: boolean; currentLastModified: string }> {
-  const currentLastModified = await readLastModified(snapshotsDir);
+  const currentLastModified = await readLastModified(examplesDir);
   return {
     valid: clientLastModified === currentLastModified,
     currentLastModified
@@ -33,13 +33,21 @@ async function verifyFileContents(
   expectedReceivedContent: string,
   expectedApprovedContent?: string
 ): Promise<{ valid: boolean; reason?: string }> {
-  // Read and compare received file content
-  const actualReceivedContent = await fs.readFile(receivedFiles[0], 'utf-8');
+  // For shared files with multiple diff groups, we need to check if ANY received file matches
+  // the expected content (since different diff groups have different content)
+  let foundMatch = false;
+  for (const receivedFile of receivedFiles) {
+    const actualReceivedContent = await fs.readFile(receivedFile, 'utf-8');
+    if (actualReceivedContent === expectedReceivedContent) {
+      foundMatch = true;
+      break;
+    }
+  }
   
-  if (actualReceivedContent !== expectedReceivedContent) {
+  if (!foundMatch) {
     return {
       valid: false,
-      reason: `Received file has been modified externally (${actualReceivedContent.length} bytes vs expected ${expectedReceivedContent.length} bytes). Please refresh.`
+      reason: `None of the received files match the expected content. Please refresh.`
     };
   }
   
@@ -86,11 +94,11 @@ function parseApprovedFileId(id: string): { filename: string; rootName: string }
  * Find all received files for an approved file
  */
 async function findReceivedFiles(
-  snapshotsDir: string,
+  examplesDir: string,
   rootName: string,
   filename: string
 ): Promise<string[]> {
-  const dirPath = path.join(snapshotsDir, rootName);
+  const dirPath = path.join(examplesDir, rootName, '_snapshots');
   const files = await fs.readdir(dirPath);
   
   if (filename === 'shared.approved.txt') {
@@ -122,7 +130,7 @@ router.post('/', async (req: Request, res: Response) => {
       expectedReceivedContent,
       expectedApprovedContent
     } = req.body as ApproveRequest;
-    const snapshotsDir = process.env.SNAPSHOTS_DIR!;
+    const examplesDir = process.env.EXAMPLES_DIR!;
     
     if (!approvedFileId || !clientLastModified || !expectedReceivedContent) {
       return res.status(400).json({
@@ -132,7 +140,7 @@ router.post('/', async (req: Request, res: Response) => {
     }
     
     // Validate lastModified
-    const validation = await validateLastModified(snapshotsDir, clientLastModified);
+    const validation = await validateLastModified(examplesDir, clientLastModified);
     if (!validation.valid) {
       const response: StaleDataErrorResponse = {
         error: 'STALE_DATA',
@@ -144,10 +152,10 @@ router.post('/', async (req: Request, res: Response) => {
     
     // Parse approved file ID
     const { filename, rootName } = parseApprovedFileId(approvedFileId);
-    const approvedPath = path.join(snapshotsDir, rootName, filename);
+    const approvedPath = path.join(examplesDir, rootName, '_snapshots', filename);
     
     // Find all received files
-    const receivedFiles = await findReceivedFiles(snapshotsDir, rootName, filename);
+    const receivedFiles = await findReceivedFiles(examplesDir, rootName, filename);
     
     if (receivedFiles.length === 0) {
       return res.status(404).json({
@@ -173,8 +181,27 @@ router.post('/', async (req: Request, res: Response) => {
       return res.status(409).json(response);
     }
     
-    // Read content from first received file (they should all be identical for shared files)
-    const newContent = await fs.readFile(receivedFiles[0], 'utf-8');
+    // Find the received file that matches the expected content
+    // This is critical when there are multiple diff groups with different content
+    let matchingFile: string | null = null;
+    for (const receivedFile of receivedFiles) {
+      const content = await fs.readFile(receivedFile, 'utf-8');
+      if (content === expectedReceivedContent) {
+        matchingFile = receivedFile;
+        break;
+      }
+    }
+    
+    if (!matchingFile) {
+      // This should never happen since verifyFileContents already checked
+      return res.status(500).json({
+        error: 'INTERNAL_ERROR',
+        message: 'Could not find matching received file'
+      });
+    }
+    
+    // Read content from the matching received file
+    const newContent = await fs.readFile(matchingFile, 'utf-8');
     
     // Update approved file
     await fs.writeFile(approvedPath, newContent, 'utf-8');
@@ -195,7 +222,7 @@ router.post('/', async (req: Request, res: Response) => {
       }
     }
     
-    const newLastModified = await readLastModified(snapshotsDir);
+    const newLastModified = await readLastModified(examplesDir);
     
     const response: ActionSuccessResponse = {
       success: true,

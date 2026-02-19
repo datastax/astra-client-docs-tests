@@ -113,7 +113,7 @@ public class SnapshotVerifier {
             // updates last-modified.txt when a new *.received.txt file is created
             // allows the reviewing dashboard to automatically detect changes in the snapshots
             if (ctx.verifyMode() == NORMAL) {
-                updateLastModified(ctx.snapshotsFolder());
+                updateLastModified(ctx.examplesFolder());
             }
 
             return new FailedToVerify(expectedPath).alsoLog(testRoot, driver.language(), snapshot);

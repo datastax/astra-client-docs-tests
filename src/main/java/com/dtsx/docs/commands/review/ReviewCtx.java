@@ -21,7 +21,7 @@ import static com.dtsx.docs.HelperCli.CLI_DIR;
 @Getter
 public class ReviewCtx extends BaseCtx {
     private final int port;
-    private final Path snapshotsFolder;
+    private final Path examplesFolder;
     private final Path dashboardFolder;
     private final boolean openBrowser;
     private final boolean detached;
@@ -29,7 +29,7 @@ public class ReviewCtx extends BaseCtx {
     public ReviewCtx(ReviewArgs args, CommandSpec spec) {
         super(args, spec);
         this.port = validatePort(args.$port);
-        this.snapshotsFolder = args.$examplesFolder.resolve().resolve("_snapshots");
+        this.examplesFolder = args.$examplesFolder.resolve();
         this.dashboardFolder = CLI_DIR.resolve("snapshot-dashboard");
         this.openBrowser = !args.$noOpen;
         this.detached = args.$detached;

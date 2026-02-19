@@ -30,7 +30,7 @@ public class ExamplesFolderMixin {
         val folder = ArgUtils.requirePath(spec.commandLine(), $examplesFolder.orElse("."), "examples folder", "-ef", "EXAMPLES_FOLDER");
 
         Predicate<Path> isValidExampleFolder = (path) -> {
-            return Stream.of(path, path.resolve("_base"), path.resolve("_fixtures"), path.resolve("_snapshots")).allMatch(Files::isDirectory);
+            return Stream.of(path, path.resolve("_base"), path.resolve("_fixtures")).allMatch(Files::isDirectory);
         };
 
         val subPaths = List.of(

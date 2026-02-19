@@ -12,8 +12,8 @@ const router = Router();
  */
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const snapshotsDir = process.env.SNAPSHOTS_DIR!;
-    const result = await scanTestRoots(snapshotsDir);
+    const examplesDir = process.env.EXAMPLES_DIR!;
+    const result = await scanTestRoots(examplesDir);
     res.json(result);
   } catch (error) {
     console.error('Error scanning test roots:', error);

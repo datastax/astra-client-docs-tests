@@ -8,10 +8,10 @@ import java.nio.file.Path;
 
 @Getter
 public class DuplicatesCtx extends BaseCtx {
-    private final Path snapshotsFolder;
+    private final Path examplesFolder;
 
     public DuplicatesCtx(DuplicatesArgs args, CommandSpec spec) {
         super(args, spec);
-        this.snapshotsFolder = args.$examplesFolder.resolve().resolve("_snapshots");
+        this.examplesFolder = args.$examplesFolder.resolve();
     }
 }

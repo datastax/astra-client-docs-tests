@@ -29,6 +29,7 @@ public class ReviewCmd extends BaseCmd<ReviewCtx> {
 
         try {
             ensureDependenciesInstalled();
+            clearLogs();
             startDashboard();
             return 0;
         } catch (Exception e) {
@@ -64,15 +65,25 @@ public class ReviewCmd extends BaseCmd<ReviewCtx> {
         CliLogger.println(false);
     }
 
+    private void clearLogs() {
+        val logFile = ctx.tmpFolder().resolve("dashboard.log").toFile();
+
+        if (logFile.exists()) {
+            if (!logFile.delete()) {
+                CliLogger.println(false, "@|yellow Warning: Failed to clear old dashboard logs|@");
+            }
+        }
+    }
+
     private void startDashboard() throws Exception {
         val processBuilder = new ProcessBuilder()
             .command("npm", "run", "dev")
             .directory(ctx.dashboardFolder().toFile());
-        
+
         val env = processBuilder.environment();
-        env.put("SNAPSHOTS_DIR", ctx.snapshotsFolder().toAbsolutePath().toString());
+        env.put("EXAMPLES_DIR", ctx.examplesFolder().toAbsolutePath().toString());
         env.put("PORT", String.valueOf(ctx.port()));
-        
+
         if (ctx.detached()) {
             startDetached(processBuilder);
         } else {
@@ -88,13 +99,13 @@ public class ReviewCmd extends BaseCmd<ReviewCtx> {
             .redirectError(ProcessBuilder.Redirect.appendTo(logFile));
 
         val dashboardProcess = processBuilder.start();
-        
+
         Thread.sleep(2000);
         
         if (!dashboardProcess.isAlive()) {
-            throw new Exception("Dashboard process failed to start");
+            throw new RunException("Dashboard process failed to start");
         }
-        
+
         val url = "http://localhost:" + ctx.port();
         
         CliLogger.println(false, "@|bold Dashboard started in background|@");
@@ -134,7 +145,7 @@ public class ReviewCmd extends BaseCmd<ReviewCtx> {
         
         CliLogger.println(false, "@|bold Dashboard running|@");
         CliLogger.println(false, "@!-!@ URL: @!@|underline " + url + "|@!@");
-        CliLogger.println(false, "@!-!@ Snapshots: @!" + ctx.snapshotsFolder().toAbsolutePath() + "!@");
+        CliLogger.println(false, "@!-!@ Examples: @!" + ctx.examplesFolder().toAbsolutePath() + "!@");
         CliLogger.println(false);
         CliLogger.println(false, "@|bold Press Ctrl+C to stop|@");
         CliLogger.println(false);
