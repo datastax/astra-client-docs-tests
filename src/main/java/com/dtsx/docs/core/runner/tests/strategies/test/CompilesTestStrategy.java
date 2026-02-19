@@ -78,16 +78,19 @@ public final class CompilesTestStrategy extends TestStrategy<CompilesTestMeta> {
             return;
         }
 
-        execEnv.withTestFileCopied(driver, path, mkPlaceholders(testRoot), TestFileModifiers.NONE, () -> {
-            val res = driver.compileScript(ctx, execEnv);
+        try {
+            val outcome = execEnv.withTestFileCopied(driver, path, mkPlaceholders(testRoot), TestFileModifiers.NONE, () -> {
+                val res = driver.compileScript(ctx, execEnv);
 
-            val outcome = (res.notOk())
-                ? new TestOutcome.FailedToCompile(res.output()).alsoLog(testRoot, lang, res.output())
-                : TestOutcome.Passed.INSTANCE;
+                return (res.notOk())
+                    ? new TestOutcome.FailedToCompile(res.output()).alsoLog(testRoot, lang, res.output())
+                    : TestOutcome.Passed.INSTANCE;
+            });
 
             outcomes.get(lang).put(path, outcome);
-            return null;
-        });
+        } catch (Exception e) {
+            outcomes.get(lang).put(path, new TestOutcome.Errored(e).alsoLog(testRoot, lang));
+        }
     }
 
     private Placeholders mkPlaceholders(TestRoot testRoot) {

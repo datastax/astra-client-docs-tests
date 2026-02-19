@@ -18,7 +18,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 
 public class CSharpDriver extends ClientDriver {
     public CSharpDriver(String artifact) {
@@ -51,9 +50,28 @@ public class CSharpDriver extends ClientDriver {
 
     @Override
     public String preprocessScript(BaseScriptRunnerCtx ignoredCtx, String content, @TestFileModifierFlags int mods) {
-        return Pattern.compile("^public\\s+class\\s+\\w+", Pattern.MULTILINE)
-            .matcher(content)
-            .replaceFirst("public class Example");
+        val mainIndex = content.indexOf("Main(");
+
+        if (mainIndex == -1) {
+            throw new RunException("Main method not found in C# script");
+        }
+
+        val classIndex = content.lastIndexOf("\npublic class ", mainIndex);
+
+        if (classIndex == -1) {
+            throw new RunException("Public class declaration not found before Main method in C# script");
+        }
+
+        val nameStart = classIndex + "\npublic class ".length();
+        var nameEnd = nameStart;
+
+        while (nameEnd < content.length() && Character.isLetterOrDigit(content.charAt(nameEnd))) {
+            nameEnd++;
+        }
+
+        return content.substring(0, nameStart)
+            + "Example"
+            + content.substring(nameEnd);
     }
 
     @Override
