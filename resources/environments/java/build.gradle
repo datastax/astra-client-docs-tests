@@ -8,7 +8,7 @@ repositories {
 }
 
 dependencies {
-    implementation "${CLIENT_ARTIFACT}"
+    implementation ${CLIENT_ARTIFACT}
     implementation "org.slf4j:slf4j-nop:2.0.17"
 }
 

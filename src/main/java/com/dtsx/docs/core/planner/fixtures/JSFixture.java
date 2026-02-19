@@ -16,6 +16,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 
+import static com.dtsx.docs.HelperCli.CLI_DIR;
+
 /// Represents a JavaScript fixture file used to set up, reset, and tear down database state for testing, with being JavaScript used for ease of scripting.
 ///
 /// JS fixture files are of the following format, where each function is optional:
@@ -78,7 +80,7 @@ public sealed abstract class JSFixture implements Comparable<JSFixture> permits 
         CliLogger.debug("Installing JSFixture dependencies in " + Path.of(".").toAbsolutePath());
 
         val res = CliLogger.loading("Installing JS fixture dependencies", (_) -> {
-            return ExternalPrograms.npm(ctx).run("ci", "--prefer-offline"); // TODO use NPM_CONFIG_CACHE in CI
+            return ExternalPrograms.npm(ctx).run(CLI_DIR, "ci", "--prefer-offline"); // TODO use NPM_CONFIG_CACHE in CI
         });
 
         if (res.exitCode() != 0) {

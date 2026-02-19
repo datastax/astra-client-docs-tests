@@ -17,10 +17,10 @@ import java.util.function.Function;
 @Getter
 @RequiredArgsConstructor
 public enum ClientLanguage {
-    JAVA(".java", "com.datastax.astra:astra-db-java:2.+", JavaDriver::new),
+    JAVA(".java", "\"com.datastax.astra:astra-db-java:2.+\"", JavaDriver::new),
     PYTHON(".py", "astrapy", PythonDriver::new),
     TYPESCRIPT(".ts", "@datastax/astra-db-ts", TypeScriptDriver::new),
-    CSHARP(".cs", "Include=\"DataStax.AstraDB.DataApi\" Version=\"2.*-*\"", CSharpDriver::new),
+    CSHARP(".cs", "<PackageReference Include=\"DataStax.AstraDB.DataApi\" Version=\"2.*-*\"/>", CSharpDriver::new),
 //    GO(".go", null, GoDriver::new),
     BASH(".sh", null, BashDriver::new);
 
