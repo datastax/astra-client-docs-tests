@@ -51,7 +51,11 @@ public class JavaDriver extends ClientDriver {
     @Override
     public String preprocessScript(BaseScriptRunnerCtx ignoredCtx, String content, @TestFileModifierFlags int mods) {
         if ((mods & TestFileModifiers.JSONIFY_OUTPUT) != 0) {
-            content = "import com.fasterxml.jackson.databind.json.JsonMapper;\nimport com.dtsx.astra.sdk.utils.JsonUtils;\nimport java.io.PrintStream;\n" + content;
+            content = """
+               import com.fasterxml.jackson.databind.json.JsonMapper;
+               import com.dtsx.astra.sdk.utils.JsonUtils;
+               import java.io.PrintStream;
+            """ + content;
 
             val target = "public static void main(String[] args) {";
             val mainMethodIdx = content.indexOf(target);

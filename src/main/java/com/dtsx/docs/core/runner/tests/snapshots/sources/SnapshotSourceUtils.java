@@ -7,6 +7,7 @@ import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import com.dtsx.docs.core.runner.tests.snapshots.verifier.SnapshotVerifier;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import lombok.experimental.UtilityClass;
+import lombok.val;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
@@ -47,6 +48,10 @@ public class SnapshotSourceUtils {
                     if (map.containsKey("$binary") || map.containsKey("_vector") || map.containsKey("embeddings")) {
                         yield "vector_or_binary";
                     }
+
+                    if (map.containsKey("$date")) {
+                        yield "date";
+                    }
                 }
 
                 var result = new LinkedHashMap<>();
@@ -70,6 +75,14 @@ public class SnapshotSourceUtils {
                     .map(SnapshotSourceUtils::mkJsonDeterministic)
                     .sorted(Comparator.comparing(SnapshotSourceUtils::calcSortValue, Comparator.nullsFirst(Integer::compareTo)))
                     .toList();
+            }
+            case Number num -> {
+                if (num instanceof Float || num instanceof Double) {
+                    if (num.doubleValue() % 1 == 0) {
+                        yield num.longValue();
+                    }
+                }
+                yield num;
             }
             default -> {
                 yield obj;
@@ -123,9 +136,6 @@ public class SnapshotSourceUtils {
                     yield 0;
                 }
                 yield str.hashCode();
-            }
-            case Long _ -> {
-                yield 0; // in case of timestamps
             }
             default -> {
                 yield obj.hashCode();

@@ -4,7 +4,6 @@ import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.core.planner.TestRoot;
 import com.dtsx.docs.core.planner.fixtures.FixtureMetadata;
 import com.dtsx.docs.core.planner.meta.snapshot.SnapshotsShareConfig;
-import com.dtsx.docs.core.runner.Placeholders;
 import com.dtsx.docs.core.runner.drivers.ClientDriver;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import com.dtsx.docs.core.runner.tests.results.TestOutcome;
@@ -38,14 +37,8 @@ import static com.dtsx.docs.core.runner.tests.VerifyMode.NORMAL;
 public class SnapshotVerifier {
     private static final String LAST_MODIFIED_FILE = "last-modified.txt";
 
-    /// Scrubber to clean dynamic data from snapshots before verification, replacing them with incrementing placeholders.
-    ///
-    /// Currently, includes:
-    ///   - {@link GuidScrubber}: Scrubs UUIDs
-    ///   - {@link $DateScrubber $DateScrubber}: Scrubs collection `$date`s
     public static final Scrubber SCRUBBER = new MultiScrubber(List.of(
         new GuidScrubber(),
-        new $DateScrubber(),
         new ObjectIdScrubber()
     ));
 
@@ -144,14 +137,6 @@ public class SnapshotVerifier {
             Files.writeString(lastModifiedPath, Instant.now().toString());
         } catch (IOException e) {
             CliLogger.exception("Failed to update " + LAST_MODIFIED_FILE + " in snapshots folder '" + snapshotsFolder + "'", e);
-        }
-    }
-
-    public static class $DateScrubber extends RegExScrubber {
-        public static final Pattern DATE_PATTERN = Pattern.compile("\\{\\s*\"\\$date\"\\s*:\\s*\\d+\\s*}");
-
-        public $DateScrubber() {
-            super(DATE_PATTERN, n -> "{ \"$date\" : \"date_" + n + "\" }");
         }
     }
 

@@ -6,7 +6,6 @@ import com.dtsx.docs.core.planner.meta.snapshot.meta.OutputJsonifySourceMeta;
 import com.dtsx.docs.core.runner.drivers.ClientDriver;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.SnapshotSource;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.SnapshotSourceUtils;
-import com.dtsx.docs.core.runner.tests.snapshots.verifier.SnapshotVerifier.$DateScrubber;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import com.dtsx.docs.lib.JacksonUtils;
 import lombok.val;
@@ -36,13 +35,16 @@ public class OutputJsonifySource extends SnapshotSource {
             jsonAsString = runJq(ctx, jsonAsString, meta.jq().get());
         }
 
-        val processedJson = SnapshotSourceUtils.mkJsonDeterministic(
-            JacksonUtils.parseJson(jsonAsString, Object.class)
-        );
+        val parsedJson = JacksonUtils.parseJson(jsonAsString, Object.class);
+        val shouldSort = meta.sort().orElse(true);
 
-        val finalJson = (processedJson instanceof Collection<?> c && c.size() == 1 && (c.iterator().next() instanceof Collection<?>))
+        val deterministicJson = (!shouldSort && parsedJson instanceof Collection<?> c)
+            ? c.stream().map(SnapshotSourceUtils::mkJsonDeterministic).toList()
+            : SnapshotSourceUtils.mkJsonDeterministic(parsedJson);
+
+        val finalJson = (deterministicJson instanceof Collection<?> c && c.size() == 1 && (c.iterator().next() instanceof Collection<?>))
             ? c.iterator().next()
-            : processedJson;
+            : deterministicJson;
 
         return JacksonUtils.formatJsonPretty(finalJson);
     }
@@ -81,7 +83,6 @@ public class OutputJsonifySource extends SnapshotSource {
         }
 
         private static String scrubTimestamp(String json, String replacement) {
-            json = $DateScrubber.DATE_PATTERN.matcher(json).replaceAll(replacement);
             json = RFC_TIMESTAMP_PATTERN.matcher(json).replaceAll(replacement);
             return json;
         }
