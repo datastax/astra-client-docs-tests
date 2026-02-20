@@ -19,6 +19,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.dtsx.docs.lib.Constants.META_FILE;
 
@@ -63,10 +66,13 @@ public class TestPlanBuilder {
             CliLogger.println(true, "@|bold Building test plan...|@");
             CliLogger.println(true, "@!->!@ Found " + testRoots.size() + " test roots");
 
+            // Build gitignore predicate once at the start
+            val gitignorePredicate = buildGitignorePredicate(ctx.examplesFolder());
+
             val builder = new Builder();
 
             for (val rootPath : testRoots) {
-                mkTestRoot(ctx, rootPath).ifPresent(builder::addRoot);
+                mkTestRoot(ctx, rootPath, gitignorePredicate).ifPresent(builder::addRoot);
             }
 
             val plan = builder.build(ctx.maxFixtureInstances());
@@ -123,6 +129,79 @@ public class TestPlanBuilder {
         }
     }
 
+    /// Builds a predicate from the .gitignore file in the examples folder.
+    ///
+    /// Reads the .gitignore file (if it exists) and converts each pattern into a predicate
+    /// that tests whether a path should be ignored. Supports glob patterns like:
+    /// - `**/bin/*` - matches bin directory at any depth
+    /// - `**/obj/*` - matches obj directory at any depth
+    /// - `target/*` - matches target directory at root level
+    ///
+    /// @param examplesFolder the examples folder to look for .gitignore
+    /// @return a predicate that returns true if a path should be ignored
+    private static Predicate<Path> buildGitignorePredicate(Path examplesFolder) {
+        val gitignorePath = examplesFolder.resolve(".gitignore");
+
+        if (!Files.exists(gitignorePath)) {
+            // No .gitignore file, don't ignore anything
+            return path -> false;
+        }
+
+        try {
+            val patterns = Files.readAllLines(gitignorePath).stream()
+                .map(String::trim)
+                .filter(line -> !line.isEmpty() && !line.startsWith("#"))
+                .map(TestPlanBuilder::gitignorePatternToRegex)
+                .map(Pattern::compile)
+                .collect(Collectors.toList());
+
+            return path -> {
+                val pathStr = path.toString();
+                return patterns.stream().anyMatch(pattern -> pattern.matcher(pathStr).find());
+            };
+        } catch (IOException e) {
+            CliLogger.println(false, "@|yellow Warning: Failed to read .gitignore file, ignoring it|@");
+            return path -> false;
+        }
+    }
+
+    /// Converts a gitignore pattern to a regex pattern.
+    ///
+    /// Handles common gitignore patterns:
+    /// - `**` matches any number of directories
+    /// - `*` matches any characters except directory separator
+    /// - Literal directory separators
+    ///
+    /// @param gitignorePattern the gitignore pattern (e.g., "**/bin/*")
+    /// @return a regex pattern string
+    private static String gitignorePatternToRegex(String gitignorePattern) {
+        // Escape special regex characters except * and /
+        String regex = gitignorePattern
+            .replace("\\", "\\\\")
+            .replace(".", "\\.")
+            .replace("+", "\\+")
+            .replace("?", "\\?")
+            .replace("|", "\\|")
+            .replace("(", "\\(")
+            .replace(")", "\\)")
+            .replace("[", "\\[")
+            .replace("]", "\\]")
+            .replace("{", "\\{")
+            .replace("}", "\\}")
+            .replace("^", "\\^")
+            .replace("$", "\\$");
+
+        // Convert gitignore wildcards to regex
+        regex = regex.replace("**/", "(.*/)?");  // ** matches any number of directories
+        regex = regex.replace("**", ".*");        // ** at end matches anything
+        regex = regex.replace("*", "[^/\\\\]*");  // * matches anything except path separator
+
+        // Handle both forward and backward slashes
+        regex = regex.replace("/", "[/\\\\]");
+
+        return regex;
+    }
+
     /// Creates a test root from a directory containing a `meta.yml` file.
     ///
     /// Steps:
@@ -135,11 +214,12 @@ public class TestPlanBuilder {
     ///
     /// @param rootPath path to the test root directory
     /// @param ctx the verifier context
+    /// @param gitignorePredicate predicate to test if paths should be ignored
     /// @return a pair of (base fixture, test root), or empty if skipped or no example files found
-    private static Optional<Pair<JSFixture, TestRoot>> mkTestRoot(TestCtx ctx, Path rootPath) {
+    private static Optional<Pair<JSFixture, TestRoot>> mkTestRoot(TestCtx ctx, Path rootPath, Predicate<Path> gitignorePredicate) {
         val meta = MetaYmlParser.parseMetaYml(ctx, rootPath.resolve(META_FILE));
 
-        val filesToTest = findFilesToTestInRoot(rootPath, ctx, meta.skipConfig());
+        val filesToTest = findFilesToTestInRoot(rootPath, ctx, meta.skipConfig(), gitignorePredicate);
 
         if (filesToTest.isEmpty()) {
             return Optional.empty();
@@ -164,6 +244,7 @@ public class TestPlanBuilder {
     /// Finds all example files in a test root for the configured client languages.
     ///
     /// Searches for files named `example.<ext>` where `<ext>` matches a configured language extension.
+    /// Files matching patterns in .gitignore are excluded.
     ///
     /// Example:
     /// ```
@@ -178,9 +259,10 @@ public class TestPlanBuilder {
     /// @param root       the test root directory to search
     /// @param ctx        the verifier context containing language configuration
     /// @param skipConfig the skip configuration to check if any languages should be skipped
+    /// @param gitignorePredicate predicate to test if paths should be ignored based on .gitignore
     /// @return map of client languages to their example file paths
     /// @throws PlanException if traversal fails
-    private static TreeMap<ClientLanguage, Set<Path>> findFilesToTestInRoot(Path root, TestCtx ctx, SkipConfig skipConfig) {
+    private static TreeMap<ClientLanguage, Set<Path>> findFilesToTestInRoot(Path root, TestCtx ctx, SkipConfig skipConfig, Predicate<Path> gitignorePredicate) {
         val ret = new TreeMap<ClientLanguage, Set<Path>>();
 
         try (val children = Files.walk(root).skip(1)) {
@@ -189,8 +271,8 @@ public class TestPlanBuilder {
                     return;
                 }
 
-                // Skip files in build output directories (obj/, bin/, target/, etc.)
-                if (isInBuildOutputDirectory(child)) {
+                // Skip files matching .gitignore patterns
+                if (gitignorePredicate.test(child)) {
                     return;
                 }
 
@@ -201,30 +283,6 @@ public class TestPlanBuilder {
         }
 
         return ret;
-    }
-
-    /// Checks if a file path is within a build output directory.
-    ///
-    /// Build output directories include:
-    /// - `obj/` and `bin/` (C#/.NET)
-    /// - `target/` (Java/Maven)
-    /// - `build/` (Gradle, general)
-    /// - `dist/` (JavaScript/TypeScript)
-    /// - `node_modules/` (JavaScript/TypeScript)
-    /// - `__pycache__/` and `.pytest_cache/` (Python)
-    ///
-    /// @param path the file path to check
-    /// @return true if the path contains any build output directory
-    private static boolean isInBuildOutputDirectory(Path path) {
-        val pathStr = path.toString();
-        return pathStr.contains("/obj/") || pathStr.contains("\\obj\\")
-            || pathStr.contains("/bin/") || pathStr.contains("\\bin\\")
-            || pathStr.contains("/target/") || pathStr.contains("\\target\\")
-            || pathStr.contains("/build/") || pathStr.contains("\\build\\")
-            || pathStr.contains("/dist/") || pathStr.contains("\\dist\\")
-            || pathStr.contains("/node_modules/") || pathStr.contains("\\node_modules\\")
-            || pathStr.contains("/__pycache__/") || pathStr.contains("\\__pycache__\\")
-            || pathStr.contains("/.pytest_cache/") || pathStr.contains("\\.pytest_cache\\");
     }
 
     private static void tryAppendChild(TestCtx ctx, SkipConfig skipConfig, Path child, TreeMap<ClientLanguage, Set<Path>> ret) {
