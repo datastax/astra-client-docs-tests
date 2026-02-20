@@ -12,12 +12,15 @@ import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import com.dtsx.docs.core.runner.tests.strategies.test.CompilesTestStrategy;
 import com.dtsx.docs.core.runner.tests.strategies.test.SnapshotTestStrategy;
 import com.dtsx.docs.lib.CliLogger;
+import lombok.SneakyThrows;
 import lombok.val;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -66,10 +69,8 @@ public class TestPlanBuilder {
             CliLogger.println(true, "@|bold Building test plan...|@");
             CliLogger.println(true, "@!->!@ Found " + testRoots.size() + " test roots");
 
-            // Build gitignore predicate once at the start
-            val gitignorePredicate = buildGitignorePredicate(ctx.examplesFolder());
-
             val builder = new Builder();
+            val gitignorePredicate = buildGitignorePredicate(ctx.examplesFolder());
 
             for (val rootPath : testRoots) {
                 mkTestRoot(ctx, rootPath, gitignorePredicate).ifPresent(builder::addRoot);
@@ -137,72 +138,70 @@ public class TestPlanBuilder {
     /// - `**/obj/*` - matches obj directory at any depth
     /// - `target/*` - matches target directory at root level
     ///
-    /// @param examplesFolder the examples folder to look for .gitignore
     /// @return a predicate that returns true if a path should be ignored
-    private static Predicate<Path> buildGitignorePredicate(Path examplesFolder) {
-        val gitignorePath = examplesFolder.resolve(".gitignore");
+    @SneakyThrows
+    private static Predicate<Path> buildGitignorePredicate(Path rootFolder) {
+        val gitignorePath = rootFolder.resolve(".gitignore");
 
         if (!Files.exists(gitignorePath)) {
-            // No .gitignore file, don't ignore anything
-            return path -> false;
+            return _ -> false;
         }
 
-        try {
-            val patterns = Files.readAllLines(gitignorePath).stream()
-                .map(String::trim)
-                .filter(line -> !line.isEmpty() && !line.startsWith("#"))
-                .map(TestPlanBuilder::gitignorePatternToRegex)
-                .map(Pattern::compile)
-                .collect(Collectors.toList());
+        val lines = Files.readAllLines(gitignorePath);
 
-            return path -> {
-                val pathStr = path.toString();
-                return patterns.stream().anyMatch(pattern -> pattern.matcher(pathStr).find());
-            };
-        } catch (IOException e) {
-            CliLogger.println(false, "@|yellow Warning: Failed to read .gitignore file, ignoring it|@");
-            return path -> false;
+        val fs = FileSystems.getDefault();
+
+        val excludeMatchers = new ArrayList<PathMatcher>();
+        val includeMatchers = new ArrayList<PathMatcher>();
+
+        for (var line : lines) {
+            line = line.trim();
+
+            if (line.isEmpty() || line.startsWith("#")) {
+                continue;
+            }
+
+            val negated = line.startsWith("!");
+
+            if (negated) {
+                line = line.substring(1);
+            }
+
+            if (line.endsWith("/")) {
+                line = line + "**";
+            }
+
+            if (!line.startsWith("/")) {
+                line = "**/" + line;
+            } else {
+                line = line.substring(1);
+            }
+
+            val matcher = fs.getPathMatcher("glob:" + line);
+
+            if (negated) {
+                includeMatchers.add(matcher);
+            } else {
+                excludeMatchers.add(matcher);
+            }
         }
+
+        return (path) -> {
+            val relative = rootFolder.relativize(path);
+            var ignored = false;
+
+            for (val matcher : excludeMatchers) {
+                ignored = ignored || matcher.matches(relative);
+            }
+
+            for (val matcher : includeMatchers) {
+                ignored = ignored && !matcher.matches(relative);
+            }
+
+            return ignored;
+        };
     }
 
-    /// Converts a gitignore pattern to a regex pattern.
-    ///
-    /// Handles common gitignore patterns:
-    /// - `**` matches any number of directories
-    /// - `*` matches any characters except directory separator
-    /// - Literal directory separators
-    ///
-    /// @param gitignorePattern the gitignore pattern (e.g., "**/bin/*")
-    /// @return a regex pattern string
-    private static String gitignorePatternToRegex(String gitignorePattern) {
-        // Escape special regex characters except * and /
-        String regex = gitignorePattern
-            .replace("\\", "\\\\")
-            .replace(".", "\\.")
-            .replace("+", "\\+")
-            .replace("?", "\\?")
-            .replace("|", "\\|")
-            .replace("(", "\\(")
-            .replace(")", "\\)")
-            .replace("[", "\\[")
-            .replace("]", "\\]")
-            .replace("{", "\\{")
-            .replace("}", "\\}")
-            .replace("^", "\\^")
-            .replace("$", "\\$");
-
-        // Convert gitignore wildcards to regex
-        regex = regex.replace("**/", "(.*/)?");  // ** matches any number of directories
-        regex = regex.replace("**", ".*");        // ** at end matches anything
-        regex = regex.replace("*", "[^/\\\\]*");  // * matches anything except path separator
-
-        // Handle both forward and backward slashes
-        regex = regex.replace("/", "[/\\\\]");
-
-        return regex;
-    }
-
-    /// Creates a test root from a directory containing a `meta.yml` file.
     ///
     /// Steps:
     /// 1. Parse `meta.yml` configuration
@@ -271,7 +270,6 @@ public class TestPlanBuilder {
                     return;
                 }
 
-                // Skip files matching .gitignore patterns
                 if (gitignorePredicate.test(child)) {
                     return;
                 }
