@@ -106,7 +106,7 @@ public abstract class RecordSource extends SnapshotSource {
     protected abstract Stream<Map<String, Object>> streamRecords(TestCtx ctx, String name, String keyspace);
 
     @Override
-    public String mkSnapshot(TestCtx ctx, ClientDriver driver, RunResult res, FixtureMetadata md) {
+    public String mkSnapshotImpl(TestCtx ctx, ClientDriver driver, RunResult res, FixtureMetadata md) {
         val schemaObjName = resolveName("schema object name", md, driver, overrideName, () -> extractSchemaObjectName(md));
         val schemaObjKeyspace = resolveName("keyspace", md, driver, overrideKeyspace, () -> Optional.of(md.keyspaceName()));
 

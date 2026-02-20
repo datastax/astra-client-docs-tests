@@ -13,7 +13,7 @@ public class OutputCaptureSource extends SnapshotSource {
     }
 
     @Override
-    public String mkSnapshot(TestCtx ctx, ClientDriver driver, RunResult res, FixtureMetadata md) {
+    public String mkSnapshotImpl(TestCtx ctx, ClientDriver driver, RunResult res, FixtureMetadata md) {
         return SnapshotSourceUtils.extractOutput(name, res);
     }
 }

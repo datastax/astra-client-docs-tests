@@ -33,7 +33,7 @@ public class UdtDefinitionsSource extends SnapshotSource {
     record TypeDescriptor(String udtName, Object definition) {}
 
     @Override
-    public String mkSnapshot(TestCtx ctx, ClientDriver driver, RunResult res, FixtureMetadata md) {
+    public String mkSnapshotImpl(TestCtx ctx, ClientDriver driver, RunResult res, FixtureMetadata md) {
         val database = DataAPIUtils.getDatabase(
             ctx.connectionInfo(),
             overrideKeyspace.orElse(md.keyspaceName())

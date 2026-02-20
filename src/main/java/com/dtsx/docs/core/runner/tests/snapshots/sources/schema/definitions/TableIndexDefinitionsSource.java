@@ -33,7 +33,7 @@ public class TableIndexDefinitionsSource extends SnapshotSource {
     }
 
     @Override
-    public String mkSnapshot(TestCtx ctx, ClientDriver driver, RunResult res, FixtureMetadata md) {
+    public String mkSnapshotImpl(TestCtx ctx, ClientDriver driver, RunResult res, FixtureMetadata md) {
         val tableName = resolveName("table name", md, driver, overrideName, md::tableName);
 
         val table = DataAPIUtils.getTable(

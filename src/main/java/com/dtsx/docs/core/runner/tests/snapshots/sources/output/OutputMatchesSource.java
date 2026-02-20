@@ -20,7 +20,7 @@ public class OutputMatchesSource extends SnapshotSource {
     }
 
     @Override
-    public String mkSnapshot(TestCtx ctx, ClientDriver driver, RunResult res, FixtureMetadata md) {
+    public String mkSnapshotImpl(TestCtx ctx, ClientDriver driver, RunResult res, FixtureMetadata md) {
         val output = SnapshotSourceUtils.extractOutput(name, res);
 
         if (regex.matcher(output).matches()) {

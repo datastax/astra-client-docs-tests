@@ -9,6 +9,7 @@ import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import com.dtsx.docs.core.runner.tests.results.TestOutcome;
 import com.dtsx.docs.core.runner.tests.results.TestOutcome.FailedToVerify;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.SnapshotSource;
+import com.dtsx.docs.core.runner.tests.snapshots.verifier.scrubbers.ObjectIdScrubber;
 import com.dtsx.docs.core.runner.tests.strategies.execution.ExecutionStrategy.TestResetter;
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
@@ -20,7 +21,6 @@ import org.approvaltests.core.Options;
 import org.approvaltests.core.Scrubber;
 import org.approvaltests.scrubbers.GuidScrubber;
 import org.approvaltests.scrubbers.MultiScrubber;
-import org.approvaltests.scrubbers.RegExScrubber;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -28,7 +28,6 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 
 import static com.dtsx.docs.core.runner.tests.VerifyMode.DRY_RUN;
 import static com.dtsx.docs.core.runner.tests.VerifyMode.NORMAL;
@@ -53,7 +52,7 @@ public class SnapshotVerifier {
             return TestOutcome.DryPassed.INSTANCE;
         }
 
-        val snapshots = new HashMap<String, Set<Path>>();
+        var snapshots = new HashMap<Snapshot, Set<Path>>();
 
         for (val filePath : filesForLang) {
             for (var i = 0; true; i++) {
@@ -77,6 +76,8 @@ public class SnapshotVerifier {
             }
         }
 
+        snapshots = driver.reduceSnapshots(snapshots);
+
         if (snapshots.size() > 1) {
             return TestOutcome.Mismatch.Mismatch.Mismatch.Mismatch.Mismatch.Mismatch.Mismatch.Mismatch.INSTANCE.alsoLog(testRoot, driver.language(), snapshots);
         }
@@ -85,21 +86,16 @@ public class SnapshotVerifier {
         return verifySnapshot(driver, testRoot, snapshot);
     }
 
-    private String mkSnapshot(ClientDriver driver, FixtureMetadata md, RunResult result) {
-        val sb = new StringBuilder();
+    private Snapshot mkSnapshot(ClientDriver driver, FixtureMetadata md, RunResult result) {
+        val parts = snapshotSources.stream()
+            .map(s -> s.mkSnapshot(ctx, driver, result, md))
+            .toList();
 
-        for (val source : snapshotSources) {
-            val snapshot = source.mkSnapshot(ctx, driver, result, md);
-            sb.append("---").append(source.name().toLowerCase()).append("---\n");
-            sb.append(snapshot).append("\n");
-        }
-
-        val snapshot = sb.deleteCharAt(sb.length() - 1).toString().trim();
-        return SCRUBBER.scrub(snapshot);
+        return Snapshot.fromParts(SCRUBBER, parts);
     }
 
     // TODO maybe cache approved test file contents' hashes + client artifacts so we don't re-verify unchanged tests?
-    private TestOutcome verifySnapshot(ClientDriver driver, TestRoot testRoot, String snapshot) {
+    private TestOutcome verifySnapshot(ClientDriver driver, TestRoot testRoot, Snapshot snapshot) {
         val namer = mkNamer(driver.language(), testRoot);
         val options = mkApprovalOptions(namer);
 
@@ -137,14 +133,6 @@ public class SnapshotVerifier {
             Files.writeString(lastModifiedPath, Instant.now().toString());
         } catch (IOException e) {
             CliLogger.exception("Failed to update " + LAST_MODIFIED_FILE + " in snapshots folder '" + snapshotsFolder + "'", e);
-        }
-    }
-
-    public static class ObjectIdScrubber extends RegExScrubber {
-        public static final Pattern OBJECT_ID_PATTERN = Pattern.compile("[a-fA-F0-9]{24}");
-
-        public ObjectIdScrubber() {
-            super(OBJECT_ID_PATTERN, n -> "objectId_" + n);
         }
     }
 }

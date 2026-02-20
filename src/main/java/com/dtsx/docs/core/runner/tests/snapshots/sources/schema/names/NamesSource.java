@@ -26,7 +26,7 @@ public abstract class NamesSource extends SnapshotSource {
     public abstract List<String> names(Database db, ClientDriver driver, FixtureMetadata md);
 
     @Override
-    public String mkSnapshot(TestCtx ctx, ClientDriver driver, RunResult res, FixtureMetadata md) {
+    public String mkSnapshotImpl(TestCtx ctx, ClientDriver driver, RunResult res, FixtureMetadata md) {
         val db = DataAPIUtils.getDatabase(
             ctx.connectionInfo(),
             this.keyspace.orElse(md.keyspaceName())

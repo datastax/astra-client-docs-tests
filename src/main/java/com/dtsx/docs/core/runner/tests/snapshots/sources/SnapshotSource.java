@@ -5,30 +5,25 @@ import com.dtsx.docs.core.planner.PlanException;
 import com.dtsx.docs.core.planner.fixtures.FixtureMetadata;
 import com.dtsx.docs.core.runner.PlaceholderVars;
 import com.dtsx.docs.core.runner.drivers.ClientDriver;
+import com.dtsx.docs.core.runner.tests.snapshots.verifier.Snapshot.SnapshotPart;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.output.OutputCaptureSource;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.records.RecordSource;
-import com.dtsx.docs.core.runner.tests.snapshots.verifier.SnapshotVerifier;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
-import lombok.Getter;
+import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Optional;
 import java.util.function.Supplier;
 
-/// Represents a pluggable source of snapshots based on the run output, or the database state.
-///
-/// @see RecordSource
-/// @see OutputCaptureSource
 @RequiredArgsConstructor
 public abstract class SnapshotSource implements Comparable<SnapshotSource> {
-    @Getter
     protected final String name;
 
-    /// Returns just a string containing the snapshot for this source.
-    /// Any header/footer or delimiting information is added by the caller.
-    ///
-    /// @see SnapshotVerifier
-    public abstract String mkSnapshot(TestCtx ctx, ClientDriver driver, RunResult res, FixtureMetadata md);
+    public SnapshotPart mkSnapshot(TestCtx ctx, ClientDriver driver, RunResult res, FixtureMetadata md) {
+        return new SnapshotPart(name, mkSnapshotImpl(ctx, driver, res, md));
+    }
+
+    protected abstract String mkSnapshotImpl(TestCtx ctx, ClientDriver driver, RunResult res, FixtureMetadata md);
 
     @Override
     public int compareTo(SnapshotSource other) {

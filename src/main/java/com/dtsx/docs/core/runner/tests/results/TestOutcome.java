@@ -1,5 +1,6 @@
 package com.dtsx.docs.core.runner.tests.results;
 
+import com.dtsx.docs.core.runner.tests.snapshots.verifier.Snapshot;
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.core.planner.TestRoot;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
@@ -32,16 +33,16 @@ public sealed interface TestOutcome {
     enum Mismatch implements TestOutcome {
         INSTANCE;
 
-        public Mismatch alsoLog(TestRoot testRoot, ClientLanguage language, Map<String, Set<Path>> differingSnapshots) {
+        public Mismatch alsoLog(TestRoot testRoot, ClientLanguage language, Map<Snapshot, Set<Path>> differingSnapshots) {
             val extra = new StringBuilder("Differing snapshots found for the following files:\n");
 
-            for (val entry : differingSnapshots.entrySet()) {
-                extra.append("Snapshot:\n").append(entry.getKey()).append("\nFiles:\n");
+            differingSnapshots.forEach((snapshot, paths) -> {
+                extra.append("Snapshot:\n").append(snapshot).append("\nFiles:\n");
 
-                for (val path : entry.getValue()) {
+                for (val path : paths) {
                     extra.append(" - ").append(path).append("\n");
                 }
-            }
+            });
 
             logResult(testRoot, language, this, extra.toString());
             return this;
@@ -49,7 +50,7 @@ public sealed interface TestOutcome {
     }
 
     record FailedToVerify(Optional<Path> expected) implements TestOutcome {
-        public FailedToVerify alsoLog(TestRoot testRoot, ClientLanguage language, String actualSnapshot) {
+        public FailedToVerify alsoLog(TestRoot testRoot, ClientLanguage language, Snapshot actualSnapshot) {
             val prefix = expected
                 .map((path) -> "Expected snapshot file: " + path)
                 .orElse("No approved snapshot file found.");
