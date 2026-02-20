@@ -189,6 +189,11 @@ public class TestPlanBuilder {
                     return;
                 }
 
+                // Skip files in build output directories (obj/, bin/, target/, etc.)
+                if (isInBuildOutputDirectory(child)) {
+                    return;
+                }
+
                 tryAppendChild(ctx, skipConfig, child, ret);
             });
         } catch (IOException e) {
@@ -196,6 +201,30 @@ public class TestPlanBuilder {
         }
 
         return ret;
+    }
+
+    /// Checks if a file path is within a build output directory.
+    ///
+    /// Build output directories include:
+    /// - `obj/` and `bin/` (C#/.NET)
+    /// - `target/` (Java/Maven)
+    /// - `build/` (Gradle, general)
+    /// - `dist/` (JavaScript/TypeScript)
+    /// - `node_modules/` (JavaScript/TypeScript)
+    /// - `__pycache__/` and `.pytest_cache/` (Python)
+    ///
+    /// @param path the file path to check
+    /// @return true if the path contains any build output directory
+    private static boolean isInBuildOutputDirectory(Path path) {
+        val pathStr = path.toString();
+        return pathStr.contains("/obj/") || pathStr.contains("\\obj\\")
+            || pathStr.contains("/bin/") || pathStr.contains("\\bin\\")
+            || pathStr.contains("/target/") || pathStr.contains("\\target\\")
+            || pathStr.contains("/build/") || pathStr.contains("\\build\\")
+            || pathStr.contains("/dist/") || pathStr.contains("\\dist\\")
+            || pathStr.contains("/node_modules/") || pathStr.contains("\\node_modules\\")
+            || pathStr.contains("/__pycache__/") || pathStr.contains("\\__pycache__\\")
+            || pathStr.contains("/.pytest_cache/") || pathStr.contains("\\.pytest_cache\\");
     }
 
     private static void tryAppendChild(TestCtx ctx, SkipConfig skipConfig, Path child, TreeMap<ClientLanguage, Set<Path>> ret) {
