@@ -12,13 +12,19 @@ import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import com.dtsx.docs.core.runner.tests.strategies.test.CompilesTestStrategy;
 import com.dtsx.docs.core.runner.tests.strategies.test.SnapshotTestStrategy;
 import com.dtsx.docs.lib.CliLogger;
+import lombok.SneakyThrows;
 import lombok.val;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 import java.util.*;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.dtsx.docs.lib.Constants.META_FILE;
 
@@ -64,9 +70,10 @@ public class TestPlanBuilder {
             CliLogger.println(true, "@!->!@ Found " + testRoots.size() + " test roots");
 
             val builder = new Builder();
+            val gitignorePredicate = buildGitignorePredicate(ctx.examplesFolder());
 
             for (val rootPath : testRoots) {
-                mkTestRoot(ctx, rootPath).ifPresent(builder::addRoot);
+                mkTestRoot(ctx, rootPath, gitignorePredicate).ifPresent(builder::addRoot);
             }
 
             val plan = builder.build(ctx.maxFixtureInstances());
@@ -123,7 +130,78 @@ public class TestPlanBuilder {
         }
     }
 
-    /// Creates a test root from a directory containing a `meta.yml` file.
+    /// Builds a predicate from the .gitignore file in the examples folder.
+    ///
+    /// Reads the .gitignore file (if it exists) and converts each pattern into a predicate
+    /// that tests whether a path should be ignored. Supports glob patterns like:
+    /// - `**/bin/*` - matches bin directory at any depth
+    /// - `**/obj/*` - matches obj directory at any depth
+    /// - `target/*` - matches target directory at root level
+    ///
+    /// @return a predicate that returns true if a path should be ignored
+    @SneakyThrows
+    private static Predicate<Path> buildGitignorePredicate(Path rootFolder) {
+        val gitignorePath = rootFolder.resolve(".gitignore");
+
+        if (!Files.exists(gitignorePath)) {
+            return _ -> false;
+        }
+
+        val lines = Files.readAllLines(gitignorePath);
+
+        val fs = FileSystems.getDefault();
+
+        val excludeMatchers = new ArrayList<PathMatcher>();
+        val includeMatchers = new ArrayList<PathMatcher>();
+
+        for (var line : lines) {
+            line = line.trim();
+
+            if (line.isEmpty() || line.startsWith("#")) {
+                continue;
+            }
+
+            val negated = line.startsWith("!");
+
+            if (negated) {
+                line = line.substring(1);
+            }
+
+            if (line.endsWith("/")) {
+                line = line + "**";
+            }
+
+            if (!line.startsWith("/")) {
+                line = "**/" + line;
+            } else {
+                line = line.substring(1);
+            }
+
+            val matcher = fs.getPathMatcher("glob:" + line);
+
+            if (negated) {
+                includeMatchers.add(matcher);
+            } else {
+                excludeMatchers.add(matcher);
+            }
+        }
+
+        return (path) -> {
+            val relative = rootFolder.relativize(path);
+            var ignored = false;
+
+            for (val matcher : excludeMatchers) {
+                ignored = ignored || matcher.matches(relative);
+            }
+
+            for (val matcher : includeMatchers) {
+                ignored = ignored && !matcher.matches(relative);
+            }
+
+            return ignored;
+        };
+    }
+
     ///
     /// Steps:
     /// 1. Parse `meta.yml` configuration
@@ -135,11 +213,12 @@ public class TestPlanBuilder {
     ///
     /// @param rootPath path to the test root directory
     /// @param ctx the verifier context
+    /// @param gitignorePredicate predicate to test if paths should be ignored
     /// @return a pair of (base fixture, test root), or empty if skipped or no example files found
-    private static Optional<Pair<JSFixture, TestRoot>> mkTestRoot(TestCtx ctx, Path rootPath) {
+    private static Optional<Pair<JSFixture, TestRoot>> mkTestRoot(TestCtx ctx, Path rootPath, Predicate<Path> gitignorePredicate) {
         val meta = MetaYmlParser.parseMetaYml(ctx, rootPath.resolve(META_FILE));
 
-        val filesToTest = findFilesToTestInRoot(rootPath, ctx, meta.skipConfig());
+        val filesToTest = findFilesToTestInRoot(rootPath, ctx, meta.skipConfig(), gitignorePredicate);
 
         if (filesToTest.isEmpty()) {
             return Optional.empty();
@@ -164,6 +243,7 @@ public class TestPlanBuilder {
     /// Finds all example files in a test root for the configured client languages.
     ///
     /// Searches for files named `example.<ext>` where `<ext>` matches a configured language extension.
+    /// Files matching patterns in .gitignore are excluded.
     ///
     /// Example:
     /// ```
@@ -178,14 +258,19 @@ public class TestPlanBuilder {
     /// @param root       the test root directory to search
     /// @param ctx        the verifier context containing language configuration
     /// @param skipConfig the skip configuration to check if any languages should be skipped
+    /// @param gitignorePredicate predicate to test if paths should be ignored based on .gitignore
     /// @return map of client languages to their example file paths
     /// @throws PlanException if traversal fails
-    private static TreeMap<ClientLanguage, Set<Path>> findFilesToTestInRoot(Path root, TestCtx ctx, SkipConfig skipConfig) {
+    private static TreeMap<ClientLanguage, Set<Path>> findFilesToTestInRoot(Path root, TestCtx ctx, SkipConfig skipConfig, Predicate<Path> gitignorePredicate) {
         val ret = new TreeMap<ClientLanguage, Set<Path>>();
 
         try (val children = Files.walk(root).skip(1)) {
             children.forEach((child) -> {
                 if (!Files.isRegularFile(child)) {
+                    return;
+                }
+
+                if (gitignorePredicate.test(child)) {
                     return;
                 }
 
