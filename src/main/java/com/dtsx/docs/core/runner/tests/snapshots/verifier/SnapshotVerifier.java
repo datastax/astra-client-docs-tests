@@ -10,6 +10,7 @@ import com.dtsx.docs.core.runner.tests.results.TestOutcome;
 import com.dtsx.docs.core.runner.tests.results.TestOutcome.FailedToVerify;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.SnapshotSource;
 import com.dtsx.docs.core.runner.tests.snapshots.verifier.scrubbers.ObjectIdScrubber;
+import com.dtsx.docs.core.runner.tests.snapshots.verifier.scrubbers.UUIDScrubber;
 import com.dtsx.docs.core.runner.tests.strategies.execution.ExecutionStrategy.TestResetter;
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
@@ -19,7 +20,6 @@ import lombok.val;
 import org.approvaltests.Approvals;
 import org.approvaltests.core.Options;
 import org.approvaltests.core.Scrubber;
-import org.approvaltests.scrubbers.GuidScrubber;
 import org.approvaltests.scrubbers.MultiScrubber;
 
 import java.io.IOException;
@@ -37,7 +37,7 @@ public class SnapshotVerifier {
     private static final String LAST_MODIFIED_FILE = "last-modified.txt";
 
     public static final Scrubber SCRUBBER = new MultiScrubber(List.of(
-        new GuidScrubber(),
+        new UUIDScrubber(),
         new ObjectIdScrubber()
     ));
 
