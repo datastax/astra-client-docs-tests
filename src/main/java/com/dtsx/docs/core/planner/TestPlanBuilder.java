@@ -171,9 +171,14 @@ public class TestPlanBuilder {
                 line = line + "**";
             }
 
-            if (!line.startsWith("/")) {
+            // Convert patterns like **/obj/* to **/obj/** to match all descendants
+            if (line.endsWith("/*")) {
+                line = line.substring(0, line.length() - 1) + "**";
+            }
+
+            if (!line.startsWith("/") && !line.startsWith("**/")) {
                 line = "**/" + line;
-            } else {
+            } else if (line.startsWith("/")) {
                 line = line.substring(1);
             }
 
