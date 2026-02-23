@@ -8,6 +8,7 @@ import com.dtsx.docs.core.runner.drivers.ClientDriver;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import com.dtsx.docs.core.runner.tests.results.TestOutcome;
 import com.dtsx.docs.core.runner.tests.results.TestOutcome.FailedToVerify;
+import com.dtsx.docs.core.runner.tests.snapshots.reducers.SnapshotReductionException;
 import com.dtsx.docs.core.runner.tests.snapshots.sources.SnapshotSource;
 import com.dtsx.docs.core.runner.tests.snapshots.verifier.scrubbers.ObjectIdScrubber;
 import com.dtsx.docs.core.runner.tests.snapshots.verifier.scrubbers.UUIDScrubber;
@@ -76,14 +77,12 @@ public class SnapshotVerifier {
             }
         }
 
-        snapshots = driver.reduceSnapshots(snapshots);
-
-        if (snapshots.size() > 1) {
+        try {
+            val snapshot = driver.language().snapshotsReducer().reduceSnapshots(snapshots);
+            return verifySnapshot(driver, testRoot, snapshot);
+        } catch (SnapshotReductionException e) {
             return TestOutcome.Mismatch.Mismatch.Mismatch.Mismatch.Mismatch.Mismatch.Mismatch.Mismatch.INSTANCE.alsoLog(testRoot, driver.language(), snapshots);
         }
-
-        val snapshot = snapshots.keySet().iterator().next();
-        return verifySnapshot(driver, testRoot, snapshot);
     }
 
     private Snapshot mkSnapshot(ClientDriver driver, FixtureMetadata md, RunResult result) {

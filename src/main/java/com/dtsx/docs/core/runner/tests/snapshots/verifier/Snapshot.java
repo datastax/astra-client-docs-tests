@@ -1,13 +1,11 @@
 package com.dtsx.docs.core.runner.tests.snapshots.verifier;
 
-import lombok.AccessLevel;
-import lombok.EqualsAndHashCode;
-import lombok.RequiredArgsConstructor;
-import lombok.val;
+import lombok.*;
 import org.approvaltests.core.Scrubber;
 
 import java.util.List;
 
+@Getter
 @EqualsAndHashCode
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class Snapshot {
