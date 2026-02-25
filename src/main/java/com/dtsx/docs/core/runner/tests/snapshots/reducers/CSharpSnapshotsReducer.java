@@ -1,10 +1,12 @@
 package com.dtsx.docs.core.runner.tests.snapshots.reducers;
 
 import com.dtsx.docs.core.runner.tests.snapshots.verifier.Snapshot;
+import com.dtsx.docs.core.runner.tests.snapshots.verifier.Snapshot.SnapshotPart;
 import com.dtsx.docs.lib.JacksonUtils;
 import lombok.val;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -21,47 +23,57 @@ public enum CSharpSnapshotsReducer implements SnapshotsReducer {
             val iter = snapshots.entrySet().iterator();
             val e1 = iter.next();
             val e2 = iter.next();
-            
+
+            // minor optimization to check if the typed snapshot is the subset first
             val e1IsUntyped = e1.getValue().stream().anyMatch(p -> p.toString().contains("untyped"));
             
-            val typedSnapshot = (e1IsUntyped) ? e2.getKey() : e1.getKey();
-            val untypedSnapshot = (e1IsUntyped) ? e1.getKey() : e2.getKey();
+            val snapshot1 = (e1IsUntyped) ? e2.getKey() : e1.getKey();
+            val snapshot2 = (e1IsUntyped) ? e1.getKey() : e2.getKey();
 
-            val typedParts = typedSnapshot.parts();
-            val untypedParts = untypedSnapshot.parts();
-            
-            if (typedParts.size() != untypedParts.size()) {
-                throw new SnapshotReductionException();
+            if (firstSnapshotSubsetOfSecond(snapshot1.parts(), snapshot2.parts())) {
+                return snapshot2;
             }
-            
-            for (int i = 0; i < typedParts.size(); i++) {
-                val typedPart = typedParts.get(i);
-                val untypedPart = untypedParts.get(i);
-                
-                if (!typedPart.name().equals(untypedPart.name())) {
-                    throw new SnapshotReductionException();
-                }
 
-                if (typedPart.name().endsWith("::jsonify")) {
-                    val typedJson = JacksonUtils.parseJson(typedPart.content(), Object.class);
-                    val untypedJson = JacksonUtils.parseJson(untypedPart.content(), Object.class);
-
-                    if (!isSubset(typedJson, untypedJson)) {
-                        throw new SnapshotReductionException();
-                    }
-                } else {
-                    if (!typedPart.content().equals(untypedPart.content())) {
-                        throw new SnapshotReductionException();
-                    }
-                }
+            if (firstSnapshotSubsetOfSecond(snapshot2.parts(), snapshot1.parts())) {
+                return snapshot1;
             }
-            
-            return untypedSnapshot;
+
+            throw new SnapshotReductionException();
         }
-        
+
         throw new SnapshotReductionException();
     }
-    
+
+    private boolean firstSnapshotSubsetOfSecond(List<SnapshotPart> parts1, List<SnapshotPart> parts2) {
+        if (parts1.size() != parts2.size()) {
+            return false;
+        }
+
+        for (int i = 0; i < parts1.size(); i++) {
+            val part1 = parts1.get(i);
+            val part2 = parts2.get(i);
+
+            if (!part1.name().equals(part2.name())) {
+                return false;
+            }
+
+            if (part1.name().endsWith("::jsonify")) {
+                val typedJson = JacksonUtils.parseJson(part1.content(), Object.class);
+                val untypedJson = JacksonUtils.parseJson(part2.content(), Object.class);
+
+                if (!isSubset(typedJson, untypedJson)) {
+                    return false;
+                }
+            } else {
+                if (!part1.content().equals(part2.content())) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
     private boolean isSubset(Object typed, Object untyped) {
         if (typed == null) return true;
         if (untyped == null) return false;
