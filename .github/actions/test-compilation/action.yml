@@ -4,7 +4,7 @@ inputs:
     required: true
   docs-repo:
     description: 'Documentation repository in format [org/repo][@branch] (both the org/repo and branch are optional)'
-    default: 'riptano/astra-vector-docs@ske-tests-1'
+    default: 'riptano/astra-vector-docs@main'
   docs-repo-token:
     description: 'GitHub PAT with access to the docs repository (if internal/private, otherwise not needed)'
     required: true

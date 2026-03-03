@@ -35,7 +35,7 @@ runs:
       shell: bash
       run: |
         REPO_PATH="riptano/astra-vector-docs"
-        BRANCH="ske-tests-1"
+        BRANCH="main"
 
         REPO_INPUT="${{ inputs.docs-repo }}"
         
