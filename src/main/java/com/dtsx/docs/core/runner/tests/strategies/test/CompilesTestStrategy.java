@@ -5,7 +5,7 @@ import com.dtsx.docs.core.planner.TestRoot;
 import com.dtsx.docs.core.planner.fixtures.BaseFixturePool;
 import com.dtsx.docs.core.planner.meta.compiles.CompilesTestMeta;
 import com.dtsx.docs.core.runner.ExecutionEnvironment;
-import com.dtsx.docs.core.runner.ExecutionEnvironment.ExecutionEnvironments;
+import com.dtsx.docs.core.runner.ExecutionEnvironments;
 import com.dtsx.docs.core.runner.ExecutionEnvironment.TestFileModifiers;
 import com.dtsx.docs.core.runner.Placeholders;
 import com.dtsx.docs.core.runner.drivers.ClientDriver;
@@ -49,7 +49,7 @@ public final class CompilesTestStrategy extends TestStrategy<CompilesTestMeta> {
                 val futures = new ArrayList<Future<?>>();
 
                 testRoot.filesToTest().forEach((lang, paths) -> {
-                    val driver = ctx.drivers().get(lang);
+                    val driver = ctx.driver(lang);
                     val execEnv = execEnvs.forLanguage(lang);
 
                     futures.add(executor.submit(() -> {

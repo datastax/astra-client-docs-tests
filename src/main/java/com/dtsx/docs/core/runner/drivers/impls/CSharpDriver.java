@@ -13,11 +13,14 @@ import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import com.dtsx.docs.lib.JacksonUtils;
 import lombok.val;
+import tools.jackson.databind.node.ObjectNode;
 
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 public class CSharpDriver extends ClientDriver {
     public CSharpDriver(String artifact) {
@@ -87,5 +90,29 @@ public class CSharpDriver extends ClientDriver {
     @Override
     public RunResult executeScript(BaseScriptRunnerCtx ctx, ExecutionEnvironment execEnv, Map<String, String> envVars) {
         return ExternalPrograms.dotnet(ctx).run(execEnv.envDir(), envVars, "run");
+    }
+
+    @Override
+    public Optional<String> extractClientVersion(BaseScriptRunnerCtx ctx, ExecutionEnvironment execEnv) {
+        val result = ExternalPrograms.dotnet(ctx).run(execEnv.envDir(), "list", "package", "--format", "json");
+        
+        if (result.notOk()) {
+            throw new RunException("Failed to extract C# client version: " + result.output());
+        }
+
+        try {
+            val json = JacksonUtils.parseJson(result.stdout(), ObjectNode.class);
+            val topLevelPackages = json.get("projects").get(0).get("frameworks").get(0).get("topLevelPackages");
+            
+            for (val pkg : topLevelPackages) {
+                if ("DataStax.AstraDB.DataApi".equals(pkg.get("id").asString())) {
+                    return Optional.of("v" + pkg.get("resolvedVersion").asString());
+                }
+            }
+        } catch (Exception e) {
+            throw new RunException("Failed to parse C# package list JSON: " + e.getMessage(), e);
+        }
+
+        return Optional.of("unknown");
     }
 }

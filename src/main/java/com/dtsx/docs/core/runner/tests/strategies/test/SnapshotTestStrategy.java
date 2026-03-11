@@ -5,7 +5,7 @@ import com.dtsx.docs.core.planner.TestRoot;
 import com.dtsx.docs.core.planner.fixtures.BaseFixturePool;
 import com.dtsx.docs.core.planner.fixtures.FixtureMetadata;
 import com.dtsx.docs.core.planner.meta.snapshot.SnapshotTestMeta;
-import com.dtsx.docs.core.runner.ExecutionEnvironment.ExecutionEnvironments;
+import com.dtsx.docs.core.runner.ExecutionEnvironments;
 import com.dtsx.docs.core.runner.ExecutionEnvironment.TestFileModifiers;
 import com.dtsx.docs.core.runner.PlaceholderResolver;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
@@ -81,7 +81,7 @@ public final class SnapshotTestStrategy extends TestStrategy<SnapshotTestMeta> {
         }
 
         private TestOutcome run(ClientLanguage language, Set<Path> filesForLang, FixtureMetadata md, TestResetter resetter, MessageUpdater msgUpdater) {
-            val driver = ctx.drivers().get(language);
+            val driver = ctx.driver(language);
             val execEnv = execEnvs.forLanguage(language);
 
             val envVars = PlaceholderResolver.mkEnvVars(ctx, md, Optional.of(language));

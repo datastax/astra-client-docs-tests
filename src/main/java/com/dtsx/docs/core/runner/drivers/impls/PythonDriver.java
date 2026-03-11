@@ -13,12 +13,13 @@ import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import com.dtsx.docs.lib.JacksonUtils;
 import lombok.val;
+import tools.jackson.databind.node.ArrayNode;
 
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 
 public class PythonDriver extends ClientDriver {
     public PythonDriver(String artifact) {
@@ -53,8 +54,6 @@ public class PythonDriver extends ClientDriver {
 
         return execEnv.envDir().resolve("example.py");
     }
-
-    private static final Pattern DataAPIClientPattern = Pattern.compile("DataAPIClient\\(([^)]*?)\\)");
 
     @Override
     public String preprocessScript(BaseScriptRunnerCtx ctx, String content, @TestFileModifierFlags int mods) {
@@ -124,5 +123,28 @@ public class PythonDriver extends ClientDriver {
     @Override
     public RunResult executeScript(BaseScriptRunnerCtx ctx, ExecutionEnvironment execEnv, Map<String, String> envVars) {
         return ExternalPrograms.custom().run(execEnv.envDir(), envVars, ".venv/bin/python", execEnv.scriptPath());
+    }
+
+    @Override
+    public Optional<String> extractClientVersion(BaseScriptRunnerCtx ctx, ExecutionEnvironment execEnv) {
+        val result = ExternalPrograms.custom().run(execEnv.envDir(), ".venv/bin/pip", "list", "--format", "json");
+        
+        if (result.notOk()) {
+            throw new RuntimeException("Failed to extract Python client version: " + result.output());
+        }
+
+        try {
+            val packages = JacksonUtils.parseJson(result.stdout(), ArrayNode.class);
+            
+            for (val pkg : packages) {
+                if ("astrapy".equals(pkg.get("name").asString())) {
+                    return Optional.of("v" + pkg.get("version").asString());
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse pip list JSON: " + e.getMessage(), e);
+        }
+
+        return Optional.of("unknown");
     }
 }

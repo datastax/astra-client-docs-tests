@@ -76,7 +76,7 @@ public class TestPlanBuilder {
                 mkTestRoot(ctx, rootPath, gitignorePredicate).ifPresent(builder::addRoot);
             }
 
-            val plan = builder.build(ctx.maxFixtureInstances());
+            val plan = builder.build(ctx);
 
             CliLogger.println(true, "@!->!@ Found " + plan.totalTests() + " files to test");
             CliLogger.println(true);

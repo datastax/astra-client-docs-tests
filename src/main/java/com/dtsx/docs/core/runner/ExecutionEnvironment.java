@@ -2,7 +2,6 @@ package com.dtsx.docs.core.runner;
 
 import com.dtsx.docs.config.ctx.BaseScriptRunnerCtx;
 import com.dtsx.docs.core.runner.drivers.ClientDriver;
-import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import com.dtsx.docs.lib.CliLogger;
 import com.dtsx.docs.lib.CliLogger.MessageUpdater;
 import lombok.*;
@@ -13,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -119,24 +117,6 @@ public class ExecutionEnvironment {
         return testFileCopyPath.toAbsolutePath().toString();
     }
 
-    /// A collection of execution environments, one for each client language.
-    ///
-    /// Provides access to environments by language and handles any cleanup of all environments if ran with the `--clean` flag.
-    ///
-    /// @see ExecutionEnvironment
-    @RequiredArgsConstructor
-    public static class ExecutionEnvironments {
-        private final Map<ClientLanguage, ExecutionEnvironment> map;
-
-        /// Gets the execution environment for a specific language.
-        ///
-        /// @param lang the client language
-        /// @return the execution environment for that language
-        public ExecutionEnvironment forLanguage(ClientLanguage lang) {
-            return map.get(lang);
-        }
-    }
-
     @SneakyThrows
     private Path setupFileForTesting(ClientDriver driver, Path sourceFile, Placeholders placeholders, @TestFileModifierFlags int mods) {
         var content = Files.readString(sourceFile);
@@ -185,11 +165,14 @@ public class ExecutionEnvironment {
         }
 
         private ExecutionEnvironments mkExecEnvs(Collection<ClientDriver> drivers, Path rootDir) {
+            CliLogger.println(true, "@|bold Setting up execution environments...|@");
+
             val execEnvs = drivers.stream().collect(Collectors.toMap(
                 ClientDriver::language,
                 (driver) -> mkExecEnv(rootDir, driver)
             ));
 
+            CliLogger.println(true);
             return new ExecutionEnvironments(execEnvs);
         }
 
@@ -214,6 +197,12 @@ public class ExecutionEnvironment {
                 }
 
                 val testFileCopyPath = driver.setupExecutionEnvironment(ctx, execEnv);
+
+                val clientVersion = driver.extractClientVersion(ctx, execEnv)
+                    .map(version -> " @|faint (client " + version + ")|@")
+                    .orElse("");
+
+                CliLogger.println(true, "@!✓!@ " + languageName + clientVersion);
 
                 return execEnv.withTestFileCopyPath(testFileCopyPath);
             });

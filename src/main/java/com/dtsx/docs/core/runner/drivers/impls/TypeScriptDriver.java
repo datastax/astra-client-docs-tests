@@ -14,10 +14,13 @@ import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import com.dtsx.docs.lib.JacksonUtils;
 import lombok.val;
+import tools.jackson.databind.node.ObjectNode;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 
 public class TypeScriptDriver extends ClientDriver {
@@ -89,5 +92,21 @@ public class TypeScriptDriver extends ClientDriver {
     @Override
     public RunResult executeScript(BaseScriptRunnerCtx ctx, ExecutionEnvironment execEnv, Map<String, String> envVars) {
         return ExternalPrograms.tsx(ctx).run(execEnv.envDir(), envVars, execEnv.scriptPath());
+    }
+
+    @Override
+    public Optional<String> extractClientVersion(BaseScriptRunnerCtx ctx, ExecutionEnvironment execEnv) {
+        try {
+            val packageLockPath = execEnv.envDir().resolve("package-lock.json");
+            val json = JacksonUtils.parseJson(Files.readString(packageLockPath), ObjectNode.class);
+            val packages = json.get("packages");
+            if (packages != null && packages.has("node_modules/@datastax/astra-db-ts")) {
+                val version = packages.get("node_modules/@datastax/astra-db-ts").get("version").asString();
+                return Optional.of("v" + version);
+            }
+            throw new RunException("Could not find @datastax/astra-db-ts in package-lock.json");
+        } catch (Exception e) {
+            throw new RunException("Failed to extract TypeScript client version from package-lock.json", e);
+        }
     }
 }

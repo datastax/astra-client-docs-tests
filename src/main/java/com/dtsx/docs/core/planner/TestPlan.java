@@ -1,8 +1,10 @@
 package com.dtsx.docs.core.planner;
 
+import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.core.planner.fixtures.BaseFixturePool;
 import com.dtsx.docs.core.planner.fixtures.JSFixture;
 import com.dtsx.docs.core.planner.meta.snapshot.ExecutionMode;
+import com.dtsx.docs.core.runner.drivers.ClientDriver;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import com.dtsx.docs.core.runner.tests.strategies.test.SnapshotTestStrategy;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +16,7 @@ import java.util.function.BiConsumer;
 
 @RequiredArgsConstructor
 public class TestPlan {
+    private final TestCtx ctx;
     private final SortedMap<BaseFixturePool, SortedSet<TestRoot>> plan;
     private final Set<ClientLanguage> usedLanguages;
 
@@ -21,8 +24,10 @@ public class TestPlan {
         plan.forEach(consumer);
     }
 
-    public Set<ClientLanguage> usedLanguages() {
-        return usedLanguages;
+    public List<ClientDriver> usedDrivers() {
+        return ctx.drivers().stream()
+            .filter(d -> usedLanguages.contains(d.language()))
+            .toList();
     }
 
     public int totalTests() {
@@ -49,15 +54,15 @@ public class TestPlan {
             updateMaxNeededFixtures(info, testRoot);
         }
 
-        public TestPlan build(int maxFixtureInstances) {
+        public TestPlan build(TestCtx ctx) {
             val plan = new TreeMap<BaseFixturePool, SortedSet<TestRoot>>();
 
             for (val entry : poolInfos.entrySet()) {
-                val pool = mkPool(entry.getKey(), entry.getValue(), maxFixtureInstances);
+                val pool = mkPool(entry.getKey(), entry.getValue(), ctx.maxFixtureInstances());
                 plan.put(pool, new TreeSet<>(entry.getValue().testRoots));
             }
 
-            return new TestPlan(plan, usedLanguages);
+            return new TestPlan(ctx, plan, usedLanguages);
         }
 
         private void updateMaxNeededFixtures(PoolInfo info, TestRoot testRoot) {

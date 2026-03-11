@@ -3,12 +3,13 @@ package com.dtsx.docs.commands.test;
 import com.dtsx.docs.config.ArgUtils;
 import com.dtsx.docs.config.ctx.BaseCtx;
 import com.dtsx.docs.config.ctx.BaseScriptRunnerCtx;
-import com.dtsx.docs.lib.ExternalPrograms;
-import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.core.runner.drivers.ClientDriver;
 import com.dtsx.docs.core.runner.drivers.ClientLanguage;
 import com.dtsx.docs.core.runner.tests.VerifyMode;
 import com.dtsx.docs.core.runner.tests.reporter.TestReporter;
+import com.dtsx.docs.lib.ExternalPrograms;
+import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.val;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
@@ -20,7 +21,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 import static com.dtsx.docs.core.runner.tests.VerifyMode.DRY_RUN;
 
@@ -37,11 +37,21 @@ import static com.dtsx.docs.core.runner.tests.VerifyMode.DRY_RUN;
 /// @see TestArgs
 @Getter
 public class TestCtx extends BaseScriptRunnerCtx {
+    @Getter(AccessLevel.NONE)
     private final Map<ClientLanguage, ClientDriver> drivers;
+
     private final TestReporter reporter;
     private final VerifyMode verifyMode;
     private final Predicate<Path> filter;
     private final int maxFixtureInstances;
+
+    public List<ClientDriver> drivers() {
+        return new ArrayList<>(drivers.values());
+    }
+
+    public ClientDriver driver(ClientLanguage lang) {
+        return drivers.get(lang);
+    }
 
     public List<ClientLanguage> languages() {
         return new ArrayList<>(drivers.keySet());

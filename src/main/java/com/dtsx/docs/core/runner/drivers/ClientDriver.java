@@ -7,7 +7,6 @@ import com.dtsx.docs.core.runner.ExecutionEnvironment;
 import com.dtsx.docs.core.runner.ExecutionEnvironment.TestFileModifierFlags;
 import com.dtsx.docs.core.runner.RunException;
 import com.dtsx.docs.core.runner.drivers.impls.*;
-import com.dtsx.docs.core.runner.tests.snapshots.verifier.Snapshot;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import lombok.AllArgsConstructor;
@@ -108,9 +107,8 @@ public abstract class ClientDriver {
     /// @return the execution result with exit code and output
     public abstract RunResult executeScript(BaseScriptRunnerCtx ctx, ExecutionEnvironment execEnv, Map<String, String> envVars);
 
-    public HashMap<Snapshot, Set<Path>> reduceSnapshots(HashMap<Snapshot, Set<Path>> snapshots) {
-        return snapshots;
-    }
+    /// Extracts the client library version from the execution environment, if applicable.
+    public abstract Optional<String> extractClientVersion(BaseScriptRunnerCtx ctx, ExecutionEnvironment execEnv);
 
     protected final void replaceArtifactPlaceholder(ExecutionEnvironment execEnv, String file) {
         val path = execEnv.envDir().resolve(file);

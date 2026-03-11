@@ -4,7 +4,7 @@ import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.core.planner.TestRoot;
 import com.dtsx.docs.core.planner.fixtures.BaseFixturePool;
 import com.dtsx.docs.core.planner.meta.BaseMetaYml;
-import com.dtsx.docs.core.runner.ExecutionEnvironment.ExecutionEnvironments;
+import com.dtsx.docs.core.runner.ExecutionEnvironments;
 import com.dtsx.docs.core.runner.tests.results.TestRootResults;
 import com.dtsx.docs.lib.ExternalPrograms.ExternalProgram;
 import lombok.RequiredArgsConstructor;

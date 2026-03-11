@@ -13,6 +13,7 @@ import com.dtsx.docs.lib.ExternalPrograms.RunResult;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 
 public class GoDriver extends ClientDriver {
@@ -53,5 +54,10 @@ public class GoDriver extends ClientDriver {
     @Override
     public RunResult executeScript(BaseScriptRunnerCtx ctx, ExecutionEnvironment execEnv, Map<String, String> envVars) {
         return null;
+    }
+
+    @Override
+    public Optional<String> extractClientVersion(BaseScriptRunnerCtx ctx, ExecutionEnvironment execEnv) {
+        return Optional.empty();
     }
 }
