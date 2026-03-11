@@ -2,6 +2,7 @@ package com.dtsx.docs.core.runner.tests.reporter;
 
 import com.dtsx.docs.commands.test.TestCtx;
 import com.dtsx.docs.core.planner.TestPlan;
+import com.dtsx.docs.core.planner.TestRoot;
 import com.dtsx.docs.core.planner.fixtures.JSFixture;
 import com.dtsx.docs.core.runner.tests.results.TestOutcome;
 import com.dtsx.docs.core.runner.tests.results.TestOutcome.*;
@@ -74,6 +75,19 @@ public abstract class TestReporter {
     /// ```
     public abstract void printTestRootResults(JSFixture baseFixture, TestRootResults result, TestResults history, long duration);
 
+    /// Prints all bailed test roots (tests that were skipped due to bail mode)
+    ///
+    /// Called when bail mode is triggered and there are remaining untested roots.
+    public void printBailedTestRoots(TestPlan plan, TestResults history) {
+        plan.forEachPool((pool, testRoots) -> {
+            for (val testRoot : testRoots) {
+                if (!history.hasResults(pool.fixture(), testRoot)) {
+                    printBailedTestRoot(testRoot);
+                }
+            }
+        });
+    }
+
     /// Prints the final summary after all tests complete (total, passed, failed, potentially bailed counts)
     ///
     /// Example:
@@ -135,6 +149,23 @@ public abstract class TestReporter {
                 ? mkShorthandReport(results, sb, duration)
                 : mkDetailedReport(results, sb, duration)
         );
+    }
+
+    private void printBailedTestRoot(TestRoot testRoot) {
+        val sb = new StringBuilder("  @|red B|@ ");
+        sb.append(testRoot.rootName());
+
+        val languages = testRoot.filesToTest().keySet().stream()
+            .map(lang -> lang.name().toLowerCase())
+            .collect(joining(","));
+
+        sb.append(Style.faint.on())
+            .append(" (")
+            .append(languages)
+            .append(")")
+            .append(Style.faint.off());
+
+        CliLogger.println(false, sb.toString());
     }
 
     private String mkShorthandReport(TestRootResults results, StringBuilder sb, long duration) {

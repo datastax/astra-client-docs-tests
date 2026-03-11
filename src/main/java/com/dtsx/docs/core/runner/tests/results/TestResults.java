@@ -1,5 +1,6 @@
 package com.dtsx.docs.core.runner.tests.results;
 
+import com.dtsx.docs.core.planner.TestRoot;
 import com.dtsx.docs.core.planner.fixtures.JSFixture;
 
 import java.util.ArrayList;
@@ -32,5 +33,10 @@ public class TestResults {
 
     public boolean allPassed() {
         return failedTests() == 0;
+    }
+
+    public boolean hasResults(JSFixture baseFixture, TestRoot testRoot) {
+        return results.getOrDefault(baseFixture, List.of()).stream()
+            .anyMatch(r -> r.testRoot().equals(testRoot));
     }
 }

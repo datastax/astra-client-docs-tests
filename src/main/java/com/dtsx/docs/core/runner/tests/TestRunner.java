@@ -46,10 +46,10 @@ public class TestRunner {
 
                     for (val testRoot : testRoots) {
                         try {
-                            val adaptedPool = testRoot.testStrategy().slicePool(testRoot, pool);
+                            val slicedPool = testRoot.testStrategy().slicePool(testRoot, pool);
 
                             val startTime = System.currentTimeMillis();
-                            val result = testRoot.testStrategy().runTestsInRoot(tsx, testRoot, execEnvs, adaptedPool);
+                            val result = testRoot.testStrategy().runTestsInRoot(tsx, testRoot, execEnvs, slicedPool);
                             val duration = System.currentTimeMillis() - startTime;
 
                             ctx.reporter().printTestRootResults(pool.fixture(), result, history, duration);
@@ -63,8 +63,6 @@ public class TestRunner {
                             throw e;
                         }
                     }
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
                 } finally {
                     pool.teardown(tsx);
                 }
@@ -72,6 +70,7 @@ public class TestRunner {
 
             return history.allPassed();
         } catch (BailException e) {
+            ctx.reporter().printBailedTestRoots(plan, history);
             return false;
         } finally {
             ctx.reporter().printSummary(plan, history);
