@@ -141,9 +141,7 @@ public class PythonDriver extends ClientDriver {
                     return Optional.of("v" + pkg.get("version").asString());
                 }
             }
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to parse pip list JSON: " + e.getMessage(), e);
-        }
+        } catch (Exception _) {}
 
         return Optional.of("unknown");
     }

@@ -109,8 +109,8 @@ public class CSharpDriver extends ClientDriver {
                     return Optional.of("v" + pkg.get("resolvedVersion").asString());
                 }
             }
-        } catch (Exception e) {
-            throw new RunException("Failed to parse C# package list JSON: " + e.getMessage(), e);
+        } catch (Exception _) {
+            return Optional.of("local");
         }
 
         return Optional.of("unknown");
