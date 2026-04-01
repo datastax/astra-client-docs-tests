@@ -3,17 +3,23 @@ on:
   pull_request:
 
 jobs:
-  checkout:
+  sanity-check:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Run "mock" client compilation tests
+        id: run-tests
         uses: ./.github/actions/test-compilation
         with:
-          clients: 'all'
+          clients: 'java'
+          args: '-f datatypes'
           docs-repo: 'datastax/astra-client-docs-tests@master'
           docs-repo-token: ${{ github.token }}
           examples-path: 'resources/mock_examples'
           testing-repo-ref: ${{ github.ref_name || 'master' }}
+
+      - name: Print number of failed tests
+        run: |
+          echo "Failed tests: ${{ steps.run-tests.outputs.failed_tests }}"

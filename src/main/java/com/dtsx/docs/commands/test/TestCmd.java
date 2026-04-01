@@ -26,6 +26,9 @@ public class TestCmd extends BaseCmd<TestCtx> {
         CliLogger.println(false);
 
         val ok = TestRunner.runTests(ctx, TestPlanBuilder.buildPlan(ctx));
-        return (ok) ? 0 : 1;
+
+        return (ok || ctx.allowFailures())
+            ? 0
+            : 1;
     }
 }

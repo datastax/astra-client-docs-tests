@@ -26,6 +26,9 @@ outputs:
   dh-cli-path:
     description: 'Path to the built dh jar file'
     value: ${{ steps.build-cli.outputs.dh-cli-path }}
+  failed_tests:
+    description: 'Whether any tests failed'
+    value: ${{ steps.calc-failed-tests.outputs.failed_tests }}
 
 runs:
   using: composite
@@ -92,16 +95,7 @@ runs:
       with:
         distribution: 'temurin'
         java-version: '25'
-
-    - name: Cache Gradle dependencies
-      uses: actions/cache@v5
-      with:
-        path: |
-          ~/.gradle/caches
-          ~/.gradle/wrapper
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-        restore-keys: |
-          ${{ runner.os }}-gradle-
+        cache: 'gradle'
 
     - name: Verify java
       shell: bash
@@ -115,15 +109,7 @@ runs:
       uses: actions/setup-node@v4
       with:
         node-version: 'lts/*'
-
-    - name: Cache npm global packages
-      if: inputs.setup-languages == 'all' || contains(inputs.setup-languages, 'typescript')
-      uses: actions/cache@v4
-      with:
-        path: ~/.npm
-        key: ${{ runner.os }}-npm-global-${{ hashFiles('**/package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-npm-global-
+        cache: 'npm'
 
     - name: Verify node
       if: inputs.setup-languages == 'all' || contains(inputs.setup-languages, 'typescript')
@@ -159,9 +145,9 @@ runs:
     # --- dotnet ---
     - name: Setup dotnet
       if: inputs.setup-languages == 'all' || contains(inputs.setup-languages, 'csharp')
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v5
       with:
-        dotnet-version: '9.x'
+        dotnet-version: '10.x'
 
     - name: Verify dotnet
       if: inputs.setup-languages == 'all' || contains(inputs.setup-languages, 'csharp')
@@ -187,6 +173,25 @@ runs:
         export SPINNER=false
         source astra-client-docs-tests/scripts/dev-alias.sh --no-compgen
         eval "${{ inputs.script }}"
+
+    - name: Set failed_tests output
+      id: calc-failed-tests
+      shell: bash
+      run: |
+        set -x
+        logs=$(cat astra-client-docs-tests/.docs_tests_temp/logs/* || '')
+        
+        total_tests=$(echo "$logs" | grep " Total tests:" | cut -d':' -f2 | tr -d ' ')
+        passed_tests=$(echo "$logs" | grep " Passed tests:" | cut -d':' -f2 | tr -d ' ')
+        
+        echo "Total tests: $total_tests"
+        echo "Passed tests: $passed_tests"
+        
+        if [[ "$total_tests" -ne "$passed_tests" ]]; then
+          echo "failed_tests=true" >> $GITHUB_OUTPUT
+        else
+          echo "failed_tests=false" >> $GITHUB_OUTPUT
+        fi
 
     - name: Print logs on failure
       if: failure()

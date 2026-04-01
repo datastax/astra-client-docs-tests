@@ -76,6 +76,12 @@ public class TestArgs extends BaseScriptRunnerArgs<TestCtx> {
     )
     public int $maxFixtureInstances;
 
+    @Option(
+        names = { "--allow-failures" },
+        description = "Whether to allow test failures without exiting with an error code."
+    )
+    public boolean $allowFailures;
+
     @Override
     public TestCtx toCtx(CommandSpec spec) {
         return new TestCtx(this, spec);
