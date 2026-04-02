@@ -21,6 +21,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class GoDriver extends ClientDriver {
     public GoDriver(String artifact) {
@@ -50,33 +53,49 @@ public class GoDriver extends ClientDriver {
         return execEnv.envDir().resolve("example.go");
     }
 
+    private static final Pattern IMPORTS_PATTERN = Pattern.compile("(?s)import\\s+\\((.*?)\\)");
+
     @Override
     public String preprocessScript(BaseScriptRunnerCtx ignoredCtx, String content, @TestFileModifierFlags int mods) {
         if ((mods & TestFileModifiers.JSONIFY_OUTPUT) != 0) {
+            content = content.replaceFirst("(?s)^\\s*package\\s+\\w+\\s*", "");
+
+            val matcher = IMPORTS_PATTERN.matcher(content);
+            val found = matcher.find();
+
+            if (found) {
+                content = content.replace(matcher.group(0), "");
+            }
+
+            val imports = Stream.concat(
+                (found) ? matcher.group(1).lines().map(String::trim) : Stream.empty(),
+                Stream.of("\"encoding/json\"", "\"fmt\"", "\"os\"")
+            ).distinct();
+
             content = """
-            package main
+                package main
+
+                import (
+                    %s
+                )
             
-            import (
-                "encoding/json"
-                "fmt"
-                "os"
-            )
-            
-            var originalPrintln = fmt.Println
-            
-            func init() {
-                fmt.Println = func(a ...any) (n int, err error) {
+                func _printlnJson(a ...any) (int, error) {
                     for _, v := range a {
                         jsonBytes, err := json.Marshal(v)
                         if err != nil {
-                            return originalPrintln(v)
+                            fmt.Fprintln(os.Stdout, v)
+                            continue
                         }
-                        originalPrintln(string(jsonBytes))
+                        fmt.Fprintln(os.Stdout, string(jsonBytes))
                     }
                     return len(a), nil
                 }
-            }
-            """ + content.replaceFirst("package main\\s*", "");
+            
+                %s
+            """.formatted(
+                imports.collect(Collectors.joining("\n")),
+                content.replace("fmt.Println", "_printlnJson")
+            );
         }
 
         return content;
