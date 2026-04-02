@@ -76,6 +76,13 @@ public class ExternalPrograms {
         return get(JQ, ctx);
     }
 
+    /// Returns a go executor (default: `go`).
+    ///
+    /// Used to run Go example scripts.
+    public static ExternalProgram go(BaseCtx ctx) {
+        return get(GO, ctx);
+    }
+
     /// Returns a custom executor with no default command.
     ///
     /// Useful for calling definitely-available scripts (such as `./.gradlew`)
@@ -98,7 +105,8 @@ public class ExternalPrograms {
         PYTHON("python3"),
         JAVA("java"),
         DOTNET("dotnet"),
-        JQ("jq");
+        JQ("jq"),
+        GO("go");
 
         private final String defaultCommand;
 
