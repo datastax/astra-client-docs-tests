@@ -11,10 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -87,11 +84,11 @@ public class ExternalPrograms {
     ///
     /// Useful for calling definitely-available scripts (such as `./.gradlew`)
     public static ExternalProgram custom() {
-        return new ExternalProgram("custom", new String[0]);
+        return new ExternalProgram("custom", new String[0], Optional.empty());
     }
 
     private static ExternalProgram get(ExternalProgramType type, BaseCtx ctx) {
-        return new ExternalProgram(type.name().toLowerCase(), ctx.commandOverrides().getOrDefault(type, type.defaultCommand()));
+        return new ExternalProgram(type.name().toLowerCase(), ctx.commandOverrides().getOrDefault(type, type.defaultCommand()), Optional.of(type.existsCheckArg));
     }
 
     /// Enum of external programs with their default commands.
@@ -99,16 +96,17 @@ public class ExternalPrograms {
     /// Each can be overridden via `<NAME>_COMMAND` env var (e.g., `TSX_COMMAND=bun tsx`).
     @RequiredArgsConstructor
     public enum ExternalProgramType {
-        TSX("npx -y tsx"),
-        NPM("npm"),
-        BASH("bash"),
-        PYTHON("python3"),
-        JAVA("java"),
-        DOTNET("dotnet"),
-        JQ("jq"),
-        GO("go");
+        TSX("npx -y tsx", "--version"),
+        NPM("npm", "--version"),
+        BASH("bash", "--version"),
+        PYTHON("python3", "--version"),
+        JAVA("java", "--version"),
+        DOTNET("dotnet", "--version"),
+        JQ("jq", "--version"),
+        GO("go", "version");
 
         private final String defaultCommand;
+        private final String existsCheckArg;
 
         public String[] defaultCommand() {
             return defaultCommand.split(" ");
@@ -181,7 +179,7 @@ public class ExternalPrograms {
     /// val tsx = ExternalPrograms.tsx(ctx);
     /// val result = tsx.run(Path.of("/tmp"), "script.ts", "--verbose");
     /// ```
-    public record ExternalProgram(String name, String[] cmd) {
+    public record ExternalProgram(String name, String[] cmd, Optional<String> existsCheckArg) {
         /// Runs the program with the given arguments in the current directory.
         ///
         /// Standard placeholder env vars (`API_ENDPOINT`, `ASTRA_TOKEN`, etc.) are automatically injected.
@@ -208,7 +206,7 @@ public class ExternalPrograms {
         /// Standard placeholder env vars (`API_ENDPOINT`, `ASTRA_TOKEN`, etc.) are automatically injected.
         ///
         /// @param workingDir the working directory (null for current directory)
-        /// @param envVars additional environment variables to set (null for none)
+        /// @param envVars additional environment variables to set (null for nne)
         /// @param args command-line arguments to pass to the program
         /// @return the result containing exit code and output
         public RunResult run(@Nullable Path workingDir, @Nullable Map<String, String> envVars, String... args) {
@@ -237,8 +235,12 @@ public class ExternalPrograms {
         ///
         /// @return true if the program executed successfully, false otherwise
         public boolean exists() {
+            if (existsCheckArg.isEmpty()) {
+                return true; // just assume it exists Ig
+            }
+
             try {
-                val process = startProcess(null, ArrayUtils.addAll(cmd, "--version"), null);
+                val process = startProcess(null, ArrayUtils.addAll(cmd, existsCheckArg.get()), null);
                 val exitCode = process.waitFor();
                 return exitCode == 0;
             } catch (IOException | InterruptedException e) {
