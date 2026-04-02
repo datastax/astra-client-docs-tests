@@ -21,6 +21,11 @@ inputs:
     description: 'API endpoint for testing'
     required: true
 
+outputs:
+  failed_tests:
+    description: 'Whether any tests failed'
+    value: ${{ steps.run-tests.outputs.failed_tests }}
+
 runs:
   using: composite
   steps:
@@ -31,6 +36,7 @@ runs:
         path: astra-client-docs-tests
 
     - name: Run client compilation tests
+      id: run-tests
       uses: ./astra-client-docs-tests/.github/actions/use-dh
       env:
         ASTRA_TOKEN: ${{ inputs.token }}
