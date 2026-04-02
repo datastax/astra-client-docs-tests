@@ -147,15 +147,7 @@ runs:
       if: inputs.setup-languages == 'all' || contains(inputs.setup-languages, 'csharp')
       uses: actions/setup-dotnet@v5
       with:
-        dotnet-version: '10.x'
-
-    - name: Force .NET 10 Environment
-      if: inputs.setup-languages == 'all' || contains(inputs.setup-languages, 'csharp')
-      shell: bash
-      run: |
-        echo "DOTNET_ROOT=$HOME/.dotnet" >> $GITHUB_ENV
-        echo "$HOME/.dotnet" >> $GITHUB_PATH
-        echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+        dotnet-version: '10.0.x'
 
     - name: Verify dotnet
       if: inputs.setup-languages == 'all' || contains(inputs.setup-languages, 'csharp')
