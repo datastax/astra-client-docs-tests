@@ -18,9 +18,12 @@ inputs:
     description: 'Install jq'
     required: false
     default: 'false'
-  script:
-    description: 'Script using dh'
+  args:
+    description: 'Args to pass to dh'
     required: true
+  allow-failures:
+    description: 'Whether to allow test failures without failing the entire workflow'
+    default: 'false'
 
 outputs:
   dh-cli-path:
@@ -28,7 +31,7 @@ outputs:
     value: ${{ steps.build-cli.outputs.dh-cli-path }}
   failed_tests:
     description: 'Whether any tests failed'
-    value: ${{ steps.calc-failed-tests.outputs.failed_tests }}
+    value: ${{ steps.run-tests.outputs.failed_tests }}
 
 runs:
   using: composite
@@ -149,6 +152,12 @@ runs:
       with:
         dotnet-version: '10.0.x'
 
+    - name: Force .NET 10
+      if: inputs.setup-languages == 'all' || contains(inputs.setup-languages, 'csharp')
+      shell: bash
+      run: |
+        echo '{"sdk": { "version": "10.0.0", "rollForward": "latestFeature" } }' > "${{ github.workspace }}/global.json"
+
     - name: Verify dotnet
       if: inputs.setup-languages == 'all' || contains(inputs.setup-languages, 'csharp')
       shell: bash
@@ -168,35 +177,32 @@ runs:
     # --- actually use dh ---
     - name: Use dh
       shell: bash
+      id: run-tests
       run: |
         set -x
+        
         export SPINNER=false
         source astra-client-docs-tests/scripts/dev-alias.sh --no-compgen
-        eval "${{ inputs.script }}"
-
-    - name: Set failed_tests output
-      id: calc-failed-tests
-      shell: bash
-      run: |
-        set -x
-        logs=$(cat astra-client-docs-tests/.docs_tests_temp/logs/* || '')
         
-        total_tests=$(echo "$logs" | grep " Total tests:" | cut -d':' -f2 | tr -d ' ')
-        passed_tests=$(echo "$logs" | grep " Passed tests:" | cut -d':' -f2 | tr -d ' ')
+        dh ${{ inputs.args }}
+        exit_code=$?
         
-        echo "Total tests: $total_tests"
-        echo "Passed tests: $passed_tests"
-        
-        if [[ "$total_tests" -ne "$passed_tests" ]]; then
-          echo "failed_tests=true" >> $GITHUB_OUTPUT
-        else
-          echo "failed_tests=false" >> $GITHUB_OUTPUT
-        fi
+        case $exit_code in
+          0)
+            echo "failed_tests=false" >> $GITHUB_OUTPUT
+            ;;
+          100)
+            echo "failed_tests=true" >> $GITHUB_OUTPUT
+            [[ "${{ inputs.allow-failures }}" != 'true' ]] && exit 100
+            ;;
+          *)
+            exit $exit_code
+            ;;
+        esac
 
     - name: Print logs on failure
-      if: failure()
+      if: always() && steps.run-tests.outputs.failed_tests == 'true'
       shell: bash
       run: |
         set -x
-        echo "Script failed, printing dh logs:"
         cat astra-client-docs-tests/.docs_tests_temp/logs/* || echo "No logs found"

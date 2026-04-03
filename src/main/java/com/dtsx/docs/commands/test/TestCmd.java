@@ -17,6 +17,8 @@ public class TestCmd extends BaseCmd<TestCtx> {
     @Mixin @Getter
     private TestArgs $args;
 
+    private static final int EXIT_CODE_TESTS_FAILED = 100;
+
     @Override
     public int run() {
         CliLogger.println(false, "@|bold Starting verifier in @!" + ctx.verifyMode().displayName() + "!@ mode.|@");
@@ -27,8 +29,6 @@ public class TestCmd extends BaseCmd<TestCtx> {
 
         val ok = TestRunner.runTests(ctx, TestPlanBuilder.buildPlan(ctx));
 
-        return (ok || ctx.allowFailures())
-            ? 0
-            : 1;
+        return (ok) ? 0 : EXIT_CODE_TESTS_FAILED;
     }
 }

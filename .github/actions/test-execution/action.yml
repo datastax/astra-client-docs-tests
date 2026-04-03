@@ -20,6 +20,9 @@ inputs:
   db-endpoint:
     description: 'API endpoint for testing'
     required: true
+  allow-failures:
+    description: 'Whether to allow test failures without failing the entire workflow'
+    default: 'false'
 
 outputs:
   failed_tests:
@@ -45,7 +48,8 @@ runs:
         docs-repo: ${{ inputs.docs-repo }}
         docs-repo-token: ${{ inputs.docs-repo-token }}
         examples-path: ${{ inputs.examples-path }}
+        allow-failures: ${{ inputs.allow-failures }}
         setup-languages: ${{ inputs.clients }},typescript # always need typescript for execution tests
         setup-jq: true
-        script: |
-          dh test ${{ inputs.clients }} ${{ inputs.args }}
+        args: |
+          test ${{ inputs.clients }} ${{ inputs.args }}

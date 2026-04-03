@@ -44,7 +44,6 @@ public class TestCtx extends BaseScriptRunnerCtx {
     private final VerifyMode verifyMode;
     private final Predicate<Path> filter;
     private final int maxFixtureInstances;
-    private final boolean allowFailures;
 
     public List<ClientDriver> drivers() {
         return new ArrayList<>(drivers.values());
@@ -65,7 +64,6 @@ public class TestCtx extends BaseScriptRunnerCtx {
         this.verifyMode = resolveVerifyMode(args);
         this.filter = mkFilter(args);
         this.maxFixtureInstances = args.$maxFixtureInstances;
-        this.allowFailures = args.$allowFailures;
     }
 
     @Override

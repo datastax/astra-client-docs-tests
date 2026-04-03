@@ -101,7 +101,7 @@ public abstract class TestReporter {
         val skippedTests = plan.totalTests() - history.totalTests();
 
         CliLogger.println(true, "\n@|bold Test Summary:|@");
-        CliLogger.println(true, "@!-!@ Total tests: " + plan.totalTests()); // compilation test action needs to be updated if this is updated
+        CliLogger.println(true, "@!-!@ Total tests: " + plan.totalTests());
         CliLogger.println(true, "@!-!@ Passed tests: " + history.passedTests());
         CliLogger.println(true, "@!-!@ Failed tests: " + history.failedTests());
 
