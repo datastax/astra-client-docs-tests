@@ -184,6 +184,8 @@ runs:
         export SPINNER=false
         source astra-client-docs-tests/scripts/dev-alias.sh --no-compgen
         
+        set +e
+        
         dh ${{ inputs.args }}
         exit_code=$?
         
@@ -193,7 +195,9 @@ runs:
             ;;
           100)
             echo "failed_tests=true" >> $GITHUB_OUTPUT
-            [[ "${{ inputs.allow-failures }}" != 'true' ]] && exit 100
+            if [[ "${{ inputs.allow-failures }}" == 'false' ]]; then
+              exit 100
+            fi
             ;;
           *)
             exit $exit_code
