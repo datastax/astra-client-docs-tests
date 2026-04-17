@@ -57,7 +57,7 @@ public enum CSharpSnapshotsReducer implements SnapshotsReducer {
                 return false;
             }
 
-            if (part1.name().endsWith("::jsonify")) {
+            if (part1.name().endsWith("::jsonify") || part1.name().endsWith("::definition")) {
                 val typedJson = JacksonUtils.parseJson(part1.content(), Object.class);
                 val untypedJson = JacksonUtils.parseJson(part2.content(), Object.class);
 
