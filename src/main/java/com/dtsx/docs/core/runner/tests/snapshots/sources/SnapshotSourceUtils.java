@@ -135,11 +135,15 @@ public class SnapshotSourceUtils {
                 if (!SnapshotVerifier.SCRUBBER.scrub(str).equals(str)) {
                     yield 0;
                 }
-                yield str.hashCode();
+                yield pascalToSnakeCase(str).hashCode();
             }
             default -> {
                 yield obj.hashCode();
             }
         };
+    }
+
+    private static String pascalToSnakeCase(String str) {
+        return str.replaceAll("([a-z])([A-Z]+)", "$1_$2").toLowerCase();
     }
 }
