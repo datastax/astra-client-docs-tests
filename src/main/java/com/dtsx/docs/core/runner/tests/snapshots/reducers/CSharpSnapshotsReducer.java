@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+// TODO don't love this there should be a better way to do this
 public enum CSharpSnapshotsReducer implements SnapshotsReducer {
     INSTANCE;
 
@@ -24,24 +25,40 @@ public enum CSharpSnapshotsReducer implements SnapshotsReducer {
             val e1 = iter.next();
             val e2 = iter.next();
 
-            // minor optimization to check if the typed snapshot is the subset first
-            val e1IsUntyped = e1.getValue().stream().anyMatch(p -> p.toString().contains("untyped"));
-            
-            val snapshot1 = (e1IsUntyped) ? e2.getKey() : e1.getKey();
-            val snapshot2 = (e1IsUntyped) ? e1.getKey() : e2.getKey();
+            val snapshot1 = e1.getKey();
+            val snapshot2 = e2.getKey();
 
-            if (firstSnapshotSubsetOfSecond(snapshot1.parts(), snapshot2.parts())) {
-                return snapshot2;
-            }
+            val untypedSnapshot = isUntyped(snapshot1) ? snapshot1 : snapshot2;
 
-            if (firstSnapshotSubsetOfSecond(snapshot2.parts(), snapshot1.parts())) {
-                return snapshot1;
+            if (firstSnapshotSubsetOfSecond(snapshot1.parts(), snapshot2.parts()) || firstSnapshotSubsetOfSecond(snapshot2.parts(), snapshot1.parts())) {
+                return untypedSnapshot;
             }
 
             throw new SnapshotReductionException();
         }
 
         throw new SnapshotReductionException();
+    }
+
+    private boolean isUntyped(Snapshot snapshot) {
+        return snapshot.parts().stream()
+            .filter(p -> p.name().endsWith("::jsonify") || p.name().endsWith("::definition") || p.name().endsWith("::definitions"))
+            .allMatch(p -> {
+                val json = JacksonUtils.parseJson(p.content(), Object.class);
+                return !hasPascalCaseKeys(json);
+            });
+    }
+
+    private boolean hasPascalCaseKeys(Object json) {
+        if (json instanceof Map<?, ?> m) {
+            return m.keySet().stream().anyMatch(k -> k instanceof String s && Character.isUpperCase(s.charAt(0)));
+        }
+        if (json instanceof Iterable<?> i) {
+            for (val item : (Iterable<?>) i) {
+                if (hasPascalCaseKeys(item)) return true;
+            }
+        }
+        return false;
     }
 
     private boolean firstSnapshotSubsetOfSecond(List<SnapshotPart> parts1, List<SnapshotPart> parts2) {
@@ -57,7 +74,6 @@ public enum CSharpSnapshotsReducer implements SnapshotsReducer {
                 return false;
             }
 
-            // TODO don't love this there should be a better way to do this
             if (part1.name().endsWith("::jsonify") || part1.name().endsWith("::definition") || part1.name().endsWith("::definitions")) {
                 val typedJson = JacksonUtils.parseJson(part1.content(), Object.class);
                 val untypedJson = JacksonUtils.parseJson(part2.content(), Object.class);
