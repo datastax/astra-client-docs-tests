@@ -1,0 +1,68 @@
+name: "Start HCD + Data API"
+description: "Authenticates w/ AWS, pulls the HCD image from ECR, and starts the stack using docker-compose."
+
+inputs:
+  aws-role-arn:
+    description: "The AWS IAM role ARN to assume for ECR access"
+    required: false
+    default: "arn:aws:iam::559669398656:role/data-api-clients-ecr-ro-user"
+  aws-region:
+    description: "The AWS region for ECR"
+    required: false
+    default: "us-west-2"
+  create-keyspaces:
+    description: "Comma list of keyspaces to automatically create"
+    required: false
+    default: "default_keyspace"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Configure AWS credentials from OIDC
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ inputs.aws-role-arn }}
+        aws-region: ${{ inputs.aws-region }}
+
+    - name: Login to Amazon ECR
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Start HCD + Data API
+      shell: bash
+      working-directory: ${{ github.action_path }}/../../../scripts/utils/docker-hcd
+      run: |
+        docker compose up -d
+
+    - name: Wait for Data API to be ready
+      shell: bash
+      run: |
+        echo "Waiting for Data API to become healthy..."
+        until curl -f http://localhost:8181/stargate/health; do
+          sleep 5
+        done
+
+    - name: Create keyspaces
+      if: ${{ inputs.create-keyspaces != '' }}
+      shell: bash
+      run: |
+        keyspaces="${{ inputs.create-keyspaces }}"
+        keyspaces="${keyspaces//,/ }"
+        
+        for ks in $keyspaces; do
+          echo "Creating keyspace: $ks"
+          curl -s -XPOST \
+            http://localhost:8181/v1/ \
+            -H "token: Cassandra:Y2Fzc2FuZHJh:Y2Fzc2FuZHJh" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"createKeyspace\": {
+                \"name\": \"$ks\",
+                \"options\": {
+                  \"replication\": {
+                    \"class\": \"SimpleStrategy\",
+                    \"replication_factor\": 1
+                  }
+                }
+              }
+            }"
+        done
