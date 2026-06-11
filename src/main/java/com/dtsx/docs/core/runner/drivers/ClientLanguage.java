@@ -48,7 +48,7 @@ public enum ClientLanguage {
     ),
     GO(
         ".go",
-        "github.com/datastax/astra-db-go",
+        "github.com/datastax/astra-db-go/v2@main",
         GoDriver::new,
         DefaultSnapshotsReducer.INSTANCE
     ),
