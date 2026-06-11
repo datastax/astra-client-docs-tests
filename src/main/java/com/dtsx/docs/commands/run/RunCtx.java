@@ -75,19 +75,21 @@ public class RunCtx extends BaseScriptRunnerCtx {
         );
 
         val triedPaths = new HashSet<String>();
+        val absExamplesFolder = examplesFolder().toAbsolutePath().normalize();
 
         for (val root : roots) {
             val candidate = root.resolve(fileStr);
+            val absCandidate = candidate.toAbsolutePath().normalize();
 
-            if (!candidate.startsWith(examplesFolder())) {
+            if (!absCandidate.startsWith(absExamplesFolder)) {
                 throw new ParameterException(cmd, "Invalid file path '" + candidate + "'. Must be inside examples folder: " + examplesFolder());
             }
 
             if (Files.exists(candidate)) {
-                return candidate;
+                return absCandidate;
             }
 
-            triedPaths.add(candidate.toAbsolutePath().normalize().toString());
+            triedPaths.add(absCandidate.toString());
         }
 
         throw new ParameterException(cmd, "Could not resolve '" + fileStr + "'. Tried: " + String.join(", ", triedPaths));

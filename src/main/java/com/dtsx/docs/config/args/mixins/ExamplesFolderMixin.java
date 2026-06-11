@@ -42,7 +42,7 @@ public class ExamplesFolderMixin {
         for (val subPath : subPaths) {
             val candidate = folder.resolve(subPath);
             if (isValidExampleFolder.test(candidate)) {
-                return candidate.normalize();
+                return candidate.toAbsolutePath().normalize();
             }
         }
 

@@ -45,7 +45,7 @@ public class RunArgs extends BaseScriptRunnerArgs<RunCtx> {
         paramLabel = "KEY=value",
         split = ","
     )
-    public Map<String, String> $replace;
+    public Map<String, String> $replace = Map.of();
 
     @Option(
         names = { "-p", "--plain" },

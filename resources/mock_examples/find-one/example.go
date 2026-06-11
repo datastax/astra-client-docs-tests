@@ -5,16 +5,16 @@ import (
 	"fmt"
 	"log"
 
-	astradb "github.com/datastax/astra-db-go"
-	"github.com/datastax/astra-db-go/filter"
-	"github.com/datastax/astra-db-go/options"
+	"github.com/datastax/astra-db-go/v2/astra"
+	"github.com/datastax/astra-db-go/v2/astra/filter"
+	"github.com/datastax/astra-db-go/v2/astra/options"
 )
 
 func main() {
 	// Get an existing collection
-	client := astradb.NewClient()
+	client := astra.NewClient()
 
-	database := client.Database("**API_ENDPOINT**", options.WithToken("**APPLICATION_TOKEN**"))
+	database := client.Database("**API_ENDPOINT**", options.API().SetToken("**APPLICATION_TOKEN**"))
 
 	collection := database.Collection("**COLLECTION_NAME**")
 
