@@ -69,7 +69,7 @@ public class GoDriver extends ClientDriver {
 
             val imports = Stream.concat(
                 (found) ? matcher.group(1).lines().map(String::trim) : Stream.empty(),
-                Stream.of("\"encoding/json\"", "\"fmt\"", "\"os\"")
+                Stream.of("\"fmt\"", "\"os\"")
             ).distinct();
 
             content = """
@@ -77,13 +77,14 @@ public class GoDriver extends ClientDriver {
 
                 import (
                     %s
+                    "github.com/datastax/astra-db-go/v2/astra/serdes"
                 )
             
                 func _printlnJson(a ...any) (int, error) {
                     for _, v := range a {
-                        jsonBytes, err := json.Marshal(v)
+                        jsonBytes, err := serdes.Serialize(v, serdes.TargetNone, serdes.UseJSONMarshal)
                         if err != nil {
-                            fmt.Fprintln(os.Stdout, v)
+                            fmt.Fprintln(os.Stdout, err)
                             continue
                         }
                         fmt.Fprintln(os.Stdout, string(jsonBytes))
