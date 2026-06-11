@@ -5,6 +5,7 @@ import com.dtsx.docs.commands.duplicates.DuplicatesCmd;
 import com.dtsx.docs.commands.logs.LogsCmd;
 import com.dtsx.docs.commands.review.ReviewCmd;
 import com.dtsx.docs.commands.run.RunCmd;
+import com.dtsx.docs.commands.startgate.StartgateCmd;
 import com.dtsx.docs.commands.test.TestCmd;
 import com.dtsx.docs.lib.CliLogger;
 import io.github.cdimascio.dotenv.Dotenv;
@@ -30,6 +31,7 @@ import static com.dtsx.docs.lib.ColorUtils.ACCENT_COLOR;
         CompgenCmd.class,
         LogsCmd.class,
         DuplicatesCmd.class,
+        StartgateCmd.class,
     }
 )
 public class HelperCli {
