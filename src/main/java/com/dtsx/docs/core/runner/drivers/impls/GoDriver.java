@@ -131,7 +131,7 @@ public class GoDriver extends ClientDriver {
             for (val node : it) {
                 val path = node.path("Path").asString();
 
-                if (path.endsWith("astra-db-go") && node.has("Version")) {
+                if (path.contains("astra-db-go/v2") && node.has("Version")) {
                     val version = node.path("Version").asString();
 
                     if (!version.isEmpty()) {
