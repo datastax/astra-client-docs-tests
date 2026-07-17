@@ -65,9 +65,6 @@ public enum ClientLanguage {
     private final SnapshotsReducer snapshotsReducer;
 
     public @Nullable String defaultArtifact() {
-        if (this == JAVA) {
-            return "files(\"" + CLI_DIR.toAbsolutePath() + "/astra-db-java-2.2.1-patched.jar\")"; // TODO remove this once Java is patched + update JavaDriver.extractClientVersion
-        }
         return defaultArtifact;
     }
 

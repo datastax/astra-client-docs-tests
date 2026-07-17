@@ -112,22 +112,20 @@ public class JavaDriver extends ClientDriver {
 
     @Override
     public Optional<String> extractClientVersion(BaseScriptRunnerCtx ctx, ExecutionEnvironment execEnv) {
-        return Optional.of("v2.2.1"); // TODO remove once Java is patched and remove ClientLanguage.defaultArtifact
+       val result = ExternalPrograms.custom().run(execEnv.envDir(), "./gradlew", "dependencies", "--configuration", "runtimeClasspath");
 
-//        val result = ExternalPrograms.custom().run(execEnv.envDir(), "./gradlew", "dependencies", "--configuration", "runtimeClasspath");
-//
-//        if (result.notOk()) {
-//            throw new RunException("Failed to extract Java client version: " + result.output());
-//        }
-//
-//        val output = result.stdout();
-//        val pattern = Pattern.compile("com\\.datastax\\.astra:astra-db-java:([\\d.]+(?:-[\\w.]+)?)");
-//        val matcher = pattern.matcher(output);
-//
-//        if (matcher.find()) {
-//            return Optional.of("v" + matcher.group(1));
-//        }
-//
-//        return Optional.of("unknown");
+       if (result.notOk()) {
+           throw new RunException("Failed to extract Java client version: " + result.output());
+       }
+
+       val output = result.stdout();
+       val pattern = Pattern.compile("com\\.datastax\\.astra:astra-db-java:([\\d.]+(?:-[\\w.]+)?)");
+       val matcher = pattern.matcher(output);
+
+       if (matcher.find()) {
+           return Optional.of("v" + matcher.group(1));
+       }
+
+       return Optional.of("unknown");
     }
 }
